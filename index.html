@@ -1045,7 +1045,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   </div>
   <div class="topbar-r">
     <span id="save-indicator" style="font-size:11px;color:rgba(255,255,255,.35);margin-right:4px;display:none" aria-live="polite"></span>
-    <div class="btn-icon" title="API配置" style="font-size:12px;padding:0 10px;width:auto" onclick="openApiConfig()" aria-label="API配置">API配置</div>
+    <div class="btn-icon" id="btn-api-config" title="API配置" style="font-size:12px;padding:0 10px;width:auto" aria-label="API配置">API配置</div>
     <div class="btn-icon export-btn" title="导出" style="font-size:12px;padding:0 10px;width:auto;position:relative" onclick="toggleExportMenu(event)" aria-label="导出">↓ 导出
       <div id="export-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid #e0e0e0;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:150px;z-index:300;overflow:hidden">
         <div onclick="exportDoc('word')" style="padding:10px 14px;font-size:12px;cursor:pointer;color:#1a1a1a;white-space:nowrap" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">📄 导出 Word (.doc)</div>
@@ -1195,7 +1195,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
           <option value="novel" disabled>📖 网文改编（即将开放）</option>
           <option value="original" disabled>✨ 原创开发（即将开放）</option>
         </select>
-        <button class="btn-send" onclick="startProject()">开始创作 →</button>
+        <button class="btn-send" id="btn-start-project">开始创作 →</button>
       </div>
     </div>
 
@@ -4988,7 +4988,27 @@ function collectProdContent(){
   return h;
 }
 
+// Global error handler — catch ANY JS error that prevents buttons from working
+window.onerror = function(msg, src, line, col, err) {
+  console.error('Global JS Error:', msg, 'at', src, line+':'+col);
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('Unhandled Promise rejection:', e.reason);
+});
+
 document.addEventListener('DOMContentLoaded', ()=>{
+
+  // Wire up key buttons via addEventListener (more reliable than inline onclick)
+  const btnApi = document.getElementById('btn-api-config');
+  if (btnApi) btnApi.addEventListener('click', openApiConfig);
+
+  const btnStart = document.getElementById('btn-start-project');
+  if (btnStart) btnStart.addEventListener('click', startProject);
+
+  const btnSaveApi = document.getElementById('btn-save-api');
+  if (btnSaveApi) btnSaveApi.addEventListener('click', persistApiConfig);
+
   renderRecentProjects();
   if(loadProject()){
     if(S.proj){
@@ -5430,7 +5450,7 @@ async function sendChatReal(ctx) {
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button onclick="closeApiConfig()" style="height:34px;padding:0 16px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);cursor:pointer">取消</button>
-        <button onclick="persistApiConfig()" style="height:34px;padding:0 16px;border:none;border-radius:var(--rs);background:var(--gm);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#fff;cursor:pointer;font-weight:500">保存配置</button>
+        <button onclick="persistApiConfig()" id="btn-save-api" style="height:34px;padding:0 16px;border:none;border-radius:var(--rs);background:var(--gm);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#fff;cursor:pointer;font-weight:500">保存配置</button>
       </div>
     </div>
   </div>
