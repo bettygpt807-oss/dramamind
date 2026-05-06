@@ -1700,227 +1700,55 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
     </div>
 
-    <!-- ASSETS -->
+    <!-- ASSETS — 由 renderProdAssets() 动态填充，不含硬编码人物/场景 -->
     <div class="prod-sec" id="prod-assets">
       <div class="asset-tabs">
         <div class="atab active" onclick="swtAsset(this,'a-chars')">角色设定</div>
         <div class="atab" onclick="swtAsset(this,'a-scenes')">场景设定</div>
         <div class="atab" onclick="swtAsset(this,'a-props')">道具设定</div>
       </div>
-
-      <!-- 角色设定 -->
       <div id="a-chars">
         <div class="cb">
           <div class="cb-head">👤 角色设定 · 定妆四视图
             <button class="regen-sm" onclick="regenProdSection('assets-chars')">↺ 重新生成</button>
-            <button class="copy-btn" style="margin-left:auto" onclick="showToast('已复制全部角色提示词')">复制全部</button>
+            <button class="copy-btn" style="margin-left:auto" onclick="cpAllAssets('a-chars')">复制全部</button>
           </div>
           <div class="cb-body" style="padding:0">
             <table class="asset-tbl">
               <thead><tr><th>角色 / 妆造</th><th>适用场景</th><th style="text-align:center;padding:8px 10px">提示词（中文 / English）</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td>Elara<br><span style="font-size:10px;color:var(--i4);font-weight:400">婚礼妆造 · 01</span></td>
-                  <td>第01集 · 婚礼仪式场景<br><span style="font-size:10px;color:var(--i4)">深象牙白礼服，近乎无妆，沉默尊严</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">请生成人物四视图（正面全身、背面全身、侧面全身、脸部特写），24岁欧美女性 Elara，西方骨相干净克制，身形偏薄，银灰色眼睛，深色长发低盘，深象牙白哥特礼服，长袖无装饰，厚重布料垂感强，近乎无妆，只保留真实肤质与一点失温感，她不是新娘，她是在完成一项任务，眼神平静而收紧，始终准备防御，电影级真人写实，冷中性光线，去饱和布料与克制骨相共同建立她的记忆点 --ar 2:3 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Please generate a four-view character sheet (full frontal, full back, full side, face close-up), 24-year-old European woman Elara, clean and restrained Western bone structure, thin figure, silver-grey eyes, dark hair in a low chignon, deep ivory gothic ceremonial gown, long sleeves, no embellishment, heavy fabric with strong drape, almost no makeup, only retaining real skin texture and a slight loss of warmth, she is not a bride, she is completing a task, eyes calm and tight, always ready for defense, movie-level live-action realism, cold neutral light, desaturated fabric and restrained bone structure together establish her memory point --ar 2:3 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Elara<br><span style="font-size:10px;color:var(--i4);font-weight:400">日常妆造 · 03–06</span></td>
-                  <td>第03–06集 · 族群日常场景<br><span style="font-size:10px;color:var(--i4)">深色羊毛长裙，低调实用，能力感</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">请生成人物四视图（正面全身、背面全身、侧面全身、脸部特写），24岁欧美女性 Elara，深色厚重羊毛长裙，腰间简单皮带，低调实用，无装饰，头发自然垂落，近乎无妆，眼神专注而安静，有一种不需要被认可的从容，电影级真人写实，室内自然冷光，去饱和深色调 --ar 2:3 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Please generate a four-view character sheet (full frontal, full back, full side, face close-up), 24-year-old European woman Elara, dark heavy wool long dress, simple leather belt at waist, understated and functional, no embellishment, hair falling naturally, almost no makeup, focused and quiet eyes with a composure that needs no validation, movie-level live-action realism, indoor natural cold light, desaturated dark tones --ar 2:3 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Caden<br><span style="font-size:10px;color:var(--i4);font-weight:400">正式妆造 · 01–05</span></td>
-                  <td>第01–05集 · 仪式/权力场景<br><span style="font-size:10px;color:var(--i4)">黑色正式礼服，威严气场，受控表情</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">请生成人物四视图（正面全身、背面全身、侧面全身、脸部特写），28岁欧美男性 Caden，冷灰眼睛，深色头发，强硬下颌线，黑色厚重正式礼服，肩线宽，站姿笔直，表情受控，眼神里有一种主动压制情绪的疲惫，他不是冷漠，他是在用冷漠保护某样东西，电影级真人写实，戏剧性侧光，深色调 --ar 2:3 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Please generate a four-view character sheet (full frontal, full back, full side, face close-up), 28-year-old European man Caden, cold grey eyes, dark hair, strong jawline, black heavy formal attire, broad shoulder line, upright posture, controlled expression, eyes carrying a fatigue of actively suppressing emotion, he is not cold, he is using coldness to protect something, movie-level live-action realism, dramatic side lighting, dark tones --ar 2:3 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+              <tbody id="asset-chars-body"><tr><td colspan="3" style="padding:24px;text-align:center;color:var(--i4);font-size:12px">角色设定提示词将在「确认导演阐述」后自动生成，或点击「↺ 重新生成」</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
-
-      <!-- 场景设定 -->
       <div id="a-scenes" style="display:none">
         <div class="cb">
           <div class="cb-head">🏛 场景设定 · 光影氛围变体
             <button class="regen-sm" onclick="regenProdSection('assets-scenes')">↺ 重新生成</button>
-            <button class="copy-btn" style="margin-left:auto" onclick="showToast('已复制全部场景提示词')">复制全部</button>
+            <button class="copy-btn" style="margin-left:auto" onclick="cpAllAssets('a-scenes')">复制全部</button>
           </div>
           <div class="cb-body" style="padding:0">
             <table class="asset-tbl">
               <thead><tr><th>场景 / 光影变体</th><th>适用集数</th><th style="text-align:center;padding:8px 10px">提示词（中文 / English）</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td>婚礼大厅<br><span style="font-size:10px;color:var(--i4);font-weight:400">烛光仪式氛围</span></td>
-                  <td>第01集 · 婚礼仪式<br><span style="font-size:10px;color:var(--i4)">暖调烛火，冷蓝底光，权力感</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">哥特式婚礼大厅，石柱高耸，拱顶阴影，数百支蜡烛形成暖调光源矩阵，主光冷蓝，烛火作为情绪出口，地面深色大理石反光，空气中有轻微烟雾感，无人物，建筑级写实，竖屏9:16构图，前景虚化石柱，中景仪式台，远景高窗透入微弱月光 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Gothic wedding hall, towering stone columns, vaulted shadows, hundreds of candles forming a warm-toned light matrix, cold blue as main light, candlelight as emotional outlet, dark marble floor reflections, slight smoke haze in air, no figures, architectural realism, vertical 9:16 composition, foreground blurred stone column, midground ceremony platform, background high windows with faint moonlight --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>婚礼大厅<br><span style="font-size:10px;color:var(--i4);font-weight:400">清晨余烬氛围</span></td>
-                  <td>第02集 · 婚后清晨<br><span style="font-size:10px;color:var(--i4)">冷白晨光，蜡烛熄灭，孤寂感</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">同一哥特式婚礼大厅，清晨，蜡烛全部熄灭，冷白晨光从高窗斜入，地面散落花瓣已枯萎，空气静止，无人物，建筑级写实，竖屏9:16，前景熄灭烛台特写，中景空旷仪式台，整体色调去饱和冷灰，孤寂感 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Same gothic wedding hall, morning, all candles extinguished, cold white morning light slanting through high windows, scattered wilted petals on floor, still air, no figures, architectural realism, vertical 9:16, foreground close-up of extinguished candelabra, midground empty ceremony platform, overall desaturated cold grey tones, sense of desolation --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>森林边界<br><span style="font-size:10px;color:var(--i4);font-weight:400">黄昏对峙氛围</span></td>
-                  <td>第04集 · 能力对抗<br><span style="font-size:10px;color:var(--i4)">橙红黄昏，浓雾，张力感</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">古老森林边界，黄昏，橙红光线从树冠间隙穿透，地面浓雾低伏，树干粗壮阴暗，远处隐约有族群领地边界标记，无人物，电影级写实，竖屏9:16，前景树根与雾气，中景光线穿透感，整体色调橙红与深绿对比，张力感 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Ancient forest boundary, dusk, orange-red light piercing through canopy gaps, dense low fog on ground, thick dark tree trunks, faint clan territory boundary markers in distance, no figures, cinematic realism, vertical 9:16, foreground tree roots and mist, midground light penetration, overall orange-red and deep green contrast, sense of tension --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+              <tbody id="asset-scenes-body"><tr><td colspan="3" style="padding:24px;text-align:center;color:var(--i4);font-size:12px">场景设定提示词将在「确认导演阐述」后自动生成，或点击「↺ 重新生成」</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
-
-      <!-- 道具设定 -->
       <div id="a-props" style="display:none">
         <div class="cb">
           <div class="cb-head">🗡 道具设定 · 关键物件
             <button class="regen-sm" onclick="regenProdSection('assets-props')">↺ 重新生成</button>
-            <button class="copy-btn" style="margin-left:auto" onclick="showToast('已复制全部道具提示词')">复制全部</button>
+            <button class="copy-btn" style="margin-left:auto" onclick="cpAllAssets('a-props')">复制全部</button>
           </div>
           <div class="cb-body" style="padding:0">
             <table class="asset-tbl">
               <thead><tr><th>道具名称</th><th>出现集数</th><th style="text-align:center;padding:8px 10px">提示词（中文 / English）</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td>婚戒<br><span style="font-size:10px;color:var(--i4);font-weight:400">Elara · 仪式道具</span></td>
-                  <td>第01集起<br><span style="font-size:10px;color:var(--i4)">权力象征，情感载体</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">单枚戒指特写，哥特风格，深色氧化银，镶嵌一颗深绿色宝石，表面有细微族群纹样雕刻，无光泽感，厚重质感，放置于深色石面上，冷白侧光，产品级写实，竖屏9:16，极简背景 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Single ring close-up, gothic style, dark oxidized silver, set with a deep green gemstone, surface with subtle clan pattern engravings, matte finish, heavy texture, placed on dark stone surface, cold white side lighting, product-level realism, vertical 9:16, minimal background --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>族群印记徽章<br><span style="font-size:10px;color:var(--i4);font-weight:400">权力道具</span></td>
-                  <td>第01–10集<br><span style="font-size:10px;color:var(--i4)">身份认证，权力象征</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">族群徽章特写，圆形，直径约8cm，深色金属，中央狼头浮雕，周围环绕古文字，表面有使用痕迹，厚重感，放置于皮革表面，戏剧性侧光，产品级写实，竖屏9:16 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Clan insignia close-up, circular, approximately 8cm diameter, dark metal, central wolf head relief, surrounded by ancient script, surface showing signs of use, heavy texture, placed on leather surface, dramatic side lighting, product-level realism, vertical 9:16 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>档案卷轴<br><span style="font-size:10px;color:var(--i4);font-weight:400">剧情道具</span></td>
-                  <td>第05集<br><span style="font-size:10px;color:var(--i4)">秘密线索，转折道具</span></td>
-                  <td style="padding:0">
-                    <div class="bilingual-wrap">
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">中文提示词</div>
-                        <textarea class="bilingual-ta">古旧羊皮纸卷轴，半展开状态，边缘微微焦黄，上有手写古文字与族群印记，放置于木质书桌，烛光侧照，纸张纹理清晰，产品级写实，竖屏9:16，背景模糊书架 --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">复制中文</button>
-                      </div>
-                      <div class="bilingual-col">
-                        <div class="bilingual-lang">English Prompt</div>
-                        <textarea class="bilingual-ta">Ancient parchment scroll, half-unrolled, edges slightly yellowed and worn, handwritten ancient script and clan markings visible, placed on wooden desk, candlelight side illumination, paper texture clearly visible, product-level realism, vertical 9:16, blurred bookshelf background --ar 9:16 --v 6.0 --style raw</textarea>
-                        <button class="copy-btn" onclick="cpSingleBilingual(this)">Copy EN</button>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+              <tbody id="asset-props-body"><tr><td colspan="3" style="padding:24px;text-align:center;color:var(--i4);font-size:12px">道具设定提示词将在「确认导演阐述」后自动生成，或点击「↺ 重新生成」</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
-
     </div><!-- /prod-assets -->
 
     <!-- SHOTS -->
@@ -2025,6 +1853,7 @@ function togUpload(){
 
 // ── Global: stores extracted text from uploaded document ──
 let uploadedDocText = '';
+let docReadyPromise = null; // resolves when doc parsing finishes
 
 function handleFile(i){
   const file = i.files[0];
@@ -2036,7 +1865,9 @@ function handleFile(i){
   const ext = file.name.split('.').pop().toLowerCase();
 
   if(ext === 'docx' || ext === 'doc'){
-    // Use mammoth.js (loaded via CDN) to extract text from docx
+    // 显示正在读取状态
+    document.getElementById('fname').textContent = file.name + '  ⏳ 读取中…';
+
     const loadMammoth = () => {
       return new Promise((resolve, reject) => {
         if(window.mammoth){ resolve(window.mammoth); return; }
@@ -2047,33 +1878,46 @@ function handleFile(i){
         document.head.appendChild(s);
       });
     };
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const mammoth = await loadMammoth();
-        const result = await mammoth.extractRawValue({ arrayBuffer: e.target.result });
-        uploadedDocText = result.value || '';
-        showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
-      } catch(err) {
-        // Fallback: try reading as text
-        uploadedDocText = '';
-        showToast('文档读取失败，将以需求描述为准');
-      }
-    };
-    reader.onerror = () => { uploadedDocText = ''; };
-    reader.readAsArrayBuffer(file);
+
+    docReadyPromise = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const mammoth = await loadMammoth();
+          const result = await mammoth.extractRawValue({ arrayBuffer: e.target.result });
+          uploadedDocText = result.value || '';
+          document.getElementById('fname').textContent = file.name + '  ✓ ' + uploadedDocText.length + '字';
+          showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
+        } catch(err) {
+          uploadedDocText = '';
+          document.getElementById('fname').textContent = file.name + '  ⚠ 读取失败';
+          showToast('文档读取失败，将以需求描述为准');
+        }
+        resolve();
+      };
+      reader.onerror = () => { uploadedDocText = ''; resolve(); };
+      reader.readAsArrayBuffer(file);
+    });
+
   } else if(ext === 'txt' || ext === 'md'){
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      uploadedDocText = e.target.result || '';
-      showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
-    };
-    reader.onerror = () => { uploadedDocText = ''; };
-    reader.readAsText(file, 'UTF-8');
+    docReadyPromise = new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedDocText = e.target.result || '';
+        document.getElementById('fname').textContent = file.name + '  ✓ ' + uploadedDocText.length + '字';
+        showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
+        resolve();
+      };
+      reader.onerror = () => { uploadedDocText = ''; resolve(); };
+      reader.readAsText(file, 'UTF-8');
+    });
+
   } else if(ext === 'pdf'){
-    // PDF: notify user we can't parse in browser without extra lib
     uploadedDocText = '';
+    docReadyPromise = Promise.resolve();
     showToast('PDF 暂不支持自动解析，请将关键内容粘贴至需求描述框');
+  } else {
+    docReadyPromise = Promise.resolve();
   }
 }
 
@@ -2081,6 +1925,7 @@ function rmFile(){
   document.getElementById('uploaded-f').style.display='none';
   document.getElementById('file-input').value='';
   uploadedDocText = '';
+  docReadyPromise = null;
 }
 
 // ══════════════════════════════════════════════════
@@ -2137,9 +1982,24 @@ const PROJECT = {
 };
 
 // Populate source from intake on project start
-function startProject(){
+async function startProject(){
   const v=document.getElementById('intake-input').value.trim();
   if(!v){showToast('请先描述你的项目需求');return;}
+
+  // ── 等待文档异步解析完成（竞态保护）──
+  const fileInput = document.getElementById('file-input');
+  const hasFileSelected = !!(fileInput && fileInput.files[0]);
+  if(hasFileSelected && docReadyPromise){
+    // 如果还在读取中，显示等待提示并等待
+    if(!uploadedDocText){
+      showToast('文档读取中，请稍候…');
+      document.getElementById('gen-txt').textContent = '正在读取文档…';
+      document.getElementById('gen-mask').classList.add('show');
+      await docReadyPromise;
+      document.getElementById('gen-mask').classList.remove('show');
+    }
+  }
+
   const g=document.getElementById('sel-genre');
   const p=document.getElementById('sel-pref');
   const m=document.getElementById('sel-market');
@@ -2182,51 +2042,84 @@ function startProject(){
   }
 
   const isIntl = PROJECT.source.market.includes('欧美') || PROJECT.source.market.includes('日韩');
-  const genMsg = PROJECT.source.hasDoc ? '正在分析文档并生成改编方案……' : (isIntl ? '正在调用 Claude 生成改编方案……' : '正在生成改编方案……');
   const cfg = getApiConfig();
   const hasApiKey = isIntl ? !!cfg.claudeKey : !!cfg.doubaoKey;
 
-  // ── System prompt：角色定义 + 输出格式 ──
-  const sysPrompt = `你是一位专业的短剧改编策划，擅长为${PROJECT.source.market}创作爆款竖屏短剧改编方案。
+  // ── 统一的方案生成函数（在文档信息已存入 PROJECT.source 后调用）──
+  const generateSchemes = () => {
+    const src = PROJECT.source;
+    const sysPrompt = `你是一位专业的短剧改编策划，擅长为${src.market}创作爆款竖屏短剧改编方案。
 
-${PROJECT.source.hasDoc ? `你将收到一份 DramaLens 拆解文档原文。请：
-1. 首先从文档中提取：原著/IP名称、核心策划逻辑、节拍序列、主要人物
-2. 基于提取内容生成4个差异化改编方案` : '请根据用户需求生成4个差异化改编方案。'}
-
-严格返回JSON数组，不要任何额外文字：
+请生成4个有差异化的改编方案，每个方案角度不同。严格返回JSON数组，不要任何额外文字或markdown代码块：
 [{
   "num": "方案 01",
   "title": "方案标题（10字内，有画面感）",
-  "docTitle": "从文档中提取的原著/IP名称（无文档则留空字符串）",
-  "docPlanningLogic": "从文档中提取的核心策划逻辑（无文档则留空）",
-  "docBeatSequence": "从文档中提取的节拍序列（无文档则留空）",
-  "docCharacters": "从文档中提取的主要人物描述（无文档则留空）",
   "titleRecs": [{"zh":"中文剧名","en":"English Title"}],
   "planningThought": "策划思路（分①②③④点，每点50字内，说明结构/冲突/情感/节奏逻辑）",
   "storyBrief": "故事简介（80-120字，有具体人物和情节）",
   "tags": ["标签1","标签2","标签3"],
-  "rating": {
-    "difficulty": 85,
-    "market": 78,
-    "viral": 72,
-    "reason": "20字内理由（主要推荐理由或风险点）"
-  }
+  "rating": {"difficulty":85,"market":78,"viral":72,"reason":"20字内推荐理由或风险点"}
 }]
+rating：difficulty=改编迁移顺畅度，market=市场偏好匹配度，viral=话题钩子强度（均0-100分）`;
 
-rating字段：difficulty=改编迁移顺畅度(0-100)，market=市场偏好匹配度(0-100)，viral=话题钩子强度(0-100)`;
+    // 用已提取的结构化信息构建 userMsg，不再传原始文档全文
+    const docInfo = src.docTitle
+      ? `原著/IP：${src.docTitle}
+核心策划逻辑：${src.docPlanningLogic}
+节拍序列：${src.docBeatSequence}
+主要人物：${src.docCharacters}`
+      : `用户需求：${src.userRequirements}`;
 
-  // ── User message：若有文档则附原文，否则用需求描述 ──
-  const docSection = PROJECT.source.hasDoc
-    ? `【DramaLens 拆解文档原文】
-${PROJECT.source.rawDocText}
+    const userMsg = `${docInfo}
+用户补充需求：${src.userRequirements}
+目标市场：${src.market}  受众：${src.preference}
+题材：${src.genre}  体量：${src.episodeCount}集`;
 
-【用户补充需求】${v}`
-    : `【用户需求描述】${v}`;
+    return new Promise((resolve) => {
+      if(!hasApiKey){
+        resolve(null);
+        return;
+      }
+      const callFn = isIntl ? callClaude : callDoubao;
+      callFn(userMsg, sysPrompt, 4096)
+        .then(resolve)
+        .catch(e => {
+          console.error('generateSchemes error:', e);
+          resolve(null);
+        });
+    });
+  };
 
-  const userMsg = `${docSection}
-
-目标市场：${PROJECT.source.market}  受众：${PROJECT.source.preference}
-题材：${PROJECT.source.genre}  体量：${PROJECT.source.episodeCount}集`;
+  // ── 文档信息提取函数（仅在有文档时调用）──
+  const extractDocInfo = () => {
+    if(!PROJECT.source.rawDocText || !hasApiKey) return Promise.resolve(false);
+    const docText = PROJECT.source.rawDocText.substring(0, 8000);
+    const sysPrompt = `你是一位短剧策划助手。请从以下 DramaLens 拆解文档中提取关键信息，严格返回JSON对象，不要任何额外文字：
+{
+  "docTitle": "原著/IP名称",
+  "docPlanningLogic": "核心策划逻辑（100字内，提炼爆款基因、结构特点）",
+  "docBeatSequence": "节拍序列（用①②③④格式列出主要剧情节拍，150字内）",
+  "docCharacters": "主要人物（男女主角的身份、性格、核心冲突，100字内）"
+}`;
+    const callFn = isIntl ? callClaude : callDoubao;
+    return callFn(`【DramaLens 拆解文档】\n${docText}`, sysPrompt, 1000)
+      .then(raw => {
+        try {
+          const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+          const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+          if(s >= 0 && e >= 0){
+            const info = JSON.parse(clean.slice(s, e+1));
+            if(info.docTitle) PROJECT.source.docTitle = info.docTitle;
+            if(info.docPlanningLogic) PROJECT.source.docPlanningLogic = info.docPlanningLogic;
+            if(info.docBeatSequence) PROJECT.source.docBeatSequence = info.docBeatSequence;
+            if(info.docCharacters) PROJECT.source.docCharacters = info.docCharacters;
+            return true;
+          }
+        } catch(err){ console.error('extractDocInfo parse error:', err); }
+        return false;
+      })
+      .catch(e => { console.error('extractDocInfo error:', e); return false; });
+  };
 
   const doRender = (raw) => {
     document.getElementById('gen-mask').classList.remove('show');
@@ -2234,40 +2127,43 @@ ${PROJECT.source.rawDocText}
     if(raw){
       try {
         const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-        const s=clean.indexOf('['), e=clean.lastIndexOf(']');
-        if(s>=0&&e>=0) schemes = JSON.parse(clean.slice(s,e+1));
-      } catch(err){ schemes = null; }
-    }
-    // ── 从 AI 返回的第一个方案中提取文档字段，同步到 PROJECT.source ──
-    if(schemes && schemes.length > 0){
-      const first = schemes[0];
-      if(first.docTitle) PROJECT.source.docTitle = first.docTitle;
-      if(first.docPlanningLogic) PROJECT.source.docPlanningLogic = first.docPlanningLogic;
-      if(first.docBeatSequence) PROJECT.source.docBeatSequence = first.docBeatSequence;
-      if(first.docCharacters) PROJECT.source.docCharacters = first.docCharacters;
+        const s = clean.indexOf('['), e = clean.lastIndexOf(']');
+        if(s >= 0 && e >= 0) schemes = JSON.parse(clean.slice(s, e+1));
+      } catch(err){ console.error('doRender parse error:', err, raw?.substring(0,200)); }
     }
     showPage('story'); goStep(1);
     if(schemes && schemes.length > 0){
       renderSchemeCards(schemes);
       saveSchemeSnapshot();
+      showToast('项目已创建：' + nm.substring(0,30));
+    } else {
+      showToast('项目已创建，方案生成失败，请点击「↺ 重新生成」');
     }
-    showToast('项目已创建：'+nm.substring(0,30));
-    const wfStory=document.getElementById('wf-story');
+    const wfStory = document.getElementById('wf-story');
     if(wfStory) wfStory.classList.add('done');
     saveProject();
   };
 
   if(hasApiKey){
+    const genMsg = PROJECT.source.hasDoc ? '正在分析文档……' : '正在生成改编方案……';
     document.getElementById('gen-txt').textContent = genMsg;
     document.getElementById('gen-mask').classList.add('show');
-    const callFn = isIntl ? callClaude : callDoubao;
-    callFn(userMsg, sysPrompt, 4096).then(raw => doRender(raw)).catch(e => {
-      document.getElementById('gen-mask').classList.remove('show');
-      if(e.message !== 'no key') showToast('生成失败：' + e.message);
-      doRender(null);
-    });
+
+    // 有文档：先提取信息，再生成方案；无文档：直接生成
+    const pipeline = PROJECT.source.hasDoc
+      ? extractDocInfo().then(() => {
+          document.getElementById('gen-txt').textContent = '正在生成改编方案……';
+          return generateSchemes();
+        })
+      : generateSchemes();
+
+    pipeline.then(doRender);
   } else {
-    showGen(genMsg, 1600, ()=> doRender(null));
+    showPage('story'); goStep(1);
+    showToast('项目已创建，请点击右上角「API配置」填写 Key 后，点击「↺ 重新生成」');
+    const wfStory = document.getElementById('wf-story');
+    if(wfStory) wfStory.classList.add('done');
+    saveProject();
   }
 }
 
@@ -2697,39 +2593,38 @@ ${transcript || '（跳过追问）'}`;
 
 function getMockBible(){
   const sc = PROJECT.scheme;
-  const totalEps = PROJECT.source.episodeCount || 40;
+  const src = PROJECT.source;
+  const totalEps = src.episodeCount || 40;
   const beatCount = Math.min(20, Math.max(8, Math.round(totalEps / 2)));
-  const mockBeatTemplates = [
-    {title:'冰冷的婚礼', summary:'仪式大厅中，ELARA 独自站在祭坛前。CADEN 走来，誓词平板，始终不看她。族人散去，无人道贺。她的双手悄悄松开——细微颤抖一闪而过。只有镜头看见了。'},
-    {title:'各自的房间', summary:'走廊尽头两扇相对的门。CADEN 低声说：除非紧急事务，否则不要敲我的门。门关上。ELARA 独自站着，给了自己三秒钟，然后起身开始整理房间，动作异常安静。'},
-    {title:'她的第一次证明', summary:'边境出现异常，CADEN 命她留守。她判断出侧翼漏洞，独自封堵。CADEN 回营，危机已解。他拿起她的处置记录，折好放进口袋，没有说一个字。'},
-    {title:'宴席上的反击', summary:'高级族人宴席。CADEN 当众提及她的「混血身份」，措辞足够伤人。ELARA 放下杯子，微笑，将话题转向一位长老的边境功绩。整桌气氛化解。散席后他的手指在桌下收紧了。'},
-    {title:'档案室的发现', summary:'她整理旧卷宗，发现一页——某混血后裔被标记为血债仪式候选人，时间节点是两年前。姓名被墨迹遮盖，旁边有一行签注，是 CADEN 的笔迹，只写了两个字：「不行。」'},
-    {title:'第一次等待', summary:'CADEN 凌晨三点惊醒，走出卧室，发现壁炉前已有人——ELARA，手捧书卷，显然也没睡着。她把书翻了一页，空出了旁边的椅子。他坐下了。两人就这样坐到天亮，一句话都没说。'},
-    {title:'真相的碎片', summary:'她追查血债仪式的来源，发现当年那个被保护的人正是自己。两年前他拒绝她，不是因为歧视，而是因为选择她会让她成为血债的目标。她站在档案室里，久久没有动。'},
-    {title:'对峙', summary:'她拿着档案走向他。他转身，看见她手中的文件，没有辩解。她问：你为什么不告诉我。他说：说了你会怎样。两人都知道那个答案，所以谁也没有再说话。'},
-  ];
+
+  // 用实际项目数据生成占位内容，不使用任何硬编码故事
+  const title = sc.title || '（待确认）';
+  const brief = sc.storyBrief || '';
+  const market = src.market || '欧美市场';
+  const docTitle = src.docTitle || src.userRequirements?.substring(0,20) || 'IP';
+
   const beats = Array.from({length: beatCount}, (_, i) => ({
     num: i + 1,
-    title: mockBeatTemplates[i % mockBeatTemplates.length].title,
-    summary: mockBeatTemplates[i % mockBeatTemplates.length].summary,
+    title: `节拍 ${String(i+1).padStart(2,'0')}`,
+    summary: `（待 AI 生成 — 基于「${title}」改编方案的第 ${i+1} 个剧情节拍，请确认 API Key 后重新生成策划案）`,
   }));
+
   return {
-    logline:`黑岭族危机逼出一场政治婚姻，被当众拒绝的混血女子用沉默和能力赢得了一个族群的认可，却在最错误的时刻发现，那个冷漠的男人一直在用一个秘密保护她。`,
-    visual:`哥特北欧美学，低饱和冷调打底（深蓝·暗金·石灰），以壁炉烛光为情感出口。压抑时用俯视远景压住人物，爆发时切贴脸特写。单集90-120秒，每15秒一个情绪节点，结尾画面定格。`,
-    characters:[
-      {name:'ELARA',nameEn:'Elara',role:'女主 · 24岁',appearance:'黑发冷白肤，眼神沉静，深色皮衣',personality:'外表沉默，内核坚韧。从不寻求认可，每次被轻视都转化为行动力',arc:'被拒者→以能力证明→被选择→主动选择',wound:'从未被人第一个选择',keyMoments:'「我不需要你的认可，我需要你的承诺。」'},
-      {name:'CADEN',nameEn:'Caden',role:'男主 · 28岁',appearance:'黑发深邃，身形高大，气场压迫',personality:'以冷酷掩盖创伤，控制欲强。核心矛盾：爱即软弱 vs 软弱才是真正的勇敢',arc:'冷漠拒绝→被动接纳→主动守护→用代价证明',wound:'父亲因爱错人毁掉族群',keyMoments:'婚礼誓词期间始终不看她——直到最后'},
+    logline: `（待生成 — 基于原著《${docTitle}》改编，方案「${title}」。请检查 API Key 配置后点击「重新生成」。）`,
+    visual: `（待生成 — 视觉风格与基调将基于「${title}」方案和目标市场${market}自动生成。）`,
+    characters: [
+      {name:'主角A',nameEn:'Protagonist A',role:'女主',appearance:'（待填写）',personality:'（待生成）',arc:'（待生成）',wound:'（待生成）',keyMoments:'（待生成）'},
+      {name:'主角B',nameEn:'Protagonist B',role:'男主',appearance:'（待填写）',personality:'（待生成）',arc:'（待生成）',wound:'（待生成）',keyMoments:'（待生成）'},
     ],
     beats,
     schemePoints:{
-      highlight:`三重暴击结构（当众拒绝×政治婚姻×秘密揭露）让观众在憋屈中积累情绪，在秘密揭露时集中爆发`,
-      structure:`起：政治婚姻的冷场。承：她以能力颠覆他的预设。转：档案线索引出两年前秘密。合：外部威胁逼出最终选择，他用行动证明`,
-      character:`核心是「能力反击歧视」——她不哭诉，用结果说话。两个创伤的人在规则中碰撞，最终卸甲`,
-      emotion:`克制的情感线，通过动作和物件传递，不直述。爆发点在「她发现两个字：不行」，悲恸先于感动`,
-      rhythm:`小爽①第5集规则力保。小爽②第9集战刃觉醒。小爽③第13集母亲反击。大爽·他打破血誓的那一刻`,
-      suspense:`主线：他为什么两年前拒绝她？暗线：血债仪式是什么？两线在第5集前后交汇`,
-      highlights:`婚礼誓词他始终不看她 · 她折叠处置记录 · 「不行」两字档案 · 她的悲恸先于原谅 · 他打破血誓`,
+      highlight:`（待生成）`,
+      structure:`（待生成）`,
+      character:`（待生成）`,
+      emotion:`（待生成）`,
+      rhythm:`（待生成）`,
+      suspense:`（待生成）`,
+      highlights:`（待生成）`,
     },
   };
 }
@@ -3029,16 +2924,20 @@ const MOCK_VIBES = [
   {type:'thrill',label:'小爽③'},
   {type:'emotion',label:'情感破防'},
 ];
-const ALL_EP_DATA = [
-  ['01','冰冷的婚礼','仪式大厅火把通明，全族肃立。ELARA 独自站在祭坛前，纹丝不动。CADEN 从远端走来，步伐沉稳，始终没有将视线落在她身上。誓词交换时，他语气平板，像在处理行政事务。仪式结束，族人散去，没有人向她道贺。','约100s','ELARA 的双手悄悄松开，细微颤抖一闪而过。只有镜头看见了。'],
-  ['02','第一夜，各自的房间','走廊尽头两扇相对的门。CADEN 背对她，低声说：除非族群紧急事务，否则不要敲我的门。门关上。ELARA 独自站着，看着他的门，再看自己的。她进房间，坐在床边——给了自己三秒钟，然后起身开始收拾行李。','约100s','她把手掌压平贴在石墙上。另一侧——他的手，同样静止。'],
-  ['03','族群在观察','ELARA 处理族群日常，用一种安静的精准调解两名族人的纠纷，引用了 CADEN 自己也险些忘记的旧规。族人开始私下议论：她不像他们以为的那种人。LOREN 注意到这种微妙转变，汇报给了 CADEN。CADEN 没有回应，只是静静听完。','约110s','一位资深族人低声说：「她不是他说的那种人。」镜头切到门口——CADEN 站在那里，已经听完了。'],
-  ['04','职责测试','边境出现异常，CADEN 命令 ELARA 留守营地。当前线信息传回，她判断出一个侧翼漏洞，独自封堵。CADEN 回营时，危机已解除，解决方案的逻辑比他自己的更干净。他站在空营地里，看着她留下的处置记录。','约100s','他把记录折好放进口袋，没说任何话。LOREN 在旁边等着他开口，等了很久。'],
-  ['05','挑衅','高级族人晚宴。CADEN 当众提到 ELARA 的「混血身份」，措辞足够伤人。席间一片沉默。ELARA 放下杯子，微笑，将话题转向一位长老的边境功绩，令其受宠若惊，整桌气氛化解。CADEN 全程保持表情，但手指在桌下收紧了。','约120s','散席后，LOREN 悄悄说：「她赢了。」CADEN 没有否认。'],
-  ['06','档案室','ELARA 整理文书时发现旧卷宗——某混血后裔被标记为血债仪式候选人，时间节点正是两年前。姓名被墨迹遮盖，旁边有一行签注，是 CADEN 的笔迹，只写了两个字：「不行。」','约95s','ELARA 盯着那两个字，手指悬在纸面上方，没有碰它。镜头定格在那一行墨迹。'],
-  ['07','勉强的尊重','跨族谈判中，ELARA 在僵局关键时刻用一句话指出对方真正在意的条件。事后，CADEN 走在她前面，没有回头，但停下来等她跟上了——这是他第一次主动等她。','约100s','走到分岔口，CADEN 说：「你今天做得不错。」没有看她。ELARA 停顿了一秒：「我知道。」'],
-  ['08','噩梦','CADEN 凌晨三点惊醒，走出卧室，发现壁炉前已有人——ELARA，膝上毯子，手中捧书，显然也没睡着。ELARA 没有起身，只是把书翻了一页，空出了旁边的椅子。CADEN 坐下了。两人就这样坐到天亮，一句话都没说。','约125s','晨光透进来，ELARA 轻声说：「你不用一直绷着。」CADEN 没有回答，但他没有离开。'],
-];
+// ── ALL_EP_DATA: 通用占位数据（无硬编码人物/故事，由 buildMockActData 基于实际项目填充）──
+const ALL_EP_DATA = (function(){
+  const data = [];
+  for(let i = 0; i < 8; i++){
+    data.push([
+      String(i+1).padStart(2,'0'),
+      `第${i+1}集标题（待生成）`,
+      `第${i+1}集情节节拍将由 AI 基于改编方案生成，请配置 API Key 后重新生成分集细纲。`,
+      '约100s',
+      `第${i+1}集结尾卡点（待生成）`,
+    ]);
+  }
+  return data;
+})();
 
 // ── VIBE TAG definitions ──
 const VIBE_DEFS = [
@@ -3159,7 +3058,7 @@ ${buildLockedEditsContext()}
     rawData = buildMockActData(act);
   } else {
     try {
-      const callFn = getGenApi();
+      const callFn = callDoubao;
       const raw = await callFn(userMsg, sysPrompt, 6000);
       rawData = parseEpJSON(raw, act.from - 1, act.count);
     } catch(e) {
@@ -3586,7 +3485,7 @@ async function sendBdChat() {
   const messages = bdState.chatHistory.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
 
   try {
-    const callFn = getGenApi();
+    const callFn = callDoubao;
     // Simple single-turn for chat (to keep token usage low)
     const reply = await callFn(msg, sysPrompt);
     aEl.textContent = reply;
@@ -3959,7 +3858,7 @@ async function generateScriptAct(actIdx) {
   appendActGeneratingPlaceholder(actIdx);
 
   const cfg = getApiConfig();
-  const callFn = getGenApi();
+  const callFn = callDoubao;
   const epSlice = PROJECT.episodes.allData.slice(act.from - 1, act.to);
   const b = PROJECT.bible, sc = PROJECT.scheme, src = PROJECT.source;
   const lockedEdits = buildScriptLockedEditsContext(actIdx);
@@ -4258,7 +4157,7 @@ async function sendScriptActChatById(actIdx) {
   const messages = scriptState.chatHistory.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
 
   try {
-    const callFn = getGenApi();
+    const callFn = callDoubao;
     const reply = await callFn(msg, sysPrompt, 1500);
     aEl.textContent = reply;
     scriptState.chatHistory.push({role:'assistant',content:reply});
@@ -4541,10 +4440,10 @@ function confirmDirector(){
   const cfg = getApiConfig();
   const directorNotes = ['ep-task','ep-emotion','ep-camera']
     .map(id=>document.getElementById(id)?.value||'').filter(Boolean).join('\n\n');
-  if(cfg.claudeKey && directorNotes){
+  if(cfg.doubaoKey && directorNotes){
     document.getElementById('gen-mask').classList.add('show');
     document.getElementById('gen-txt').textContent = '正在基于导演阐述生成资产设定……';
-    callClaude(
+    callDoubao(
       `请根据以下导演阐述，生成主要角色的AI生图提示词（中英双语）：\n\n${directorNotes}`,
       '你是专业短剧美术指导，输出格式：角色名 | 中文提示词 | English prompt，每行一个角色。'
     ).then(()=>{
@@ -4574,53 +4473,58 @@ function swtAsset(el,id){
 }
 
 function buildShots(){
-  const epSel=document.getElementById('shots-ep-sel');
-  const epNum=epSel?parseInt(epSel.value)||1:1;
-  const epStr=String(epNum).padStart(2,'0');
-  const globalStyle='全程4K超清，哥特现实主义，低饱和冷调打底（色温3200K以下），烛火暖调作为情绪出口，人物面部稳定不变形，动作自然流畅，竖屏9:16，字幕安全区底部18%留白，无卡顿无闪烁。';
+  const epSel = document.getElementById('shots-ep-sel');
+  const epNum = epSel ? parseInt(epSel.value) || 1 : 1;
+  const epStr = String(epNum).padStart(2,'0');
 
-  // Per-episode director notes (ep01 has detailed content; others show placeholder)
-  const ep01Notes={
-    'ep-task':'第01集核心任务：建立权力失衡关系，完成政治婚姻仪式，埋下Elara能力线伏笔。观众需在集末感受到"她不只是受害者"。',
-    'ep-emotion':'情绪弧线：压抑→隐忍→微裂缝。开场冷静克制，中段被当众拒绝后短暂失控，结尾用行动重建尊严。',
-    'ep-camera':'运镜设计：仪式段落用固定长镜头强调权力结构；对峙时用不对称构图（Caden居中，Elara偏框）；情绪裂缝用手部特写+浅景深。全程竖屏9:16，字幕安全区18%底部留白。',
+  // 从实际项目数据中取当前集信息
+  const epData = PROJECT.episodes.allData[epNum - 1];
+  const epTitle = epData ? epData[1] : `第${epStr}集`;
+  const epBeat  = epData ? epData[2] : '（待生成）';
+  const chars   = PROJECT.bible.characters.slice(0,2).map(c=>c.name).join(' / ') || '主角A / 主角B';
+  const sc      = PROJECT.scheme;
+  const b       = PROJECT.bible;
+
+  // 全局风格约束 — 从 Bible 视觉风格提取，若无则用通用竖屏规范
+  const globalStyle = b.visual
+    ? `风格约束：${b.visual.substring(0,100)}… 竖屏9:16，字幕安全区底部18%留白。`
+    : '竖屏9:16，字幕安全区底部18%留白，人物面部稳定不变形，动作自然流畅，无卡顿无闪烁。';
+
+  // 导演阐述字段
+  const noteFields = {
+    'ep-task':    `第${epStr}集《${epTitle}》核心任务：请点击「↺ 重新生成」调用AI基于剧本内容生成导演阐述。`,
+    'ep-emotion': `情绪弧线：待生成——基于改编方案「${sc.title || '（未设定）'}」自动分析本集情绪走向与转折节点。`,
+    'ep-camera':  `运镜设计：待生成——将基于本集剧情节拍和导演意图生成镜头语言方案。全程竖屏9:16，字幕安全区18%底部留白。`,
   };
-  const noteFields=epNum===1?ep01Notes:{
-    'ep-task':`第${epStr}集核心任务：待生成——点击「↺ 重新生成」调用AI生成本集导演阐述。`,
-    'ep-emotion':`情绪弧线：待生成——本集情绪走向与转折节点将由AI基于剧本内容生成。`,
-    'ep-camera':`运镜设计：待生成——本集镜头语言与构图策略将由AI基于导演意图生成。全程竖屏9:16，字幕安全区18%底部留白。`,
-  };
-  Object.entries(noteFields).forEach(([id,val])=>{
-    const el=document.getElementById(id);
-    if(el) el.value=val;
+  Object.entries(noteFields).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if(el && !el.value.trim()) el.value = val; // 不覆盖用户已填写的内容
   });
 
-  // Per-episode shots (ep01 has detailed content; others show placeholder rows)
-  const ep01Shots=[
-    ['00:00–00:12','Elara','婚礼大厅入口 → 走廊','傍晚，Elara脚步平稳走向仪式大厅入口，中景跟拍，推门入走廊，在门口停顿，深吸气，表情镇静隐忍。镜头固定，人物居中偏下，前景虚化石柱，冷蓝主光，烛火从走廊深处透出。切至走廊内景，Elara侧脸特写，眼神收紧，肩线平稳，无多余动作。'],
-    ['00:12–00:25','Caden','婚礼大厅内景','长镜头横扫整排族群成员肃立，镜头缓慢从左至右，众人表情肃穆。Caden从大厅远端走来，背影高大，步伐沉稳，不看Elara方向。镜头缓推至其侧脸——表情无从读取，眼神压制，有一种主动封锁情绪的疲惫。不对称构图，Caden居画面中轴，Elara方向在画面外。'],
-    ['00:25–00:40','Elara / Caden','婚礼大厅中央','双人构图：Caden站定，目视正前方，Elara站于其侧，同样目视正前，两人之间有意识地保持距离。长老RHYS开口，镜头缓推至Elara双手特写——手指交握，细微颤抖，指节微白。定格两秒。切黑。浅景深，手部对焦清晰，背景虚化，暖调烛光从侧方打入手部。'],
-    ['00:40–00:55','Elara','婚礼大厅侧廊','Elara独自站于侧廊，背对镜头，望向高窗透入的月光。肩线微微下沉，深呼吸可见。缓慢转身，眼神重新收紧——不是绝望，是重新确认自己的位置。固定镜头，人物偏框，大量留白，冷月光侧照，去饱和深蓝灰调。'],
-    ['00:55–01:10','Caden','族长议事厅','Caden独坐议事厅，桌上摊开族群档案，手指停在某一页，表情细微变化——有一瞬间的动摇，随即被压制。镜头缓推至他眼神特写，然后切至档案页面特写（内容模糊，只见族群印记）。烛光暖调，戏剧性侧光，深色调，人物面部稳定。'],
+  // 分镜切片 — 基于实际剧情节拍生成占位行
+  const shots = [
+    [`00:00–00:15`, chars.split('/')[0]?.trim() || '主角', `第${epStr}集 · 场景一`, epBeat ? epBeat.substring(0, 80) + '（待细化分镜）' : '待生成——点击「↺ 重新生成」调用AI生成本集分镜切片。'],
+    [`00:15–00:30`, chars, `第${epStr}集 · 场景二`, `待生成——AI将基于本集剧本与导演阐述生成详细分镜描述。`],
+    [`00:30–00:45`, '—', `第${epStr}集 · 场景三`, `待生成——包含时间片、出场人物、场景、分镜描述及全局风格约束。`],
   ];
-  const shots=epNum===1?ep01Shots:[
-    [`00:00–00:12`,'—',`第${epStr}集 · 场景1`,`待生成——点击「↺ 重新生成」调用AI生成本集分镜切片。`],
-    [`00:12–00:25`,'—',`第${epStr}集 · 场景2`,`待生成——AI将基于本集剧本内容与导演阐述生成详细分镜描述。`],
-    [`00:25–00:40`,'—',`第${epStr}集 · 场景3`,`待生成——包含时间片、出场人物、场景、分镜描述及全局风格约束。`],
-  ];
-  document.getElementById('shots-body').innerHTML=shots.map(([tc,chars,scene,d])=>{
-    const copyText=`【${tc}】出场人物：${chars} | 场景：${scene}\n\n${d}\n\n${globalStyle}`;
-    return `<tr><td>${tc}</td><td>${chars}</td><td>${scene}</td><td><div class="shot-desc">${d}</div></td><td><button class="copy-btn" onclick="cpShot(this,'${encodeURIComponent(copyText)}')">复制</button></td></tr>`;
+
+  document.getElementById('shots-body').innerHTML = shots.map(([tc, ch, scene, d]) => {
+    const copyText = `【${tc}】出场人物：${ch} | 场景：${scene}\n\n${d}\n\n${globalStyle}`;
+    return `<tr><td>${tc}</td><td>${ch}</td><td>${scene}</td><td><div class="shot-desc">${d}</div></td><td><button class="copy-btn" onclick="cpShot(this,'${encodeURIComponent(copyText)}')">复制</button></td></tr>`;
   }).join('');
 }
 
 function regenProdSection(id){
   const cfg=getApiConfig();
   if(!cfg.claudeKey && !cfg.doubaoKey){ showToast('请先配置 API Key'); return; }
+  const callFn = cfg.doubaoKey ? callDoubao : callClaude;
   const prompts={
-    director:{fn:()=>callClaude('请生成导演阐述，包含：核心任务、情绪弧线、运镜设计三个维度。','你是专业短剧导演，请根据剧本内容生成导演阐述。')},
-    assets:  {fn:()=>callClaude('请生成角色/场景/道具的AI生图提示词（中英双语）。','你是专业短剧美术指导，请生成资产设定提示词。')},
-    shots:   {fn:()=>(cfg.doubaoKey?callDoubao:callClaude)('请生成10–15秒为单位的分镜切片，包含时间片、出场人物、场景、分镜描述。','你是专业短剧分镜师，请生成分镜切片描述。')},
+    director:{fn:()=>callFn('请生成导演阐述，包含：核心任务、情绪弧线、运镜设计三个维度。','你是专业短剧导演，请根据剧本内容生成导演阐述。')},
+    assets:  {fn:()=>callFn('请生成角色/场景/道具的AI生图提示词（中英双语）。','你是专业短剧美术指导，请生成资产设定提示词。')},
+    shots:   {fn:()=>callFn('请生成10–15秒为单位的分镜切片，包含时间片、出场人物、场景、分镜描述。','你是专业短剧分镜师，请生成分镜切片描述。')},
+    'assets-chars':{fn:()=>callFn('请生成主要角色的定妆四视图AI生图提示词（中英双语），格式：角色名 | 场景 | 中文提示词 | English prompt。','你是专业短剧美术指导。')},
+    'assets-scenes':{fn:()=>callFn('请生成主要场景的光影氛围AI生图提示词（中英双语），格式：场景名 | 适用集数 | 中文提示词 | English prompt。','你是专业短剧美术指导。')},
+    'assets-props':{fn:()=>callFn('请生成关键道具的AI生图提示词（中英双语），格式：道具名 | 出现集数 | 中文提示词 | English prompt。','你是专业短剧美术指导。')},
   };
   const p=prompts[id];
   if(!p){ showGen('正在重新生成……',1200,()=>showToast('已重新生成')); return; }
@@ -4633,6 +4537,14 @@ function regenProdSection(id){
     document.getElementById('gen-mask').classList.remove('show');
     if(e.message!=='no key') showToast('生成失败：'+e.message);
   });
+}
+
+function cpAllAssets(sectionId){
+  const section = document.getElementById(sectionId);
+  if(!section){ showToast('找不到内容'); return; }
+  const texts = [...section.querySelectorAll('.bilingual-ta')].map(ta => ta.value).filter(Boolean);
+  if(!texts.length){ showToast('暂无内容可复制'); return; }
+  navigator.clipboard.writeText(texts.join('\n\n---\n\n')).then(()=>showToast('已复制全部提示词'));
 }
 
 function cpBilingual(btn){
@@ -4708,9 +4620,12 @@ let _saveTimer = null;
 function saveProject(){
   try {
     serializeCurrentScript();
+    // 不持久化 rawDocText（体积大，刷新后需重新上传文档）
+    const projectToSave = JSON.parse(JSON.stringify(PROJECT));
+    delete projectToSave.source.rawDocText;
     const snapshot = {
       S: {...S},
-      PROJECT: JSON.parse(JSON.stringify(PROJECT)),
+      PROJECT: projectToSave,
       breakdownState: JSON.parse(JSON.stringify(breakdownState)),
       scriptState: {
         total: scriptState.total,
@@ -5161,40 +5076,59 @@ function regenSchemes() {
   const isIntl = (src.market||'').includes('欧美') || (src.market||'').includes('日韩');
   const cfg = getApiConfig();
   const hasKey = isIntl ? !!cfg.claudeKey : !!cfg.doubaoKey;
-  const genMsg = isIntl ? '正在调用 Claude 重新生成改编方案……' : '正在重新生成改编方案……';
+
+  if(!hasKey){
+    showToast('请先点击右上角「API配置」填写 API Key');
+    return;
+  }
 
   const sysPrompt = `你是一位专业的短剧改编策划，擅长为${src.market}创作爆款竖屏短剧改编方案。
 
-生成4个有差异化的改编方案，严格返回JSON数组，不要额外文字：
-[{"num":"方案 01","title":"方案标题","titleRecs":[{"zh":"中文剧名","en":"English Title"}],"planningThought":"策划思路①②③④","storyBrief":"故事简介80-120字","tags":["标签"],"rating":{"difficulty":85,"market":78,"viral":72,"reason":"20字内推荐理由或风险点"}}]
+生成4个有差异化的改编方案，严格返回JSON数组，不要任何额外文字或markdown代码块：
+[{
+  "num": "方案 01",
+  "title": "方案标题（10字内，有画面感）",
+  "titleRecs": [{"zh":"中文剧名","en":"English Title"}],
+  "planningThought": "策划思路（分①②③④点，每点50字内）",
+  "storyBrief": "故事简介（80-120字，有具体人物和情节）",
+  "tags": ["标签1","标签2","标签3"],
+  "rating": {"difficulty":85,"market":78,"viral":72,"reason":"20字内推荐理由或风险点"}
+}]
+rating：difficulty=改编迁移顺畅度，market=市场偏好匹配度，viral=话题钩子强度（均0-100分）`;
 
-rating说明：difficulty=改编迁移顺畅度(0-100)，market=市场偏好匹配度(0-100)，viral=话题钩子强度(0-100)`;
-
-  const docSection = src.rawDocText
-    ? `【DramaLens 拆解文档原文】\n${src.rawDocText}\n\n【用户补充需求】${src.userRequirements}`
-    : `原著：${src.docTitle || src.userRequirements}\n策划逻辑：${src.docPlanningLogic}\n用户需求：${src.userRequirements}`;
-  const userMsg = `${docSection}\n目标市场：${src.market}  受众：${src.preference}\n题材：${src.genre}  体量：${src.episodeCount}集`;
+  // 用已提取的结构化信息（不再传文档原文）
+  const docInfo = src.docTitle
+    ? `原著/IP：${src.docTitle}\n核心策划逻辑：${src.docPlanningLogic}\n节拍序列：${src.docBeatSequence}\n主要人物：${src.docCharacters}`
+    : `用户需求：${src.userRequirements}`;
+  const userMsg = `${docInfo}\n用户补充需求：${src.userRequirements}\n目标市场：${src.market}  受众：${src.preference}\n题材：${src.genre}  体量：${src.episodeCount}集`;
 
   const doRender = (raw) => {
     document.getElementById('gen-mask').classList.remove('show');
     let schemes = null;
-    if(raw){ try { const c=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim(); const s=c.indexOf('['),e=c.lastIndexOf(']'); if(s>=0&&e>=0) schemes=JSON.parse(c.slice(s,e+1)); } catch(err){} }
-    if(schemes && schemes.length > 0){ renderSchemeCards(schemes); saveSchemeSnapshot(); showToast('改编方案已重新生成'); }
-    else showToast('已重新生成（使用现有方案）');
+    if(raw){
+      try {
+        const c = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+        const s = c.indexOf('['), e = c.lastIndexOf(']');
+        if(s >= 0 && e >= 0) schemes = JSON.parse(c.slice(s, e+1));
+      } catch(err){ console.error('regenSchemes parse error:', err); }
+    }
+    if(schemes && schemes.length > 0){
+      renderSchemeCards(schemes);
+      saveSchemeSnapshot();
+      showToast('改编方案已重新生成');
+    } else {
+      showToast('生成结果解析失败，请再次重试');
+    }
     updateHistoryBtn();
   };
 
-  if(hasKey){
-    document.getElementById('gen-txt').textContent = genMsg;
-    document.getElementById('gen-mask').classList.add('show');
-    const callFn = isIntl ? callClaude : callDoubao;
-    callFn(userMsg, sysPrompt).then(doRender).catch(e=>{
-      document.getElementById('gen-mask').classList.remove('show');
-      if(e.message!=='no key') showToast('生成失败：'+e.message);
-    });
-  } else {
-    showGen(genMsg, 1600, ()=>doRender(null));
-  }
+  document.getElementById('gen-txt').textContent = '正在重新生成改编方案……';
+  document.getElementById('gen-mask').classList.add('show');
+  const callFn = isIntl ? callClaude : callDoubao;
+  callFn(userMsg, sysPrompt, 4096).then(doRender).catch(e => {
+    document.getElementById('gen-mask').classList.remove('show');
+    showToast('生成失败：' + (e.message || '未知错误'));
+  });
 }
 
 function showSchemeHistory() {
@@ -5362,24 +5296,124 @@ function getGenApi() {
   return isIntl ? callClaude : callDoubao;
 }
 
-// 翻译 — 固定使用Claude
+// ── 一键翻译：将剧本中文内容翻译为英文并写回界面 ──
 async function translateScriptReal(mode) {
   document.getElementById('stb-translate-menu').style.display = 'none';
-  const label = mode === 'current' ? `第${(currentEp||0)+1}集` : '全本';
-  const body = document.getElementById('script-body');
-  const text = body ? body.innerText : '';
-  document.getElementById('gen-txt').textContent = `正在翻译${label}……`;
+
+  const cfg = getApiConfig();
+  if (!cfg.claudeKey && !cfg.doubaoKey) {
+    showToast('请先配置 API Key');
+    return;
+  }
+
+  // 确定翻译范围：当前集 or 全本
+  const isCurrent = mode === 'current';
+
+  // 收集需要翻译的集
+  let epWraps = [];
+  if (isCurrent) {
+    const wrap = document.getElementById(`script-ep-wrap-${currentEp}`);
+    if (wrap) epWraps = [wrap];
+    else { showToast('找不到当前集内容'); return; }
+  } else {
+    epWraps = [...document.querySelectorAll('[id^="script-ep-wrap-"]')];
+  }
+
+  if (!epWraps.length) { showToast('暂无剧本内容可翻译'); return; }
+
+  const totalLabel = isCurrent ? `第${(currentEp||0)+1}集` : `全本（${epWraps.length}集）`;
+  document.getElementById('gen-txt').textContent = `正在翻译 ${totalLabel}……`;
   document.getElementById('gen-mask').classList.add('show');
-  try {
-    await callClaude(
-      `请将以下中文短剧剧本翻译为英文，保持戏剧张力和人物语气：\n\n${text.substring(0, 8000)}`,
-      'You are a professional drama script translator. Translate Chinese short drama scripts to natural, engaging English while preserving dramatic tension and character voices.'
-    );
-    document.getElementById('gen-mask').classList.remove('show');
-    showToast(`${label}翻译完成`);
-  } catch(e) {
-    document.getElementById('gen-mask').classList.remove('show');
-    if (e.message !== 'no key') showToast('翻译失败：' + e.message);
+
+  const sysPrompt = `You are a professional short drama script translator specializing in Chinese-to-English translation for vertical-screen short dramas targeting international streaming platforms.
+
+Translation rules:
+- Preserve all screenplay formatting (scene headings, action lines, character names, dialogue, parentheticals)
+- Keep scene headings in standard format: INT./EXT. LOCATION — TIME
+- Character names: translate to natural English equivalents or keep original if it's a proper name
+- Dialogue: natural, emotionally resonant English — match the tone (cold, tender, fierce) of the original
+- Action lines: vivid, present tense, cinematic
+- Return ONLY the translated script text, no explanations`;
+
+  let failedEps = [];
+
+  for (let i = 0; i < epWraps.length; i++) {
+    const wrap = epWraps[i];
+    const epIdx = parseInt(wrap.dataset.ep);
+
+    // 提取该集所有可编辑元素的文本，保留结构标签
+    const elements = [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
+    if (!elements.length) continue;
+
+    // 构建结构化文本，带类型标记供解析
+    const lines = elements.map(el => {
+      const cls = [...el.classList].find(c => c.startsWith('sp-')) || 'sp-action';
+      return `[${cls}]${el.textContent.trim()}`;
+    }).filter(l => !l.includes('[sp-title]') || l.length > 10); // 跳过空标题
+
+    const sourceText = lines.join('\n');
+    if (!sourceText.trim()) continue;
+
+    if (!isCurrent) {
+      document.getElementById('gen-txt').textContent = `正在翻译第${epIdx+1}集（${i+1}/${epWraps.length}）……`;
+    }
+
+    try {
+      const callFn = cfg.claudeKey ? callClaude : callDoubao;
+      const raw = await callFn(
+        `Translate the following Chinese short drama script to English. Each line starts with a tag like [sp-scene], [sp-action], [sp-char], [sp-dlg], [sp-paren] — keep these tags exactly as-is, only translate the content after the tag.\n\n${sourceText}`,
+        sysPrompt,
+        Math.min(4096, sourceText.length * 3)
+      );
+
+      // 解析翻译结果并写回对应元素
+      const translatedLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+      const tagMap = {};
+      translatedLines.forEach(line => {
+        const match = line.match(/^\[(sp-[a-z]+)\](.*)$/);
+        if (match) {
+          const tag = match[1];
+          if (!tagMap[tag]) tagMap[tag] = [];
+          tagMap[tag].push(match[2].trim());
+        }
+      });
+
+      // 按顺序把翻译结果写回每个元素
+      const tagCounters = {};
+      elements.forEach(el => {
+        const cls = [...el.classList].find(c => c.startsWith('sp-'));
+        if (!cls || cls === 'sp-title') return;
+        if (!tagCounters[cls]) tagCounters[cls] = 0;
+        const translations = tagMap[cls];
+        if (translations && tagCounters[cls] < translations.length) {
+          el.textContent = translations[tagCounters[cls]];
+          tagCounters[cls]++;
+        }
+      });
+
+      // 同步到 PROJECT.script.allData
+      const epWrapEl = document.getElementById(`script-ep-wrap-${epIdx}`);
+      if (epWrapEl) {
+        PROJECT.script.allData[epIdx] = epWrapEl.innerHTML;
+        const actIdx = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
+        if (actIdx >= 0 && scriptState.actScripts[actIdx]) {
+          scriptState.actScripts[actIdx].eps[epIdx] = epWrapEl.innerHTML;
+        }
+      }
+
+    } catch(e) {
+      console.error(`翻译第${epIdx+1}集失败:`, e);
+      failedEps.push(epIdx + 1);
+    }
+  }
+
+  document.getElementById('gen-mask').classList.remove('show');
+  saveProject();
+
+  if (failedEps.length) {
+    showToast(`翻译完成，第 ${failedEps.join('、')} 集失败，可单集重试`);
+  } else {
+    showToast(`${totalLabel}翻译完成 ✓`);
   }
 }
 
