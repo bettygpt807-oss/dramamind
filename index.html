@@ -1412,28 +1412,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
     </div><!-- story-main -->
 
-    <!-- BOTTOM FLOATING CHAT BAR -->
-    <div class="story-chat-bar" id="story-chat-bar">
-      <!-- Expandable history panel -->
-      <div class="chat-history" id="story-chat-history">
-        <div class="chat-history-inner" id="story-chat">
-          <div class="msg ai">你好！已分析你的 DramaLens 文档，生成了 4 个改编方案。选择一个方案继续，或告诉我你想探索的方向。</div>
-        </div>
-      </div>
-      <!-- Input row -->
-      <div class="chat-input-row">
-        <button class="chat-hist-toggle" onclick="toggleChatHistory()" id="chat-hist-btn">
-          <span>💬</span><span id="chat-hist-label">查看对话</span>
-        </button>
-        <textarea class="ci" id="ci-story" rows="1"
-          placeholder="针对当前方案提出修改建议，或描述你想要的新方向……"
-          onkeydown="ckEnter(event,'story')"
-          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-        <div class="chat-bar-actions">
-          <button class="cs-btn" onclick="sendChat('story')" aria-label="发送消息">↑</button>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1469,24 +1447,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     </div>
   </div>
 
-  <!-- Breakdown chat bar (shown after generation starts) -->
-  <div class="bd-chat-bar" id="bd-chat-bar">
-    <div class="chat-history" id="bd-chat-history">
-      <div class="chat-history-inner" id="bd-chat-msgs" style="max-height:200px"></div>
-    </div>
-    <div class="chat-input-row">
-      <button class="chat-hist-toggle" onclick="toggleBdChat()" id="bd-chat-toggle">
-        <span>💬</span><span id="bd-chat-lbl">和 AI 修改细纲</span>
-      </button>
-      <textarea class="ci" id="ci-breakdown" rows="1"
-        placeholder="针对某集或某幕提出修改……"
-        onkeydown="ckEnterBd(event)"
-        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-      <div class="chat-bar-actions">
-        <button class="cs-btn" onclick="sendBdChat()" aria-label="发送">↑</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Vibe tag selector popover -->
@@ -1808,6 +1768,138 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   </div>
 </div>
 
+
+<!-- ══ 三栏工作台：全局左栏 + 右栏（共用） ══ -->
+<div id="workbench-wrap" style="display:none;flex:1;overflow:hidden;min-height:0">
+
+  <!-- 左栏：项目资料库 -->
+  <div class="wb-left" id="wb-left">
+    <div class="wb-left-head">
+      <div class="wb-left-title">📁 项目资料库</div>
+    </div>
+    <div class="wb-left-body" id="wb-asset-list">
+
+      <div class="asset-card" id="ac-doc" onclick="toggleAssetCard('ac-doc')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">📄</span>
+          <span class="asset-card-label">原始文档</span>
+          <span class="asset-card-status" id="ac-doc-status">待上传</span>
+        </div>
+        <div class="asset-card-body" id="ac-doc-body">—</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('doc')">复制</button>
+        </div>
+      </div>
+
+      <div class="asset-card" id="ac-scheme" onclick="toggleAssetCard('ac-scheme')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">🎯</span>
+          <span class="asset-card-label">改编方案</span>
+          <span class="asset-card-status" id="ac-scheme-status">待确认</span>
+        </div>
+        <div class="asset-card-body" id="ac-scheme-body">—</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('scheme')">复制</button>
+          <button class="asset-btn" onclick="event.stopPropagation();exportAsset('scheme')">导出</button>
+        </div>
+      </div>
+
+      <div class="asset-card" id="ac-bible" onclick="toggleAssetCard('ac-bible')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">📋</span>
+          <span class="asset-card-label">创意策划案</span>
+          <span class="asset-card-status" id="ac-bible-status">待生成</span>
+        </div>
+        <div class="asset-card-body" id="ac-bible-body">—</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('bible')">复制</button>
+          <button class="asset-btn" onclick="event.stopPropagation();exportAsset('bible')">导出</button>
+        </div>
+      </div>
+
+      <div class="asset-card" id="ac-breakdown" onclick="toggleAssetCard('ac-breakdown')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">📊</span>
+          <span class="asset-card-label">分集细纲</span>
+          <span class="asset-card-status" id="ac-breakdown-status">待生成</span>
+        </div>
+        <div class="asset-card-body" id="ac-breakdown-body">—</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('breakdown')">复制</button>
+          <button class="asset-btn" onclick="event.stopPropagation();exportAsset('breakdown')">导出</button>
+        </div>
+      </div>
+
+      <div class="asset-card" id="ac-script-cn" onclick="toggleAssetCard('ac-script-cn')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">✍️</span>
+          <span class="asset-card-label">中文剧本</span>
+          <span class="asset-card-status" id="ac-script-cn-status">待生成</span>
+        </div>
+        <div class="asset-card-body" id="ac-script-cn-body">—</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('script-cn')">复制</button>
+          <button class="asset-btn" onclick="event.stopPropagation();exportAsset('script-cn')">导出</button>
+        </div>
+      </div>
+
+      <div class="asset-card" id="ac-script-en" onclick="toggleAssetCard('ac-script-en')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">🌐</span>
+          <span class="asset-card-label">英文剧本</span>
+          <span class="asset-card-status" id="ac-script-en-status">待翻译</span>
+        </div>
+        <div class="asset-card-body" id="ac-script-en-body">—</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('script-en')">复制</button>
+          <button class="asset-btn" onclick="event.stopPropagation();exportAsset('script-en')">导出</button>
+        </div>
+      </div>
+
+    </div><!-- wb-asset-list -->
+    <div class="wb-left-footer">
+      <button class="wb-export-btn" onclick="openExportModal()">⬇ 导出项目资料</button>
+    </div>
+  </div><!-- wb-left -->
+
+  <!-- 中栏：挂载点，各 page 的主内容在这里渲染 -->
+  <div class="wb-mid" id="wb-mid">
+    <!-- page-story / page-breakdown / page-script 会被 JS 移入此处 -->
+  </div>
+
+  <!-- 右栏：贯穿对话框 -->
+  <div class="wb-right" id="wb-right">
+    <div class="wb-right-head">
+      <div class="wb-right-title">💬 项目对话</div>
+      <div class="wb-right-stage" id="wb-stage-tag">改编策划</div>
+    </div>
+    <div class="wb-chat-msgs" id="global-chat-msgs"></div>
+    <div class="wb-right-input">
+      <textarea class="wb-ci" id="wb-ci" rows="1"
+        placeholder="和 AI 聊聊当前创作进展……"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendGlobalChat()}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+      <button class="wb-send" onclick="sendGlobalChat()">↑</button>
+    </div>
+  </div><!-- wb-right -->
+
+</div><!-- workbench-wrap -->
+
+<!-- 导出弹窗 -->
+<div id="export-modal" style="display:none" class="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
+  <div class="export-modal">
+    <div class="export-modal-head">
+      <span class="export-modal-title">导出项目资料</span>
+      <button onclick="closeExportModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--i3);line-height:1">×</button>
+    </div>
+    <div id="export-modal-items"></div>
+    <div class="export-modal-footer">
+      <button onclick="closeExportModal()" style="height:32px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:12px;font-family:'Noto Sans SC',sans-serif;color:var(--i2);cursor:pointer">关闭</button>
+      <button onclick="exportAllAssets()" style="height:32px;padding:0 14px;border:none;border-radius:var(--rs);background:var(--gm);font-size:12px;font-family:'Noto Sans SC',sans-serif;color:#fff;cursor:pointer;font-weight:500">全部导出</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- main-content -->
 </div><!-- body-wrap -->
 
@@ -1827,23 +1919,64 @@ function showPage(p){
     const el=document.getElementById(id);
     if(el)el.classList.remove('active');
   });
-  document.getElementById('page-'+p).classList.add('active');
+
+  const pageEl = document.getElementById('page-'+p);
+  if(pageEl) pageEl.classList.add('active');
   const n=document.getElementById('nav-'+p);
   if(n)n.classList.add('active');
+
+  // 三栏工作台：story/breakdown/script 在三栏中显示，home/prod 全宽显示
+  const isWorkbench = ['story','breakdown','script'].includes(p);
+  const wbWrap = document.getElementById('workbench-wrap');
+  const mainContent = document.getElementById('page-'+p)?.closest('.main-content');
+
+  if(isWorkbench){
+    // 显示三栏容器
+    if(wbWrap) wbWrap.style.display = 'flex';
+    // 把当前 page 移入中栏
+    const wbMid = document.getElementById('wb-mid');
+    if(wbMid && pageEl){
+      // 先把 wb-mid 中已有的 page 移回 main-content（防止页面丢失）
+      [...wbMid.children].forEach(child => {
+        if(child.classList.contains('page')){
+          document.querySelector('.main-content').appendChild(child);
+        }
+      });
+      // 把目标 page 移入中栏
+      wbMid.appendChild(pageEl);
+      pageEl.classList.add('active');
+    }
+    // 更新右栏阶段标签
+    const stageLabels = {story:'改编策划', breakdown:'分集细纲', script:'剧本创作'};
+    const stageTag = document.getElementById('wb-stage-tag');
+    if(stageTag) stageTag.textContent = stageLabels[p] || p;
+    // 添加阶段分隔消息到对话框
+    addStageMark(stageLabels[p] || p);
+  } else {
+    // 非工作台页面：隐藏三栏，把所有 page 移回 main-content
+    if(wbWrap) wbWrap.style.display = 'none';
+    const wbMid = document.getElementById('wb-mid');
+    if(wbMid){
+      [...wbMid.children].forEach(child => {
+        if(child.classList.contains('page')){
+          document.querySelector('.main-content').appendChild(child);
+        }
+      });
+    }
+  }
+
   if(p==='script') setTimeout(initScriptScrollObserver, 100);
-  // Sync prod gate overlay visibility
   if(p==='prod'){
     const overlay=document.getElementById('prod-gate-overlay');
     if(overlay) overlay.style.display=scriptState.finalized?'none':'flex';
   }
-  // Workflow nav: show on story/breakdown/script, hide on home and prod
   const wfNav=document.getElementById('workflow-nav');
-  const isWorkflow=['story','breakdown','script'].includes(p);
-  if(wfNav) wfNav.style.display=isWorkflow?'flex':'none';
+  if(wfNav) wfNav.style.display=isWorkbench?'flex':'none';
   ['story','breakdown','script'].forEach(id=>{
     const tab=document.getElementById('wf-'+id);
     if(tab) tab.classList.toggle('active',id===p);
   });
+  S.page = p;
 }
 
 function togUpload(){
@@ -1854,6 +1987,109 @@ function togUpload(){
 // ── Global: stores extracted text from uploaded document ──
 let uploadedDocText = '';
 let docReadyPromise = null; // resolves when doc parsing finishes
+
+// ── 纯 JS docx 解析器（无需任何外部库，直接解析 ZIP+XML）──
+async function parseDocx(arrayBuffer) {
+  const bytes = new Uint8Array(arrayBuffer);
+
+  // ZIP Local File Header: PK\x03\x04
+  const SIG = [0x50, 0x4B, 0x03, 0x04];
+
+  function readUint16LE(arr, off) {
+    return arr[off] | (arr[off+1] << 8);
+  }
+  function readUint32LE(arr, off) {
+    return (arr[off] | (arr[off+1] << 8) | (arr[off+2] << 16) | (arr[off+3] << 24)) >>> 0;
+  }
+
+  // 找到 word/document.xml 的 ZIP entry
+  let pos = 0;
+  let docXmlData = null;
+
+  while (pos < bytes.length - 30) {
+    // 检查 Local File Header 签名
+    if (bytes[pos]===SIG[0] && bytes[pos+1]===SIG[1] && bytes[pos+2]===SIG[2] && bytes[pos+3]===SIG[3]) {
+      const compression  = readUint16LE(bytes, pos + 8);
+      const compSize     = readUint32LE(bytes, pos + 18);
+      const uncompSize   = readUint32LE(bytes, pos + 22);
+      const fnLen        = readUint16LE(bytes, pos + 26);
+      const extraLen     = readUint16LE(bytes, pos + 28);
+      const dataStart    = pos + 30 + fnLen + extraLen;
+
+      // 读取文件名
+      const fnBytes = bytes.slice(pos + 30, pos + 30 + fnLen);
+      const fileName = new TextDecoder('utf-8', {fatal:false}).decode(fnBytes);
+
+      // 只处理 word/document.xml
+      if (fileName === 'word/document.xml' || fileName === 'word/document.xml.rels') {
+        const compressed = bytes.slice(dataStart, dataStart + compSize);
+
+        if (compression === 0) {
+          // Store (无压缩)
+          docXmlData = new TextDecoder('utf-8', {fatal:false}).decode(compressed);
+        } else if (compression === 8) {
+          // Deflate — 用浏览器原生 DecompressionStream
+          try {
+            const ds = new DecompressionStream('deflate-raw');
+            const writer = ds.writable.getWriter();
+            const reader = ds.readable.getReader();
+            writer.write(compressed);
+            writer.close();
+            const chunks = [];
+            let totalLen = 0;
+            while (true) {
+              const {done, value} = await reader.read();
+              if (done) break;
+              chunks.push(value);
+              totalLen += value.length;
+            }
+            const merged = new Uint8Array(totalLen);
+            let offset = 0;
+            for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
+            docXmlData = new TextDecoder('utf-8', {fatal:false}).decode(merged);
+          } catch(e) {
+            console.warn('DecompressionStream failed:', e);
+          }
+        }
+
+        if (fileName === 'word/document.xml' && docXmlData) break;
+      }
+
+      pos = dataStart + compSize;
+    } else {
+      pos++;
+    }
+  }
+
+  if (!docXmlData) return '';
+
+  // 从 XML 中提取文本
+  // <w:p> = 段落，<w:t> = 文本节点，<w:br> = 换行
+  // 先处理段落分隔
+  const withParas = docXmlData.replace(/<w:p[ >]/g, '\n<w:p>');
+  // 提取所有 <w:t> 内容
+  const textParts = [];
+  const tRegex = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g;
+  let match;
+  let lastParaEnd = 0;
+  const paraRegex = /\n<w:p>/g;
+  let combined = withParas;
+
+  // 更简洁的方式：直接提取段落和文本
+  const paragraphs = docXmlData.split(/<w:p[ >\/]/);
+  const result = [];
+  for (const para of paragraphs) {
+    const texts = [];
+    const tRe = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g;
+    let m;
+    while ((m = tRe.exec(para)) !== null) {
+      if (m[1]) texts.push(m[1]);
+    }
+    if (texts.length > 0) result.push(texts.join(''));
+  }
+
+  return result.filter(Boolean).join('\n');
+}
 
 function handleFile(i){
   const file = i.files[0];
@@ -1866,79 +2102,31 @@ function handleFile(i){
   if(ext === 'docx' || ext === 'doc'){
     document.getElementById('fname').textContent = file.name + '  ⏳ 读取中…';
 
-    // 多个 CDN 备选，依次尝试
-    const MAMMOTH_CDNS = [
-      'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js',
-      'https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
-    ];
-
-    const loadMammoth = () => {
-      if(window.mammoth) return Promise.resolve(window.mammoth);
-      return MAMMOTH_CDNS.reduce((chain, url) => {
-        return chain.catch(() => new Promise((res, rej) => {
-          // 移除之前失败的 script 标签
-          document.querySelectorAll('script[data-mammoth]').forEach(s => s.remove());
-          const s = document.createElement('script');
-          s.setAttribute('data-mammoth', '1');
-          s.src = url;
-          s.onload = () => window.mammoth ? res(window.mammoth) : rej(new Error('mammoth not found'));
-          s.onerror = () => rej(new Error('CDN failed: ' + url));
-          document.head.appendChild(s);
-        }));
-      }, Promise.reject(new Error('start')));
-    };
-
-    // 用 ZIP 解析提取 .docx 纯文本（不依赖 mammoth，作为最终 fallback）
-    const extractDocxAsText = (arrayBuffer) => {
-      return new Promise((res) => {
-        try {
-          // .docx 是 ZIP，word/document.xml 是正文
-          // 简单方法：直接读 ArrayBuffer 里的可打印字符
-          const uint8 = new Uint8Array(arrayBuffer);
-          let raw = '';
-          for(let j = 0; j < uint8.length; j++) {
-            const c = uint8[j];
-            if(c >= 0x20 && c < 0x7F) raw += String.fromCharCode(c);
-          }
-          // 从 XML 标签中提取文本内容
-          const xmlMatch = raw.match(/<w:t[^>]*>([^<]+)/g);
-          if(xmlMatch && xmlMatch.length > 0){
-            const text = xmlMatch.map(m => m.replace(/<w:t[^>]*>/, '')).join(' ');
-            res(text.length > 100 ? text : '');
-          } else {
-            res('');
-          }
-        } catch(e){ res(''); }
-      });
-    };
-
     docReadyPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const arrayBuffer = e.target.result;
         let text = '';
 
-        // 方案1：mammoth（最准确）
-        try {
-          const mammoth = await loadMammoth();
-          const result = await mammoth.extractRawValue({ arrayBuffer });
-          text = result.value || '';
-        } catch(mammothErr) {
-          console.warn('mammoth 失败，尝试备用解析:', mammothErr.message);
-          // 方案2：ZIP/XML 直接解析（仅对 .docx 有效）
-          if(ext === 'docx'){
-            text = await extractDocxAsText(arrayBuffer);
+        if(ext === 'docx'){
+          // 用纯 JS ZIP 解析器（无需外部库）
+          try {
+            text = await parseDocx(arrayBuffer);
+          } catch(err) {
+            console.warn('parseDocx 失败:', err);
           }
-          // 方案3：尝试当 UTF-8 文本读（某些 .doc 可能可读）
-          if(!text){
-            try {
-              text = new TextDecoder('utf-8', {fatal: false}).decode(arrayBuffer);
-              // 过滤掉乱码，只保留合理字符
-              text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ').trim();
-              if(text.length < 100) text = '';
-            } catch(e){ text = ''; }
-          }
+        }
+
+        // 无论 doc 还是 docx 解析失败，都尝试直接文本读取（部分 .doc 可以）
+        if(!text || text.length < 50){
+          try {
+            const decoded = new TextDecoder('utf-8', {fatal: false}).decode(arrayBuffer);
+            // 从原始字节流里找中文字符
+            const chineseMatches = decoded.match(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef，。！？；：""''（）【】、…]{3,}/g);
+            if(chineseMatches && chineseMatches.length > 5){
+              text = chineseMatches.join('');
+            }
+          } catch(e){}
         }
 
         if(text && text.length > 50){
@@ -1947,8 +2135,8 @@ function handleFile(i){
           showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
         } else {
           uploadedDocText = '';
-          document.getElementById('fname').textContent = file.name + '  ⚠ 解析失败，请将内容粘贴至下方需求框';
-          showToast('⚠ 文档解析失败 — 建议将 .doc 另存为 .txt 后重新上传，或将内容粘贴至需求描述框');
+          document.getElementById('fname').textContent = file.name + '  ⚠ 解析失败';
+          showToast('⚠ 解析失败 — 请将文档内容粘贴至下方需求框，效果完全一样');
         }
         resolve();
       };
@@ -2107,44 +2295,54 @@ async function startProject(){
 
   const isIntl = PROJECT.source.market.includes('欧美') || PROJECT.source.market.includes('日韩');
   const cfg = getApiConfig();
-  const hasApiKey = isIntl ? !!cfg.claudeKey : !!cfg.doubaoKey;
+  const hasApiKey = !!cfg.doubaoKey;
 
   // ── 统一的方案生成函数（在文档信息已存入 PROJECT.source 后调用）──
   const generateSchemes = () => {
     const src = PROJECT.source;
+    const hasDocInfo = !!(src.docTitle && src.docPlanningLogic);
     const sysPrompt = `你是一位专业的短剧改编策划，擅长为${src.market}创作爆款竖屏短剧改编方案。
 
-请生成4个有差异化的改编方案，每个方案角度不同。严格返回JSON数组，不要任何额外文字或markdown代码块：
+${hasDocInfo ? `你拿到了一份已拆解好的原著爆款逻辑分析报告。你的任务是：
+1. 深度理解原著的爆款基因（节拍序列、冲突结构、情感钩子）
+2. 结合目标市场偏好和用户自定义需求，生成4个差异化的改编迁移方案
+3. 每个方案要说明如何保留原著爆款基因、如何迁移适配目标市场` : `根据用户需求生成4个差异化的竖屏短剧改编方案。`}
+
+严格返回JSON数组，不要任何额外文字或markdown代码块：
 [{
   "num": "方案 01",
   "title": "方案标题（10字内，有画面感）",
   "titleRecs": [{"zh":"中文剧名","en":"English Title"}],
-  "planningThought": "策划思路（分①②③④点，每点50字内，说明结构/冲突/情感/节奏逻辑）",
+  "planningThought": "策划思路（分①②③④点，每点50字内：①爆款基因如何迁移 ②核心冲突结构 ③情感逻辑 ④节奏和悬念布局）",
   "storyBrief": "故事简介（80-120字，有具体人物和情节）",
   "tags": ["标签1","标签2","标签3"],
   "rating": {"difficulty":85,"market":78,"viral":72,"reason":"20字内推荐理由或风险点"}
 }]
-rating：difficulty=改编迁移顺畅度，market=市场偏好匹配度，viral=话题钩子强度（均0-100分）`;
+rating：difficulty=原著爆款基因迁移顺畅度，market=市场偏好匹配度，viral=话题钩子强度（均0-100分）`;
 
-    // 用已提取的结构化信息构建 userMsg，不再传原始文档全文
+    // 用已提取的结构化信息构建 userMsg
     const docInfo = src.docTitle
-      ? `原著/IP：${src.docTitle}
-核心策划逻辑：${src.docPlanningLogic}
+      ? `【原著爆款逻辑分析】
+原著/IP：${src.docTitle}
+核心爆款基因：${src.docPlanningLogic}
 节拍序列：${src.docBeatSequence}
 主要人物：${src.docCharacters}`
-      : `用户需求：${src.userRequirements}`;
+      : `【创作需求】${src.userRequirements}`;
 
     const userMsg = `${docInfo}
-用户补充需求：${src.userRequirements}
-目标市场：${src.market}  受众：${src.preference}
-题材：${src.genre}  体量：${src.episodeCount}集`;
+
+【用户自定义需求】${src.userRequirements}
+【目标市场】${src.market}  【受众】${src.preference}
+【题材】${src.genre}  【体量】${src.episodeCount}集
+
+请基于以上原著爆款逻辑和用户需求，生成4个各有侧重的差异化改编方案。`;
 
     return new Promise((resolve) => {
       if(!hasApiKey){
         resolve(null);
         return;
       }
-      const callFn = isIntl ? callClaude : callDoubao;
+      const callFn = callDoubao;
       callFn(userMsg, sysPrompt, 4096)
         .then(resolve)
         .catch(e => {
@@ -2165,7 +2363,7 @@ rating：difficulty=改编迁移顺畅度，market=市场偏好匹配度，viral
   "docBeatSequence": "节拍序列（用①②③④格式列出主要剧情节拍，150字内）",
   "docCharacters": "主要人物（男女主角的身份、性格、核心冲突，100字内）"
 }`;
-    const callFn = isIntl ? callClaude : callDoubao;
+    const callFn = callDoubao;
     return callFn(`【DramaLens 拆解文档】\n${docText}`, sysPrompt, 1000)
       .then(raw => {
         try {
@@ -2205,6 +2403,7 @@ rating：difficulty=改编迁移顺畅度，market=市场偏好匹配度，viral
     }
     const wfStory = document.getElementById('wf-story');
     if(wfStory) wfStory.classList.add('done');
+    archiveDoc(); // 入库：原始文档
     saveProject();
   };
 
@@ -2361,6 +2560,7 @@ function confirmScheme(){
 
   goStep(2);
   startInquiry();
+  archiveScheme(); // 入库：改编方案
 }
 
 // ══ STEP 2: AI Inquiry ══
@@ -2394,10 +2594,14 @@ function startInquiry(){
 
 风格：平等的创作伙伴，语气亲切专业，像在聊剧而非填表单。每个问题后附上你的判断和选项建议。`;
 
-  // 构建 userMsg，优先使用从文档中提取的真实信息
+  // 构建 userMsg，优先使用从文档中提取的真实信息，明确包含用户自定义需求
   const docContext = src.docTitle
-    ? `原著：${src.docTitle}\n策划逻辑：${src.docPlanningLogic}\n原著节拍：${src.docBeatSequence}\n原著人物：${src.docCharacters}`
-    : (src.rawDocText ? `【参考文档摘要】\n${src.rawDocText.substring(0, 2000)}` : `用户需求：${src.userRequirements}`);
+    ? `【原著爆款逻辑】
+原著/IP：${src.docTitle}
+核心爆款基因：${src.docPlanningLogic}
+节拍序列：${src.docBeatSequence}
+主要人物：${src.docCharacters}`
+    : (src.rawDocText ? `【参考文档摘要】\n${src.rawDocText.substring(0, 2000)}` : `【用户需求】${src.userRequirements}`);
 
   const userMsg = `我选定了以下改编方案，请针对性地提出策划追问：
 
@@ -2407,6 +2611,10 @@ function startInquiry(){
 
 【项目基本信息】
 ${docContext}
+
+【用户自定义需求（必须在策划追问中重点关注）】
+${src.userRequirements}
+
 目标市场：${src.market}  受众：${src.preference}
 题材：${src.genre}  体量：${src.episodeCount}集
 
@@ -2440,7 +2648,7 @@ ${docContext}
     return;
   }
 
-  const callFn = getGenApi();
+  const callFn = callDoubao;
   callFn(userMsg, sysPrompt, 2000)
     .then(doAsk)
     .catch((err) => {
@@ -2513,25 +2721,21 @@ function sendInquiryMsg(){
 
   const callWithHistory = async () => {
     const c = getApiConfig();
-    if(c.claudeKey){
-      const base = c.claudeBase || 'https://api.anthropic.com';
-      const url = base.endsWith('/v1/messages') ? base : `${base}/v1/messages`;
-      const headers = {
-        'content-type': 'application/json',
-        'x-api-key': c.claudeKey,
-        'Authorization': `Bearer ${c.claudeKey}`,
-        'anthropic-version': '2023-06-01',
-      };
-      if (!c.claudeBase) headers['anthropic-dangerous-direct-browser-access'] = 'true';
-      const r = await fetch(url,{method:'POST',headers,body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system:sysPrompt,messages})});
-      const d=await r.json(); return d.content[0].text;
-    } else {
-      const r = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{method:'POST',headers:{'Authorization':`Bearer ${c.doubaoKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:c.doubaoModel||'doubao-seed-2-0-lite',messages:[{role:'system',content:sysPrompt},...messages]})});
-      const d=await r.json(); return d.choices[0].message.content;
-    }
+    if(!c.doubaoKey) throw new Error('no key');
+    const r = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${c.doubaoKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: c.doubaoModel || 'doubao-seed-2-0-lite',
+        max_tokens: 1200,
+        messages: [{role:'system', content:sysPrompt}, ...messages],
+      })
+    });
+    const d = await r.json();
+    return d.choices[0].message.content;
   };
 
-  if(!cfg.claudeKey && !cfg.doubaoKey){
+  if(!cfg.doubaoKey){
     setTimeout(()=>{
       loadBlock.remove();
       const r=['很好！这个选择让整体节奏更清晰。还想追问一点……','这个设定非常有潜力，执行层面你有没有想过……','好，信息已经够了。✓ 我们可以生成创意策划案了'];
@@ -2560,7 +2764,7 @@ function sendInquiryMsg(){
 // ══ STEP 2 → STEP 3: Generate Creative Bible ══
 async function generateBible(){
   const cfg = getApiConfig();
-  const callFn = getGenApi();
+  const callFn = callDoubao;
   const src = PROJECT.source;
   const sc = PROJECT.scheme;
 
@@ -2577,7 +2781,12 @@ async function generateBible(){
 
   const sysPrompt = `你是一位顶级短剧项目策划，专注竖屏短剧，深刻理解「快节奏·强冲突·强情绪·强悬念」叙事要求，同时尊重经典故事准则（人物弧光、叙事结构、主题升华）。
 
-请根据以下信息生成完整创意策划案。
+【你的任务】基于以下三个核心输入生成完整创意策划案：
+① 原著爆款逻辑（从文档中提取的爆款基因，必须继承）
+② 定稿改编方案（用户已选定的改编方向，必须咬合）
+③ AI与用户策划追问的沟通结论（用户在追问中确认的关键决策，必须落实）
+
+策划案必须是三个输入的有机整合，不得偏离任何一方的核心约束。
 
 【输出格式】严格JSON，不要任何额外文字：
 {
@@ -2606,24 +2815,26 @@ async function generateBible(){
 - 节拍要覆盖完整叙事弧：建立→升级→激化→崩塌→重建→高潮→落定`;
 
   const docContext = src.rawDocText
-    ? `【DramaLens 拆解文档原文摘要】\n${src.rawDocText.substring(0, 3000)}`
+    ? `【DramaLens 拆解文档原文摘要（原著爆款逻辑来源）】\n${src.rawDocText.substring(0, 3000)}`
     : (src.docTitle
-      ? `原著：${src.docTitle}\n策划逻辑：${src.docPlanningLogic}\n原著节拍：${src.docBeatSequence}\n原著人物：${src.docCharacters}`
-      : `用户需求：${src.userRequirements}`);
+      ? `【原著爆款逻辑】\n原著/IP：${src.docTitle}\n核心爆款基因：${src.docPlanningLogic}\n节拍序列：${src.docBeatSequence}\n主要人物：${src.docCharacters}`
+      : `【用户需求】${src.userRequirements}`);
 
   const userMsg = `【项目信息】
 市场：${src.market}  受众：${src.preference}
 题材：${src.genre}  体量：${src.episodeCount}集
-创作者需求：${src.userRequirements}
+创作者自定义需求：${src.userRequirements}
 
 ${docContext}
 
-【选定改编方案】${sc.num} · ${sc.title}
+【定稿改编方案（策划案必须咬合此方案的核心方向）】
+${sc.num} · ${sc.title}
 策划思路：${sc.planningThought}
 故事简介：${sc.storyBrief}
+方案标签：${(sc.tags||[]).join('、')}
 
-【策划追问记录】
-${transcript || '（跳过追问）'}`;
+【策划追问完整记录（AI与用户最新沟通内容，必须在策划案中体现）】
+${transcript || '（跳过追问，直接生成）'}`;
 
   const doRender = (raw) => {
     document.getElementById('gen-mask').classList.remove('show');
@@ -2881,6 +3092,7 @@ function confirmBibleAndNext(){
   breakdownState.totalEps = PROJECT.source.episodeCount || 40;
   showToast('策划案已确认！开始生成分集细纲……');
   saveProject();
+  archiveBible(); // 入库：创意策划案
   // Mark workflow nav
   const wfBd = document.getElementById('wf-breakdown');
   if(wfBd) wfBd.classList.add('done');
@@ -3086,7 +3298,9 @@ ${bdState.allEps.slice(-5).map(e=>`第${e.num}集《${e.title}》：${e.hook.sub
 
 【创意策划案核心要点】
 Logline：${b.logline}
+核心亮点：${(b.schemePoints&&b.schemePoints.highlight)||''}
 结构逻辑：${(b.schemePoints&&b.schemePoints.structure)||''}
+人物逻辑：${(b.schemePoints&&b.schemePoints.character)||''}
 情感逻辑：${(b.schemePoints&&b.schemePoints.emotion)||''}
 节奏逻辑（爽感分布）：${(b.schemePoints&&b.schemePoints.rhythm)||''}
 悬念布局：${(b.schemePoints&&b.schemePoints.suspense)||''}
@@ -3485,8 +3699,7 @@ document.addEventListener('click', function(e) {
 // ══ BREAKDOWN CHAT ══
 
 function showBdChatBar() {
-  const bar = document.getElementById('bd-chat-bar');
-  if (bar) bar.classList.add('visible');
+  // 三栏布局中，对话框已移至右侧贯穿对话框，此函数保留以兼容调用
 }
 
 function toggleBdChat() {
@@ -3571,6 +3784,7 @@ function confirmBreakdownAndNext() {
   breakdownState.generatedBatches = Math.ceil(bdState.allEps.length / 5);
   bdState.confirmed = true;
   saveProject();
+  archiveBreakdown(); // 入库：分集细纲
   showToast('细纲已确认！进入剧本创作……');
   setTimeout(()=>{ showPage('script'); buildScriptUI(); }, 600);
 }
@@ -3969,11 +4183,14 @@ ${buildCharVoiceContext()}`;
 原著/IP：${realDocTitle}  改编方案：${sc.title}
 Logline：${b.logline||''}
 
-【创意策划案核心要点】
+【创意策划案核心要点（剧本必须在每集中落实这些逻辑）】
+核心亮点：${(b.schemePoints&&b.schemePoints.highlight)||''}
 结构逻辑：${(b.schemePoints&&b.schemePoints.structure)||''}
+人物逻辑：${(b.schemePoints&&b.schemePoints.character)||''}
 情感逻辑：${(b.schemePoints&&b.schemePoints.emotion)||''}
 节奏逻辑：${(b.schemePoints&&b.schemePoints.rhythm)||''}
 悬念布局：${(b.schemePoints&&b.schemePoints.suspense)||''}
+全剧高光情节（在对应集必须完整呈现）：${(b.schemePoints&&b.schemePoints.highlights)||''}
 
 【视觉风格与基调】
 ${b.visual||''}
@@ -4444,6 +4661,7 @@ function finalizeScript() {
   showToast('全本定稿完成！可在左侧工具栏打开「视频制作」');
   const overlay = document.getElementById('prod-gate-overlay');
   if (overlay) overlay.style.display = 'none';
+  archiveScriptCn(); // 入库：中文剧本
 }
 
 function openVideoProduction() {
@@ -5070,13 +5288,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const hasKey = !!(cfg.claudeKey || cfg.doubaoKey);
   const hasPrompted = localStorage.getItem('dramamind_api_prompted');
   if (!hasKey && !hasPrompted) {
-    // Show modal after a short delay so the page renders first
     setTimeout(() => {
       const notice = document.getElementById('api-config-notice');
       if (notice) notice.style.display = 'block';
       openApiConfig();
     }, 600);
   }
+
+  // 初始化三栏工作台
+  initWorkbench();
 });
 
 document.addEventListener('input', function(e){
@@ -5137,12 +5357,11 @@ function updateHistoryBtn() {
 function regenSchemes() {
   saveSchemeSnapshot();
   const src = PROJECT.source;
-  const isIntl = (src.market||'').includes('欧美') || (src.market||'').includes('日韩');
   const cfg = getApiConfig();
-  const hasKey = isIntl ? !!cfg.claudeKey : !!cfg.doubaoKey;
+  const hasKey = !!cfg.doubaoKey;
 
   if(!hasKey){
-    showToast('请先点击右上角「API配置」填写 API Key');
+    showToast('请先点击右上角「API配置」填写豆包 API Key');
     return;
   }
 
@@ -5188,7 +5407,7 @@ rating：difficulty=改编迁移顺畅度，market=市场偏好匹配度，viral
 
   document.getElementById('gen-txt').textContent = '正在重新生成改编方案……';
   document.getElementById('gen-mask').classList.add('show');
-  const callFn = isIntl ? callClaude : callDoubao;
+  const callFn = callDoubao;
   callFn(userMsg, sysPrompt, 4096).then(doRender).catch(e => {
     document.getElementById('gen-mask').classList.remove('show');
     showToast('生成失败：' + (e.message || '未知错误'));
@@ -5363,10 +5582,9 @@ async function callDoubao(userMsg, systemPrompt, maxTokens) {
 }
 
 // 根据市场选择API
+// 所有创作环节统一使用豆包；翻译单独处理（Claude优先+豆包兜底）
 function getGenApi() {
-  const market = PROJECT.source.market || '';
-  const isIntl = market.includes('欧美') || market.includes('日韩');
-  return isIntl ? callClaude : callDoubao;
+  return callDoubao;
 }
 
 // ── 一键翻译：将剧本中文内容翻译为英文并写回界面 ──
@@ -5432,12 +5650,20 @@ Translation rules:
     }
 
     try {
-      const callFn = cfg.claudeKey ? callClaude : callDoubao;
-      const raw = await callFn(
-        `Translate the following Chinese short drama script to English. Each line starts with a tag like [sp-scene], [sp-action], [sp-char], [sp-dlg], [sp-paren] — keep these tags exactly as-is, only translate the content after the tag.\n\n${sourceText}`,
-        sysPrompt,
-        Math.min(4096, sourceText.length * 3)
-      );
+      const userMsg = `Translate the following Chinese short drama script to English. Each line starts with a tag like [sp-scene], [sp-action], [sp-char], [sp-dlg], [sp-paren] — keep these tags exactly as-is, only translate the content after the tag.\n\n${sourceText}`;
+      const maxTok = Math.min(4096, sourceText.length * 3);
+      let raw;
+      if(cfg.claudeKey){
+        try { raw = await callClaude(userMsg, sysPrompt, maxTok); }
+        catch(claudeErr){
+          console.warn('Claude 翻译失败，切换豆包:', claudeErr.message);
+          if(!cfg.doubaoKey) throw claudeErr;
+          // 豆包用中文系统提示兜底
+          raw = await callDoubao(userMsg, '你是专业短剧剧本翻译，将中文竖屏短剧剧本翻译为英文，保持戏剧张力和格式标签。', maxTok);
+        }
+      } else {
+        raw = await callDoubao(userMsg, '你是专业短剧剧本翻译，将中文竖屏短剧剧本翻译为英文，保持戏剧张力和格式标签。', maxTok);
+      }
 
       // 解析翻译结果并写回对应元素
       const translatedLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
@@ -5487,10 +5713,245 @@ Translation rules:
     showToast(`翻译完成，第 ${failedEps.join('、')} 集失败，可单集重试`);
   } else {
     showToast(`${totalLabel}翻译完成 ✓`);
+    archiveScriptEn(); // 入库：英文剧本
   }
 }
 
-// 故事开发聊天 — Step 1 方案助手 + Step 3 Bible 精修
+// ══════════════════════════════════════════════════
+// 三栏工作台 JS
+// ══════════════════════════════════════════════════
+
+// ── 资料库数据 ──
+const ASSET_STORE = {
+  doc:      { label:'原始文档',   text:'' },
+  scheme:   { label:'改编方案',   text:'' },
+  bible:    { label:'创意策划案', text:'' },
+  breakdown:{ label:'分集细纲',   text:'' },
+  'script-cn':{ label:'中文剧本', text:'' },
+  'script-en':{ label:'英文剧本', text:'' },
+};
+
+function updateAssetCard(key, text){
+  const store = ASSET_STORE[key];
+  if(!store) return;
+  store.text = text || '';
+  const card = document.getElementById('ac-' + key);
+  const body = document.getElementById('ac-' + key + '-body');
+  const status = document.getElementById('ac-' + key + '-status');
+  if(!card) return;
+  const hasContent = store.text.length > 0;
+  card.classList.toggle('ready', hasContent);
+  if(body) body.textContent = store.text.substring(0, 600) + (store.text.length > 600 ? '……' : '');
+  if(status) status.textContent = hasContent ? '✓ 已归档' : '待生成';
+}
+
+function toggleAssetCard(id){
+  const card = document.getElementById(id);
+  if(!card) return;
+  card.classList.toggle('open');
+}
+
+function copyAsset(key){
+  const text = ASSET_STORE[key]?.text;
+  if(!text){ showToast('暂无内容'); return; }
+  navigator.clipboard.writeText(text).then(()=>showToast('已复制到剪贴板'));
+}
+
+function exportAsset(key){
+  const store = ASSET_STORE[key];
+  if(!store?.text){ showToast('暂无内容可导出'); return; }
+  const filename = (S.proj || '项目') + '_' + store.label + '.txt';
+  const blob = new Blob([store.text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── 导出弹窗 ──
+function openExportModal(){
+  const items = document.getElementById('export-modal-items');
+  items.innerHTML = Object.entries(ASSET_STORE).map(([key, store]) => {
+    const hasContent = store.text.length > 0;
+    return `<div class="export-item${hasContent?' ready':''}" onclick="exportAsset('${key}')">
+      <span class="export-item-icon">${{doc:'📄',scheme:'🎯',bible:'📋',breakdown:'📊','script-cn':'✍️','script-en':'🌐'}[key]}</span>
+      <span class="export-item-label">${store.label}</span>
+      <span class="export-item-status">${hasContent?'✓ 可导出':'尚未生成'}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('export-modal').style.display = 'flex';
+}
+
+function closeExportModal(){
+  document.getElementById('export-modal').style.display = 'none';
+}
+
+function exportAllAssets(){
+  const ready = Object.entries(ASSET_STORE).filter(([,s]) => s.text.length > 0);
+  if(!ready.length){ showToast('暂无可导出的内容'); return; }
+  const all = ready.map(([,s]) => `═══ ${s.label} ═══\n\n${s.text}`).join('\n\n\n');
+  const filename = (S.proj || '项目') + '_全部资料.txt';
+  const blob = new Blob([all], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  closeExportModal();
+  showToast('全部资料已导出');
+}
+
+// ── 资料自动入库：各环节 confirm 时调用 ──
+function archiveDoc(){
+  const text = uploadedDocText
+    ? `【文档内容摘要】\n${uploadedDocText.substring(0, 1000)}${uploadedDocText.length > 1000 ? '\n……（共'+uploadedDocText.length+'字）' : ''}`
+    : (PROJECT.source.docTitle ? `原著/IP：${PROJECT.source.docTitle}\n策划逻辑：${PROJECT.source.docPlanningLogic}\n主要人物：${PROJECT.source.docCharacters}` : PROJECT.source.userRequirements);
+  updateAssetCard('doc', text);
+}
+
+function archiveScheme(){
+  const sc = PROJECT.scheme;
+  if(!sc.title) return;
+  const text = `${sc.num} · ${sc.title}\n\n【策划思路】\n${sc.planningThought}\n\n【故事简介】\n${sc.storyBrief}\n\n【标签】${sc.tags?.join('、')||''}`;
+  updateAssetCard('scheme', text);
+}
+
+function archiveBible(){
+  const b = PROJECT.bible;
+  if(!b.logline) return;
+  const sp = b.schemePoints || {};
+  const chars = (b.characters||[]).map(c=>`${c.name}（${c.role}）：${c.personality}`).join('\n');
+  const text = `Logline：${b.logline}\n\n视觉风格：${b.visual}\n\n核心亮点：${sp.highlight}\n结构逻辑：${sp.structure}\n情感逻辑：${sp.emotion}\n节奏逻辑：${sp.rhythm}\n悬念布局：${sp.suspense}\n\n【人物小传】\n${chars}`;
+  updateAssetCard('bible', text);
+}
+
+function archiveBreakdown(){
+  if(!bdState.allEps?.length) return;
+  const lines = bdState.allEps.slice(0, 20).map(ep =>
+    `第${ep.num}集《${ep.title}》\n${ep.beat?.substring(0,80)}……\n卡点：${ep.hook?.substring(0,50)}`
+  );
+  const text = lines.join('\n\n') + (bdState.allEps.length > 20 ? `\n\n……共${bdState.allEps.length}集` : '');
+  updateAssetCard('breakdown', text);
+}
+
+function archiveScriptCn(){
+  // 从剧本 DOM 提取纯文本
+  const body = document.getElementById('script-body');
+  if(!body) return;
+  const text = body.innerText?.substring(0, 3000) || '';
+  if(text.length > 50) updateAssetCard('script-cn', text);
+}
+
+// 英文剧本在翻译完成后从 DOM 提取（翻译后内容已写回 DOM）
+function archiveScriptEn(){
+  const body = document.getElementById('script-body');
+  if(!body) return;
+  const text = body.innerText?.substring(0, 3000) || '';
+  if(text.length > 50) updateAssetCard('script-en', text);
+}
+
+// ── 阶段分隔标记 ──
+let _lastStage = '';
+function addStageMark(label){
+  if(label === _lastStage) return; // 不重复插入
+  _lastStage = label;
+  const msgs = document.getElementById('global-chat-msgs');
+  if(!msgs) return;
+  const mark = document.createElement('div');
+  mark.className = 'gc-stage-tag';
+  mark.textContent = '— 进入 ' + label + ' —';
+  msgs.appendChild(mark);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── 全局对话框 ──
+const globalChatHistory = []; // [{role:'user'|'ai', content, stage}]
+
+function sendGlobalChat(){
+  const inp = document.getElementById('wb-ci');
+  const msg = inp?.value?.trim();
+  if(!msg) return;
+  inp.value = ''; inp.style.height = 'auto';
+
+  appendGlobalMsg('user', msg);
+  globalChatHistory.push({role:'user', content:msg, stage: S.page});
+
+  const loadEl = appendGlobalMsg('ai', '…');
+
+  const cfg = getApiConfig();
+  if(!cfg.doubaoKey){
+    setTimeout(()=>{ loadEl.textContent = '请先配置豆包 API Key'; }, 600);
+    return;
+  }
+
+  // 构建上下文感知的系统提示
+  const stageCtx = {
+    story: `当前在【改编策划】阶段，已选方案：${PROJECT.scheme.title||'未选定'}`,
+    breakdown: `当前在【分集细纲】阶段，已生成${bdState.allEps?.length||0}集细纲`,
+    script: `当前在【剧本创作】阶段，已生成${Object.keys(scriptState.actScripts||{}).length}幕剧本`,
+  };
+  const ctx = stageCtx[S.page] || '当前在首页';
+  const projInfo = `项目：${S.proj||'未命名'}，原著：${PROJECT.source.docTitle||PROJECT.source.userRequirements?.substring(0,20)||'未知'}，市场：${PROJECT.source.market||'未设定'}，${PROJECT.source.episodeCount||40}集`;
+
+  const sysPrompt = `你是一位专业的短剧创作顾问，正在全程陪同创作者完成一个短剧项目的全流程创作。
+${projInfo}
+${ctx}
+请根据创作者的问题给出简洁专业的建议，结合当前阶段的具体情况。语气平等，像创作伙伴。`;
+
+  // 传入最近10条历史
+  const recentHistory = globalChatHistory.slice(-10).map(m=>({
+    role: m.role==='ai'?'assistant':'user',
+    content: m.content
+  }));
+
+  fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+    method:'POST',
+    headers:{'Authorization':`Bearer ${cfg.doubaoKey}`,'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model: cfg.doubaoModel||'doubao-seed-2-0-lite',
+      max_tokens: 800,
+      messages:[{role:'system',content:sysPrompt},...recentHistory],
+    })
+  }).then(r=>r.json()).then(d=>{
+    const reply = d.choices[0].message.content;
+    loadEl.textContent = reply;
+    globalChatHistory.push({role:'ai', content:reply, stage:S.page});
+    document.getElementById('global-chat-msgs').scrollTop = 9999;
+  }).catch(e=>{
+    loadEl.textContent = '请求失败：' + e.message;
+  });
+}
+
+function appendGlobalMsg(role, text){
+  const msgs = document.getElementById('global-chat-msgs');
+  if(!msgs) return null;
+  const el = document.createElement('div');
+  el.className = 'gc-msg ' + role;
+  el.textContent = text;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+// ── 在各 confirm 点挂入归档调用 ──
+// 这些函数在原有 confirmScheme/confirmBibleAndNext/confirmBreakdownAndNext/translateScriptReal 里调用
+
+// ── 初始化：在 DOMContentLoaded 里添加 workbench 初始化 ──
+function initWorkbench(){
+  // 右栏聊天框高度自适应
+  const ci = document.getElementById('wb-ci');
+  if(ci) ci.addEventListener('input', function(){
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+  });
+  // 初始化资料库（如果有恢复的 PROJECT）
+  if(PROJECT.source.docTitle || uploadedDocText) archiveDoc();
+  if(PROJECT.scheme.confirmed) archiveScheme();
+  if(PROJECT.bible.confirmed) archiveBible();
+  if(bdState.allEps?.length > 0) archiveBreakdown();
+}
+
 async function sendChatReal(ctx) {
   if (ctx === 'script') return;
 
@@ -5539,7 +6000,7 @@ async function sendChatReal(ctx) {
   }
 
   try {
-    let sysPrompt, callFn = getGenApi();
+    let sysPrompt, callFn = callDoubao;
     if(isBible){
       const b=PROJECT.bible, sc=PROJECT.scheme;
       sysPrompt = `你是一位竖屏短剧策划顾问，正在帮助创作者精修「${sc.title}」的创意策划案。当前策划案摘要：Logline：${b.logline}。请根据创作者的要求提供具体修改建议，修改完成后给出修改后的版本供创作者参考。语气平等专业。`;
