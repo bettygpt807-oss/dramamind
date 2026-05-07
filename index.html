@@ -99,7 +99,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .page{display:none;flex-direction:column;height:100%}
 .page.active{display:flex}
 /* When inside wb-mid (flex column), active page must fill available space */
-.wb-mid>.page.active{flex:1;min-height:0;height:100%}
+.wb-mid>.page.active{flex:1;min-height:0;height:auto}
 
 /* HOME */
 .home-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:36px 24px 60px;min-height:0}
@@ -1315,7 +1315,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
           <div class="im-sel">
             <label>题材类型</label>
             <select id="sel-genre">
-              <option value="ai">AI 向（魔幻/奇幻/末世/神话/狼人/吸血鬼）</option>
+              <option value="ai">仿真人向（魔幻/奇幻/末世/神话/狼人/吸血鬼）</option>
               <option value="live">真人向（霸总/都市/甜宠/虐恋/情感流/复仇）</option>
             </select>
           </div>
@@ -1607,9 +1607,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         <div id="script-body"></div>
       </div>
 
-    </div><!-- /script-ea -->
-  </div><!-- /script-layout -->
-</div><!-- /page-script -->
+    </div>
+
+</div>
 
 <!-- Selection toolbar (appears on text selection in script) -->
 <div class="selection-toolbar" id="sel-toolbar">
@@ -3686,8 +3686,6 @@ ${src.docHighlights ? `【原著高光爆点（分集细纲中必须有对应场
 
 ${src.docRhythmRules ? `【原著节奏规律（每集卡点设计必须遵守）】\n${src.docRhythmRules}` : ''}
 
-${src.docBeatSequence ? `【原著节拍序列原文（校验用：对照检查本幕的分集细纲是否对应复刻了原著相应位置的节拍情绪和冲突结构）】\n${src.docBeatSequence.substring(0, 1500)}` : ''}
-
 ${prevContext}
 
 【本批任务】${act.name}（第${act.from}-${act.to}集）
@@ -4269,46 +4267,50 @@ function loadSavedProj(name){
   // Determine best landing page: use last active page from saved state
   const savedPage = snap.S?.page;
   const targetPage = (savedPage && savedPage !== 'home') ? savedPage : 'story';
-
-  // Step 1: navigate to target page FIRST so DOM is mounted in wb-mid
   showPage(targetPage);
 
-  // Step 2: re-render story-stage content
-  if(PROJECT.scheme.confirmed) {
-    goStep(3);
-    if(PROJECT.bible && PROJECT.bible.logline) {
-      try { renderBible(PROJECT.bible); } catch(e){ console.warn('renderBible failed', e); }
+  // Re-render content for each stage
+  if(targetPage === 'story' || true) {
+    // Always re-render scheme cards if schemes exist
+    if(PROJECT.scheme.confirmed) {
+      // Show bible step
+      goStep(3);
+      // Re-render bible if it exists
+      if(PROJECT.bible && PROJECT.bible.logline) {
+        try { renderBible(PROJECT.bible); } catch(e){}
+      }
+    } else if(PROJECT.schemes && PROJECT.schemes.length > 0) {
+      goStep(2);
+      try { renderSchemeCards(PROJECT.schemes); } catch(e){}
+    } else {
+      goStep(1);
     }
-  } else if(PROJECT.schemes && PROJECT.schemes.length > 0) {
-    goStep(2);
-    try { renderSchemeCards(PROJECT.schemes); } catch(e){}
-  } else {
-    goStep(1);
+    if(targetPage !== 'story') {
+      // Navigate to the actual target page
+      setTimeout(() => showPage(targetPage), 50);
+    }
   }
 
-  // Step 3: render breakdown content after DOM settles
+  // Always render breakdown if data exists (regardless of targetPage)
   if(bdState.acts.length > 0) {
-    setTimeout(() => {
-      try {
-        renderActNav();
-        renderActsContainer();
-        bdState.acts.forEach((act, i) => {
-          if(act.eps && act.eps.length > 0) renderActCards(i);
-        });
-        showBdChatBar();
-        if(bdState.confirmed) {
-          const btn = document.getElementById('bd-confirm-btn');
-          if(btn) btn.style.display = 'flex';
-        }
-      } catch(e){ console.warn('breakdown render failed', e); }
-    }, 80);
+    renderActNav();
+    renderActsContainer();
+    bdState.acts.forEach((act, i) => {
+      if(act.eps && act.eps.length > 0) renderActCards(i);
+    });
+    showBdChatBar();
+    if(bdState.confirmed) {
+      const btn = document.getElementById('bd-confirm-btn');
+      if(btn) btn.style.display='flex';
+    }
   }
 
-  // Step 4: render script content after DOM settles
+  // Always render script if data exists (regardless of targetPage)
   if(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0) {
     setTimeout(() => {
-      try { buildScriptUI(); updateScriptStats(); } catch(e){ console.warn('script render failed', e); }
-    }, 160);
+      buildScriptUI();
+      updateScriptStats();
+    }, 100);
   }
 
   showToast(`已载入项目「${name.substring(0,20)}」`);
@@ -4668,8 +4670,6 @@ Logline：${b.logline||''}
 ${src.docHighlights ? `【原著爆点场景还原要求（这些场景的情绪逻辑必须在剧本中有明确对应）】\n${src.docHighlights}` : ''}
 
 ${src.docRhythmRules ? `【原著节奏规律（剧本节奏设计必须遵守）】\n${src.docRhythmRules}` : ''}
-
-${src.docBeatSequence ? `【原著节拍序列原文（写对白和场景时校验：每15秒一个情绪节点的安排必须对应原著此处的情绪节拍设计）】\n${src.docBeatSequence.substring(0, 1200)}` : ''}
 
 【视觉风格与基调】
 ${b.visual||''}
@@ -6140,16 +6140,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
     if(S.page && S.page !== 'home'){
       showPage(S.page);
-      if(S.page === 'story') {
-        if(PROJECT.scheme.confirmed) {
-          goStep(3);
-          if(PROJECT.bible && PROJECT.bible.logline) {
-            try { renderBible(PROJECT.bible); } catch(e){ console.warn('renderBible on restore', e); }
-          }
-        } else {
-          if(S.step) goStep(S.step);
-        }
-      }
+      if(S.page === 'story' && S.step) goStep(S.step);
       if(S.page === 'breakdown' && bdState.acts.length > 0){
         renderActNav();
         renderActsContainer();
@@ -7094,7 +7085,7 @@ function showPMDetail(idx) {
             <span style="font-size:10px;color:var(--i4)">${Math.round(v.text.length/100)/10}k字</span>
           </div>
           <div style="display:flex;gap:6px">
-            <button onclick="pmCopyAsset('${key}')" class="asset-btn">复制</button>
+            <button onclick="navigator.clipboard.writeText(${JSON.stringify(v.text).replace(/</g,'\\x3c')}).then(()=>showToast('已复制'))" class="asset-btn">复制</button>
             <button onclick="pmExportAsset('${key}',${JSON.stringify(v.label).replace(/</g,'\\x3c')})" class="asset-btn">导出</button>
           </div>
         </div>
@@ -7124,16 +7115,6 @@ function showPMDetail(idx) {
     </div>
     <div style="font-size:12px;font-weight:500;color:var(--i2);margin-bottom:12px">归档资产（${assetEntries.length}项）</div>
     ${assetHTML}`;
-}
-
-function pmCopyAsset(key) {
-  const activeItem = document.querySelector('.pm-item.active');
-  if(!activeItem) return;
-  const idx = parseInt(activeItem.id.replace('pmi-',''));
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
-  const p = projects[idx];
-  if(!p || !p.ASSET_STORE?.[key]?.text) { showToast('无内容可复制'); return; }
-  navigator.clipboard.writeText(p.ASSET_STORE[key].text).then(() => showToast('已复制到剪贴板'));
 }
 
 function pmExportAsset(key, label) {
