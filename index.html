@@ -1608,7 +1608,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
     </div>
 
-</div>
+  </div><!-- /script-layout -->
+</div><!-- /page-script -->
 
 <!-- Selection toolbar (appears on text selection in script) -->
 <div class="selection-toolbar" id="sel-toolbar">
@@ -2681,11 +2682,16 @@ function loadProj(name){
 
 function goStep(n){
   S.step=n;
-  // ss2 no longer exists; only toggle ss1 and ss3
   const ss1 = document.getElementById('ss1');
   const ss3 = document.getElementById('ss3');
-  if(n===1){ if(ss1) ss1.style.display='block'; }
-  if(n===3){ if(ss3) ss3.style.display='block'; }
+  // Mutually exclusive: show only the active step, hide the other
+  if(n===1){
+    if(ss1) ss1.style.display='block';
+    if(ss3) ss3.style.display='none';
+  } else if(n===3){
+    if(ss3) ss3.style.display='block';
+    if(ss1) ss1.style.display='none';
+  }
   // Scroll to top of story-main
   const main=document.querySelector('.story-main');
   if(main) main.scrollTo({top:0,behavior:'smooth'});
@@ -4280,26 +4286,22 @@ function loadSavedProj(name){
   const targetPage = (savedPage && savedPage !== 'home') ? savedPage : 'story';
   showPage(targetPage);
 
-  // Re-render content for each stage
-  if(targetPage === 'story' || true) {
-    // Always re-render scheme cards if schemes exist
-    if(PROJECT.scheme.confirmed) {
-      // Show bible step
-      goStep(3);
-      // Re-render bible if it exists
-      if(PROJECT.bible && PROJECT.bible.logline) {
-        try { renderBible(PROJECT.bible); } catch(e){}
-      }
-    } else if(PROJECT.schemes && PROJECT.schemes.length > 0) {
-      goStep(2);
-      try { renderSchemeCards(PROJECT.schemes); } catch(e){}
-    } else {
-      goStep(1);
+  // Always re-render story stage data regardless of targetPage
+  if(PROJECT.scheme.confirmed) {
+    goStep(3);
+    if(PROJECT.bible && PROJECT.bible.logline) {
+      try { renderBible(PROJECT.bible); } catch(e){}
     }
-    if(targetPage !== 'story') {
-      // Navigate to the actual target page
-      setTimeout(() => showPage(targetPage), 50);
-    }
+  } else if(PROJECT.schemes && PROJECT.schemes.length > 0) {
+    goStep(2);
+    try { renderSchemeCards(PROJECT.schemes); } catch(e){}
+  } else {
+    goStep(1);
+  }
+
+  // Navigate to the correct target page (after story data is rendered)
+  if(targetPage !== 'story') {
+    showPage(targetPage);
   }
 
   // Always render breakdown if data exists (regardless of targetPage)
