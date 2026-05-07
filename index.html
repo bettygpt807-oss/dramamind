@@ -98,6 +98,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .main-content{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column}
 .page{display:none;flex-direction:column;height:100%}
 .page.active{display:flex}
+/* When inside wb-mid (flex column), active page must fill available space */
+.wb-mid>.page.active{flex:1;min-height:0;height:auto}
 
 /* HOME */
 .home-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:36px 24px 60px;min-height:0}
@@ -1136,6 +1138,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-card{border:1px solid rgba(255,255,255,.08);border-radius:var(--rs);margin-bottom:6px;overflow:hidden;cursor:pointer;transition:all .15s}
 .asset-card:hover{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.03)}
 .asset-card.ready{border-color:rgba(46,122,80,.45)}
+.asset-card.viewing{border-color:var(--gm)!important;background:var(--gg);box-shadow:0 0 0 2px rgba(30,92,58,.15)}
+.asset-card.viewing .asset-card-label{color:var(--gm);font-weight:600}
 .asset-card-head{display:flex;align-items:center;gap:8px;padding:8px 10px}
 .asset-card-icon{font-size:13px;flex-shrink:0}
 .asset-card-label{font-size:12px;color:rgba(255,255,255,.62);flex:1}
@@ -1230,7 +1234,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         <div class="sb-icon">＋</div>
         <div class="sb-txt"><div class="sb-title">新建项目</div></div>
       </div>
-      <div class="sb-row" id="nav-pm" onclick="showToast('项目管理即将开放')">
+      <div class="sb-row" id="nav-pm" onclick="openProjectManager()">
         <div class="sb-icon" style="font-size:13px">▦</div>
         <div class="sb-txt"><div class="sb-title">项目管理</div></div>
       </div>
@@ -1326,11 +1330,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         </div>
       </div>
       <textarea class="intake-ta" id="intake-input" placeholder="（可选）粘贴改编方案或创作需求……系统将自动识别并生成方案卡片，无需手动填写每一项"></textarea>
-      <div class="upload-area" id="upload-area">
-        <div class="dropzone" onclick="document.getElementById('file-input').click()">
-          <p>📄 将 DramaLens 拆解文档拖放至此，或点击选择文件</p>
-          <span>支持 .docx / .pdf</span>
-        </div>
+      <div class="upload-area" id="upload-area" style="display:none">
         <div class="uploaded-f" id="uploaded-f" style="display:none">
           <span>📄 </span><span id="fname">file.json</span>
           <span class="f-rem" onclick="rmFile()">×</span>
@@ -1338,8 +1338,11 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         <input type="file" id="file-input" style="display:none" accept=".docx,.doc,.pdf" onchange="handleFile(this)">
       </div>
       <div class="intake-tb">
-        <button class="tb-btn" id="up-toggle" onclick="togUpload()">📎 上传文件</button>
-        <button class="tb-btn" onclick="window.open('https://dramalens.vercel.app/','_blank')">🔗 DramaLens 导入</button>
+        <button class="tb-btn" id="up-toggle" onclick="document.getElementById('file-input').click()">📎 上传文件 <span style="font-size:10px;opacity:.6;margin-left:2px">.docx/.pdf</span></button>
+        <div class="uploaded-f" id="uploaded-f" style="display:none;margin-top:0;margin-left:4px;flex-shrink:0">
+          <span>📄 </span><span id="fname" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          <span class="f-rem" onclick="rmFile()">×</span>
+        </div>
         <div class="tb-sp"></div>
         <select class="tb-sel" id="sel-path" style="height:30px;margin-right:4px" aria-label="创作路径">
           <option value="analyze">🔬 拆解改编</option>
@@ -1570,9 +1573,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <div class="stb-translate-wrap" id="stb-translate-wrap">
               <button class="stb-action-btn" onclick="toggleTranslateMenu(event)">一键翻译 ▾</button>
               <div class="stb-dropdown" id="stb-translate-menu" style="display:none">
-                <div class="stb-dd-item" onclick="translateScript('current-ep')">当前集翻译</div>
-                <div class="stb-dd-item" onclick="translateScript('current-act')">当前幕翻译</div>
-                <div class="stb-dd-item" onclick="translateScript('all')">全本翻译</div>
+                <div class="stb-dd-item" onclick="translateScript('current-act')">当前幕翻译（全英）</div>
+                <div class="stb-dd-item" onclick="translateScript('current-act-dialogue')">当前幕翻译（只翻台词）</div>
+                <div class="stb-dd-item" onclick="translateScript('all')">全本翻译（全英）</div>
               </div>
             </div>
             <div class="stb-sep"></div>
@@ -1936,6 +1939,19 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         </div>
       </div>
 
+      <div class="asset-card" id="ac-script-prod" onclick="viewAssetInMain('script-prod')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">🎬</span>
+          <span class="asset-card-label">制作剧本</span>
+          <span class="asset-card-status" id="ac-script-prod-status">待生成</span>
+        </div>
+        <div class="asset-card-body" id="ac-script-prod-body">翻译台词后自动归档 · 中文场景/动作行 + 英文台词</div>
+        <div class="asset-card-actions">
+          <button class="asset-btn" onclick="event.stopPropagation();copyAsset('script-prod')">复制</button>
+          <button class="asset-btn" onclick="event.stopPropagation();exportAsset('script-prod')">导出</button>
+        </div>
+      </div>
+
     </div><!-- wb-asset-list -->
     <div class="wb-left-footer">
       <button class="wb-export-btn" onclick="openExportModal()">⬇ 导出项目资料</button>
@@ -2073,8 +2089,8 @@ function showPage(p){
 let inquiryMode = false;
 
 function togUpload(){
-  document.getElementById('upload-area').classList.toggle('vis');
-  document.getElementById('up-toggle').classList.toggle('active');
+  // Now the button directly triggers file picker — this is kept for compatibility
+  document.getElementById('file-input').click();
 }
 
 // ── Global: stores extracted text from uploaded document ──
@@ -2777,7 +2793,7 @@ ${src.userRequirements}
     return;
   }
 
-  const callFn = callDoubao;
+  const callFn = callAny;
   callFn(userMsg, sysPrompt, 2000)
     .then(doAsk)
     .catch((err) => {
@@ -2881,19 +2897,12 @@ function sendInquiryMsg(){
   const messages = inquiryHistory.map(m=>({role:m.role==='ai'?'assistant':'user', content:m.content}));
 
   const callWithHistory = async () => {
-    const c = getApiConfig();
-    if(!c.doubaoKey) throw new Error('no key');
-    const r = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${c.doubaoKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: c.doubaoModel || 'doubao-seed-2-0-lite-260215',
-        max_tokens: 1200,
-        messages: [{role:'system', content:sysPrompt}, ...messages],
-      })
-    });
-    const d = await r.json();
-    return d.choices[0].message.content;
+    return callAny(messages.length > 0
+      ? messages[messages.length-1].content
+      : '请开始追问',
+      sysPrompt + '\n\n【对话历史】\n' + messages.slice(0,-1).map(m=>`${m.role==='assistant'?'顾问':'创作者'}：${m.content}`).join('\n\n'),
+      1200
+    );
   };
 
   const showBibleBtn = () => {
@@ -2901,7 +2910,7 @@ function sendInquiryMsg(){
     if(btn) btn.classList.add('show');
   };
 
-  if(!cfg.doubaoKey){
+  if(!cfg.doubaoKey && !cfg.claudeKey){
     setTimeout(()=>{
       const r=['很好！这个选择让整体节奏更清晰。还想追问一点……','这个设定非常有潜力，执行层面你有没有想过……','好，信息已经够了。✓ 我们可以生成创意策划案了'];
       const reply = r[Math.min(inquiryMsgCount-1, r.length-1)];
@@ -2931,7 +2940,7 @@ function sendInquiryMsg(){
 // ══ STEP 2 → STEP 3: Generate Creative Bible ══
 async function generateBible(){
   const cfg = getApiConfig();
-  const callFn = callDoubao;
+  const callFn = callAny;
   const src = PROJECT.source;
   const sc = PROJECT.scheme;
 
@@ -3349,6 +3358,27 @@ function showBibleChat(){
 
 function confirmBibleAndNext(){
   if(!PROJECT.bible.logline){ showToast('策划案尚未生成，请先完成策划追问'); return; }
+
+  // Force-sync any in-progress contenteditable edits before archiving
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const key = el.dataset.field;
+    if(!key) return;
+    const val = el.textContent.trim();
+    if(key === 'logline') PROJECT.bible.logline = val;
+    else if(key === 'visual') PROJECT.bible.visual = val;
+    else if(key.startsWith('sp_')) {
+      if(!PROJECT.bible.schemePoints) PROJECT.bible.schemePoints = {};
+      PROJECT.bible.schemePoints[key.replace('sp_','')] = val;
+    }
+  });
+  document.querySelectorAll('[data-char-idx]').forEach(el => {
+    const idx = parseInt(el.dataset.charIdx);
+    const field = el.dataset.charField;
+    if(!isNaN(idx) && field && PROJECT.bible.characters[idx]) {
+      PROJECT.bible.characters[idx][field] = el.textContent.trim();
+    }
+  });
+
   PROJECT.bible.confirmed=true;
   // Sync to outline for downstream compatibility
   PROJECT.outline={
@@ -3605,7 +3635,13 @@ async function generateAct(actIdx) {
 【竖屏短剧叙事要求】
 - 每集结尾留一个让观众必须看下集的悬念或情绪钩子
 - 每集有一个「最强情绪时刻」，用行为和物件传递，不直述情绪
-- 对白密度：每场景不超过8句，留白比对话更有力`;
+- 对白密度：每场景不超过8句，留白比对话更有力
+
+【改编安全性原则（防版权风险，必须严格遵守）】
+- 所有人物名称必须使用改编方案中确定的新名字，严禁出现原著人物名
+- 所有地点、组织、道具名称必须用新设定名称替代（原著标志性道具→改编方案对应新道具名）
+- 场景语言必须完全属于新世界观，不能照搬原著的标志性场景措辞
+- 目标：冲突结构和情绪节拍与原著高度对应，但读起来是一个视觉上完全不同的新故事`;
 
   // Build context from previous acts
   const prevContext = bdState.allEps.length > 0
@@ -3672,7 +3708,7 @@ ${buildLockedEditsContext()}
     rawData = buildMockActData(act);
   } else {
     try {
-      const callFn = callDoubao;
+      const callFn = callAny;
       const raw = await callFn(userMsg, sysPrompt, 6000);
       rawData = parseEpJSON(raw, act.from - 1, act.count);
     } catch(e) {
@@ -4012,7 +4048,7 @@ async function sendActReviewChat(actIdx) {
   const sysPrompt=`你是专业短剧编剧顾问，正在帮创作者修改「${sc.title||'项目'}」第${actIdx+1}幕（${act.name}，第${act.from}-${act.to}集）的分集细纲。Logline：${b.logline||''}。请给出具体修改建议，标明集数和字段，语气平等简洁。`;
   
   try {
-    const callFn = callDoubao;
+    const callFn = callAny;
     const reply = await callFn(msg, sysPrompt);
     aEl.textContent = reply;
   } catch(e) { aEl.textContent='请求失败，请重试。'; }
@@ -4116,76 +4152,11 @@ function showBdChatBar() {
   // 三栏布局中，对话框已移至右侧贯穿对话框，此函数保留以兼容调用
 }
 
-function toggleBdChat() {
-  const h = document.getElementById('bd-chat-history');
-  const lbl = document.getElementById('bd-chat-lbl');
-  if (h) {
-    h.classList.toggle('open');
-    if (lbl) lbl.textContent = h.classList.contains('open') ? '收起对话' : '和 AI 修改细纲';
-  }
-}
-
-function ckEnterBd(e) {
-  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendBdChat(); }
-}
-
-async function sendBdChat() {
-  const inp = document.getElementById('ci-breakdown');
-  const msg = inp?.value?.trim();
-  if (!msg) return;
-  inp.value=''; inp.style.height='auto';
-
-  const msgs = document.getElementById('bd-chat-msgs');
-  if (!msgs) return;
-
-  // Open history
-  const h = document.getElementById('bd-chat-history');
-  if (h && !h.classList.contains('open')) {
-    h.classList.add('open');
-    const lbl = document.getElementById('bd-chat-lbl');
-    if (lbl) lbl.textContent = '收起对话';
-  }
-
-  // User bubble
-  const uEl = document.createElement('div');
-  uEl.className='msg user'; uEl.textContent=msg;
-  msgs.appendChild(uEl);
-  msgs.scrollTop=msgs.scrollHeight;
-  bdState.chatHistory.push({role:'user', content:msg});
-
-  // AI bubble
-  const aEl = document.createElement('div');
-  aEl.className='msg ai'; aEl.textContent='…';
-  msgs.appendChild(aEl);
-  msgs.scrollTop=msgs.scrollHeight;
-
-  const cfg = getApiConfig();
-  if (!cfg.claudeKey && !cfg.doubaoKey) {
-    await new Promise(r=>setTimeout(r,900));
-    aEl.textContent='好的，我来看看如何调整。如果你想修改某一集的节拍或卡点，可以直接点击卡片上的对应字段编辑，系统会自动记录你的修改并在后续生成剧本时继承。';
-    bdState.chatHistory.push({role:'assistant', content:aEl.textContent});
-    return;
-  }
-
-  const b=PROJECT.bible, sc=PROJECT.scheme, src=PROJECT.source;
-  const sysPrompt = `你是一位竖屏短剧分集编剧顾问，正在帮助创作者修改「${sc.title}」的分集细纲。
-当前已生成${bdState.generatedCount}集细纲，总集数${src.episodeCount}集。
-项目Logline：${b.logline}
-如果创作者要求修改某集内容，请给出具体修改建议（标明集数和字段），创作者可以直接采纳后手动点击卡片编辑，或告诉你确认后你帮她更新。`;
-
-  const messages = bdState.chatHistory.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
-
-  try {
-    const callFn = callDoubao;
-    // Simple single-turn for chat (to keep token usage low)
-    const reply = await callFn(msg, sysPrompt);
-    aEl.textContent = reply;
-    bdState.chatHistory.push({role:'assistant', content:reply});
-  } catch(e) {
-    aEl.textContent = '请求失败，请重试。';
-  }
-  msgs.scrollTop=msgs.scrollHeight;
-}
+// Breakdown chat is handled by the global right-panel chat (sendGlobalChat)
+// These stubs are kept for compatibility with any saved project state that references them
+function toggleBdChat() { /* handled by global chat panel */ }
+function ckEnterBd(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendGlobalChat();} }
+async function sendBdChat() { sendGlobalChat(); }
 
 // ══ CONFIRM & EXPORT ══
 
@@ -4293,11 +4264,33 @@ function loadSavedProj(name){
     if(tab) tab.classList.toggle('done', wfDone.includes(id));
   });
 
-  // Navigate to last active page
-  const targetPage = S.page && S.page !== 'home' ? S.page : 'story';
+  // Determine best landing page: use last active page from saved state
+  const savedPage = snap.S?.page;
+  const targetPage = (savedPage && savedPage !== 'home') ? savedPage : 'story';
   showPage(targetPage);
 
-  if(targetPage === 'story' && S.step) goStep(S.step);
+  // Re-render content for each stage
+  if(targetPage === 'story' || true) {
+    // Always re-render scheme cards if schemes exist
+    if(PROJECT.scheme.confirmed) {
+      // Show bible step
+      goStep(3);
+      // Re-render bible if it exists
+      if(PROJECT.bible && PROJECT.bible.logline) {
+        try { renderBible(PROJECT.bible); } catch(e){}
+      }
+    } else if(PROJECT.schemes && PROJECT.schemes.length > 0) {
+      goStep(2);
+      try { renderSchemeCards(PROJECT.schemes); } catch(e){}
+    } else {
+      goStep(1);
+    }
+    if(targetPage !== 'story') {
+      // Navigate to the actual target page
+      setTimeout(() => showPage(targetPage), 50);
+    }
+  }
+
   if(targetPage === 'breakdown') {
     if(bdState.acts.length > 0) {
       renderActNav();
@@ -4309,11 +4302,15 @@ function loadSavedProj(name){
       if(bdState.confirmed) document.getElementById('bd-confirm-btn').style.display='flex';
     }
   }
+
   if(targetPage === 'script') {
-    buildScriptUI();
+    setTimeout(() => {
+      buildScriptUI();
+      updateScriptStats();
+    }, 100);
   }
 
-  showToast('已加载项目：' + name.substring(0,20));
+  showToast(`已载入项目「${name.substring(0,20)}」`);
 }
 function updateScriptStats(){
   const body=document.getElementById('script-body');
@@ -4507,8 +4504,6 @@ function findNextUngeneratedAct() {
 // ── Act tabs (幕级，不是集级) ──
 function renderActTabs() {
   const tabs = document.getElementById('act-tabs');
-  // Also keep ep-tabs in sync for any legacy calls
-  const epTabs = document.getElementById('ep-tabs');
   if (!tabs) return;
 
   let html = '';
@@ -4584,7 +4579,7 @@ async function generateScriptAct(actIdx) {
   appendActGeneratingPlaceholder(actIdx);
 
   const cfg = getApiConfig();
-  const callFn = callDoubao;
+  const callFn = callAny;
   const epSlice = PROJECT.episodes.allData.slice(act.from - 1, act.to);
   const b = PROJECT.bible, sc = PROJECT.scheme, src = PROJECT.source;
   const transcript = PROJECT.inquiry.messages.length > 0
@@ -4620,6 +4615,12 @@ async function generateScriptAct(actIdx) {
 - [DIALOGUE] 行中的对白语言：与项目目标市场语言一致（欧美市场用英文，中国市场用中文）
 - 同一人物在整部剧本中名字必须完全一致，不得在英文名和中文名之间随意切换
 - 场景标题（[SCENE]行）中的地点名：可保留原始语言，但同一地点名称必须一致
+
+【改编安全性原则（防版权风险，必须严格遵守）】
+- 所有人物名称使用改编方案确定的新名字，严禁出现原著人物名
+- 场景地点、组织、道具全部使用新设定中的名称
+- 对白的语言风格和世界观完全属于改编后的新世界，不能出现原著特有的语言符号
+- 目标：读者感受到相同的情绪冲击力，但认不出是哪部原著的故事
 
 【硬性约束】
 - 每集字数：1000-1500字 / 对应时长：100s-130s
@@ -4876,6 +4877,24 @@ function toggleActEndChat(actIdx) {
 
 function renderFinalizePrompt() {
   renderActTabs();
+  const body = document.getElementById('script-body');
+  if(!body) return;
+
+  // Show library interaction hint after all acts are done
+  const hint = document.createElement('div');
+  hint.id = 'finalize-hint';
+  hint.style.cssText = 'max-width:600px;margin:40px auto;padding:32px 36px;background:var(--wh);border-radius:var(--r);box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:center';
+  hint.innerHTML = `
+    <div style="font-size:32px;margin-bottom:12px">✓</div>
+    <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:8px">全部剧本已生成</div>
+    <div style="font-size:13px;color:var(--i3);line-height:1.8;margin-bottom:24px">点击左侧资料库中的任意资产，可在此处预览并在线编辑<br>翻译台词后系统自动归档制作剧本，全本翻译后归档英文剧本</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      ${Object.entries(ASSET_STORE).filter(([k,v])=>v.text).map(([k,v])=>`
+        <button onclick="viewAssetInMain('${k}')" class="gen-btn" style="height:32px;padding:0 16px;font-size:12px;background:var(--wh);color:var(--gm);border:1.5px solid var(--gm)">
+          查看 ${v.label}
+        </button>`).join('')}
+    </div>`;
+  body.appendChild(hint);
 }
 
 // ── Act end AI chat (by actIdx, embedded in the end panel) ──
@@ -4910,7 +4929,7 @@ async function sendScriptActChatById(actIdx) {
   const messages = scriptState.chatHistory.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
 
   try {
-    const callFn = callDoubao;
+    const callFn = callAny;
     const reply = await callFn(msg, sysPrompt, 1500);
     aEl.textContent = reply;
     scriptState.chatHistory.push({role:'assistant',content:reply});
@@ -5241,7 +5260,8 @@ function swtSSTab(el,id){
     const e=document.getElementById(t);
     if(e)e.style.display=t===id?'flex':'none';
   });
-  document.getElementById('sc-chat-wrap').style.display=id==='sc-chat'?'flex':'none';
+  const scWrap = document.getElementById('sc-chat-wrap');
+  if(scWrap) scWrap.style.display=id==='sc-chat'?'flex':'none';
 }
 
 function swtProd(el,id){
@@ -5408,9 +5428,10 @@ function cpRow(btn){
 
 function toggleChatHistory(){
   const h=document.getElementById('story-chat-history');
+  if(!h) return;
   const lbl=document.getElementById('chat-hist-label');
   const isOpen=h.classList.toggle('open');
-  lbl.textContent=isOpen?'收起对话':'查看对话';
+  if(lbl) lbl.textContent=isOpen?'收起对话':'查看对话';
   if(isOpen){
     const inner=document.getElementById('story-chat');
     if(inner)inner.scrollTop=inner.scrollHeight;
@@ -5418,6 +5439,107 @@ function toggleChatHistory(){
 }
 
 // toggleScriptChat defined in Phase 3 block above
+
+// ══ SELECTION TOOLBAR ══
+
+let _selectedEl = null; // currently selected script element
+
+// Show toolbar near selected text
+document.addEventListener('mouseup', (e) => {
+  if(S.page !== 'script') return;
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed || !sel.toString().trim()) {
+    document.getElementById('sel-toolbar').classList.remove('show');
+    return;
+  }
+  const target = sel.anchorNode?.parentElement?.closest('[data-ep]');
+  if(!target) { document.getElementById('sel-toolbar').classList.remove('show'); return; }
+  _selectedEl = target;
+  const range = sel.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  const tb = document.getElementById('sel-toolbar');
+  tb.style.left = Math.max(8, rect.left + rect.width/2 - 80) + 'px';
+  tb.style.top = (rect.top + window.scrollY - 44) + 'px';
+  tb.classList.add('show');
+});
+
+document.addEventListener('mousedown', (e) => {
+  if(!e.target.closest('#sel-toolbar') && !e.target.closest('#comment-input-wrap')) {
+    document.getElementById('sel-toolbar').classList.remove('show');
+    closeCommentInput();
+  }
+  if(!e.target.closest('#ce-menu') && !e.target.closest('.sel-btn')) {
+    document.getElementById('ce-menu').classList.remove('show');
+  }
+});
+
+function openAiEditInput(e) {
+  const sel = window.getSelection();
+  const quote = sel ? sel.toString().trim().substring(0, 100) : '';
+  const wrap = document.getElementById('comment-input-wrap');
+  const preview = document.getElementById('comment-quote-preview');
+  const ta = document.getElementById('comment-input-ta');
+  if(preview) preview.textContent = quote ? `"${quote}"` : '';
+  if(ta) ta.value = '';
+  if(wrap) {
+    const tb = document.getElementById('sel-toolbar');
+    const rect = tb.getBoundingClientRect();
+    wrap.style.left = Math.max(8, rect.left) + 'px';
+    wrap.style.top = (rect.top + window.scrollY + 44) + 'px';
+    wrap.classList.add('show');
+    setTimeout(() => ta?.focus(), 50);
+  }
+  document.getElementById('sel-toolbar').classList.remove('show');
+}
+
+function closeCommentInput() {
+  const wrap = document.getElementById('comment-input-wrap');
+  if(wrap) wrap.classList.remove('show');
+}
+
+async function submitAiEdit() {
+  const ta = document.getElementById('comment-input-ta');
+  const instruction = ta?.value?.trim();
+  if(!instruction) { showToast('请输入修改说明'); return; }
+  closeCommentInput();
+  if(!_selectedEl) { showToast('请先在剧本中选中要修改的文字'); return; }
+  const original = _selectedEl.textContent.trim();
+  const cfg = getApiConfig();
+  if(!cfg.doubaoKey && !cfg.claudeKey) { showToast('请先配置 API Key'); return; }
+  const epIdx = parseInt(_selectedEl.dataset.ep);
+  const b = PROJECT.bible, sc = PROJECT.scheme;
+  const sysPrompt = `你是专业短剧编剧，正在修改「${sc.title||'项目'}」第${epIdx+1}集的剧本内容。Logline：${b.logline||''}。请按照创作者的指令修改选中文字，保持好莱坞剧本格式，只返回修改后的替换文本，不加任何解释或标签。`;
+  showToast('AI 修改中…');
+  try {
+    const result = await callAny(`原文：${original}\n\n修改要求：${instruction}`, sysPrompt, 500);
+    _selectedEl.textContent = result.trim();
+    saveScriptField(_selectedEl);
+    showToast('修改完成 ✓');
+  } catch(e) {
+    showToast('修改失败：' + e.message);
+  }
+}
+
+function openCEMenu(e) {
+  const menu = document.getElementById('ce-menu');
+  const tb = document.getElementById('sel-toolbar');
+  const rect = tb.getBoundingClientRect();
+  menu.style.left = Math.max(8, rect.right - 140) + 'px';
+  menu.style.top = (rect.top + window.scrollY + 44) + 'px';
+  menu.classList.add('show');
+  document.getElementById('sel-toolbar').classList.remove('show');
+}
+
+function changeElement(newType) {
+  document.getElementById('ce-menu').classList.remove('show');
+  if(!_selectedEl) return;
+  const epIdx = parseInt(_selectedEl.dataset.ep);
+  convertElementType(_selectedEl, newType, epIdx);
+  showToast('已转换为 ' + {
+    'sp-scene':'场景标题','sp-action':'动作','sp-char':'人物名',
+    'sp-paren':'括号说明','sp-dlg':'对白','sp-transition':'转场'
+  }[newType] || newType);
+}
 
 function ckEnter(e,ctx){
   if(e.key==='Enter'&&!e.shiftKey){
@@ -5618,8 +5740,10 @@ function saveProject(){
       projectToSave.source.docBeatSequence = projectToSave.source.docBeatSequence.substring(0, 3000) + '\n…[已截断，原始文档重新上传可恢复完整版]';
     }
     const snapshot = {
+      name: S.proj || '未命名项目',
       S: {...S},
       PROJECT: projectToSave,
+      ASSET_STORE: JSON.parse(JSON.stringify(ASSET_STORE)),
       breakdownState: JSON.parse(JSON.stringify(breakdownState)),
       scriptState: {
         total: scriptState.total,
@@ -5643,6 +5767,16 @@ function saveProject(){
       showToast('⚠ 项目数据较大，建议导出备份');
     }
     localStorage.setItem(STORAGE_KEY, serialized);
+    // Also keep dramamind_projects in sync so project manager shows fresh data
+    if(S.proj) {
+      try {
+        const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+        const idx = projects.findIndex(p => p.name === S.proj);
+        if(idx >= 0) { projects[idx] = snapshot; }
+        else { projects.unshift(snapshot); }
+        localStorage.setItem('dramamind_projects', JSON.stringify(projects.slice(0, 20)));
+      } catch(e2) { /* quota — don't block main save */ }
+    }
     const ind = document.getElementById('save-indicator');
     if(ind){ ind.style.display='inline'; ind.textContent='已保存'; setTimeout(()=>{ ind.textContent=''; }, 2000); }
   } catch(e) {
@@ -5661,6 +5795,18 @@ function debouncedSave(){
 function restoreFromSnap(snap) {
   Object.assign(S, snap.S || {});
   Object.assign(PROJECT, snap.PROJECT);
+  // Restore ASSET_STORE
+  if (snap.ASSET_STORE) {
+    Object.keys(ASSET_STORE).forEach(k => {
+      if (snap.ASSET_STORE[k]) {
+        ASSET_STORE[k].text = snap.ASSET_STORE[k].text || '';
+      }
+    });
+    // Refresh all asset card statuses
+    Object.keys(ASSET_STORE).forEach(k => {
+      if(ASSET_STORE[k].text) updateAssetCard(k, ASSET_STORE[k].text);
+    });
+  }
   Object.assign(breakdownState, snap.breakdownState || {});
   // Restore scriptState
   if (snap.scriptState) {
@@ -5699,6 +5845,7 @@ function newProject(){
     const snap = {
       name: S.proj, savedAt: Date.now(),
       S: {...S}, PROJECT: JSON.parse(JSON.stringify(PROJECT)),
+      ASSET_STORE: JSON.parse(JSON.stringify(ASSET_STORE)),
       breakdownState: JSON.parse(JSON.stringify(breakdownState)),
       scriptState: {
         total: scriptState.total,
@@ -6011,6 +6158,49 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   // 初始化三栏工作台
   initWorkbench();
+
+  // ── Q5: Auto-save safeguards ──
+
+  // 1. Periodic save every 30s (catches any missed edits)
+  setInterval(() => {
+    if(S.page && S.page !== 'home') {
+      try { saveProject(); } catch(e){}
+    }
+  }, 30000);
+
+  // 2. Save on page/tab close/refresh
+  window.addEventListener('beforeunload', (e) => {
+    try { saveProject(); } catch(ex){}
+    // Only show warning if there's active unsaved work
+    if(S.page && S.page !== 'home' && S.proj) {
+      e.preventDefault();
+      e.returnValue = ''; // triggers browser's native "leave page?" dialog
+    }
+  });
+
+  // 3. Scheme card textarea auto-save (delegated from container)
+  const schemeCards = document.querySelector('.scheme-cards');
+  if(schemeCards) {
+    let _schemeEditTimer = null;
+    schemeCards.addEventListener('input', (e) => {
+      if(e.target.classList.contains('sc-hook-edit') || e.target.classList.contains('sc-brief-edit')) {
+        clearTimeout(_schemeEditTimer);
+        _schemeEditTimer = setTimeout(() => { saveProject(); }, 1000);
+      }
+    });
+  }
+
+  // 4. Global delegated auto-save for any contenteditable that doesn't already have blur-save
+  let _globalEditTimer = null;
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if(el.hasAttribute('contenteditable') && !el.hasAttribute('data-ep') && el.id !== 'wb-ci') {
+      clearTimeout(_globalEditTimer);
+      _globalEditTimer = setTimeout(() => {
+        try { saveProject(); } catch(ex){}
+      }, 1500);
+    }
+  });
 });
 
 document.addEventListener('input', function(e){
@@ -6304,6 +6494,14 @@ function getApiConfig() {
   catch(e) { return {}; }
 }
 
+// ── Universal caller: Doubao preferred, Claude as fallback ──
+async function callAny(userMsg, systemPrompt, maxTokens=2000) {
+  const cfg = getApiConfig();
+  if (cfg.doubaoKey) return callDoubao(userMsg, systemPrompt, maxTokens);
+  if (cfg.claudeKey) return callClaude(userMsg, systemPrompt, maxTokens);
+  throw new Error('no key');
+}
+
 function openApiConfig() {
   const cfg = getApiConfig();
   document.getElementById('claude-key-input').value = cfg.claudeKey || '';
@@ -6423,7 +6621,8 @@ async function translateScriptReal(mode) {
 
   // 确定翻译范围
   const isCurrent = mode === 'current-ep';
-  const isCurrentAct = mode === 'current-act';
+  const isCurrentAct = mode === 'current-act' || mode === 'current-act-dialogue';
+  const dialogueOnly = mode === 'current-act-dialogue';
 
   // 翻译前先归档当前中文剧本（翻译意味着中文版已定稿）
   archiveScriptCn();
@@ -6450,11 +6649,18 @@ async function translateScriptReal(mode) {
   if (!epWraps.length) { showToast('暂无剧本内容可翻译'); return; }
 
   const actName = isCurrentAct && bdState.acts[currentActIdx] ? bdState.acts[currentActIdx].name : '';
-  const totalLabel = isCurrent ? `第${(currentEp||0)+1}集` : isCurrentAct ? `${actName}（${epWraps.length}集）` : `全本（${epWraps.length}集）`;
+  const modeLabel = dialogueOnly ? '（只翻台词）' : '（全英）';
+  const totalLabel = isCurrent ? `第${(currentEp||0)+1}集` : isCurrentAct ? `${actName}${modeLabel}（${epWraps.length}集）` : `全本（${epWraps.length}集）`;
   document.getElementById('gen-txt').textContent = `正在翻译 ${totalLabel}……`;
   document.getElementById('gen-mask').classList.add('show');
 
-  const sysPrompt = `You are a professional short drama script translator specializing in Chinese-to-English translation for vertical-screen short dramas targeting international streaming platforms.
+  const sysPrompt = dialogueOnly
+    ? `You are a professional short drama script translator. Translate ONLY the dialogue and parenthetical lines from Chinese to English. Rules:
+- [sp-dlg] lines: translate to natural, emotionally resonant English that matches the character's tone and personality
+- [sp-paren] lines: translate the stage direction/emotion notes naturally
+- Keep all formatting tags exactly as-is — only translate the text content after the tag
+- Return ONLY the translated lines, no explanations`
+    : `You are a professional short drama script translator specializing in Chinese-to-English translation for vertical-screen short dramas targeting international streaming platforms.
 
 Translation rules:
 - Preserve all screenplay formatting (scene headings, action lines, character names, dialogue, parentheticals)
@@ -6470,7 +6676,10 @@ Translation rules:
     const wrap = epWraps[i];
     const epIdx = parseInt(wrap.dataset.ep);
 
-    const elements = [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
+    // For dialogue-only mode, only extract dialogue and parenthetical lines
+    const elements = dialogueOnly
+      ? [...wrap.querySelectorAll('.sp-dlg,.sp-paren')]
+      : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
     if (!elements.length) continue;
 
     const lines = elements.map(el => {
@@ -6544,8 +6753,17 @@ Translation rules:
   if (failedEps.length) {
     showToast(`翻译完成，第 ${failedEps.join('、')} 集失败，可单集重试`);
   } else {
-    showToast(`${totalLabel}翻译完成 ✓ · 中文剧本已自动归档`);
-    archiveScriptEn(); // 入库：英文剧本
+    // Q1: Any translation = CN script is finalized for that scope → archive CN
+    archiveScriptCn();
+    if (dialogueOnly) {
+      // Q2: Dialogue-only = prod script (CN scenes + EN dialogue) → archive prod
+      archiveScriptProd();
+      showToast(`${totalLabel}台词翻译完成 ✓ · 中文剧本及制作剧本已归档`);
+    } else {
+      // Full EN translation → archive EN script too
+      archiveScriptEn();
+      showToast(`${totalLabel}翻译完成 ✓ · 中文剧本及英文剧本已归档`);
+    }
   }
 }
 
@@ -6559,8 +6777,9 @@ const ASSET_STORE = {
   scheme:   { label:'改编方案',   text:'' },
   bible:    { label:'创意策划案', text:'' },
   breakdown:{ label:'分集细纲',   text:'' },
-  'script-cn':{ label:'中文剧本', text:'' },
-  'script-en':{ label:'英文剧本', text:'' },
+  'script-cn':  { label:'中文剧本',   text:'' },
+  'script-en':  { label:'英文剧本',   text:'' },
+  'script-prod':{ label:'制作剧本',   text:'' },
 };
 
 function updateAssetCard(key, text){
@@ -6580,6 +6799,13 @@ function updateAssetCard(key, text){
 function toggleAssetCard(id){
   const card = document.getElementById(id);
   if(!card) return;
+  // Script assets: when on script page, show inline viewer instead of toggle
+  const scriptAssets = ['ac-script-cn','ac-script-en','ac-script-prod'];
+  if(S.page === 'script' && scriptAssets.includes(id)) {
+    const key = id.replace('ac-','');
+    viewAssetInMain(key);
+    return;
+  }
   card.classList.toggle('open');
 }
 
@@ -6609,6 +6835,7 @@ const ASSET_DESCRIPTIONS = {
   breakdown: '各幕分集细纲，含情节节拍与结尾卡点',
   'script-cn': '完整中文剧本（好莱坞格式）',
   'script-en': '完整英文剧本（好莱坞格式）',
+  'script-prod': '制作剧本：中文场景/动作行 + 英文台词（供制作团队使用）',
 };
 
 function openExportModal(){
@@ -6619,7 +6846,7 @@ function openExportModal(){
   items.innerHTML = Object.entries(ASSET_STORE).map(([key, store]) => {
     const hasContent = store.text.length > 0;
     const desc = ASSET_DESCRIPTIONS[key] || '';
-    const icon = {doc:'📄',scheme:'🎯',bible:'📋',breakdown:'📊','script-cn':'✍️','script-en':'🌐'}[key] || '📁';
+    const icon = {doc:'📄',scheme:'🎯',bible:'📋',breakdown:'📊','script-cn':'✍️','script-en':'🌐','script-prod':'🎬'}[key] || '📁';
     return `<div class="export-item${hasContent?' ready':''}" onclick="${hasContent ? `exportAsset('${key}')` : 'showToast(\"内容尚未生成\")'}" title="${hasContent ? '点击下载' : '内容尚未生成，无法导出'}">
       <span class="export-item-icon">${icon}</span>
       <span class="export-item-info">
@@ -6677,33 +6904,230 @@ function archiveBible(){
 
 function archiveBreakdown(){
   if(!bdState.allEps?.length) return;
-  const lines = bdState.allEps.slice(0, 20).map(ep =>
-    `第${ep.num}集《${ep.title}》\n${ep.beat?.substring(0,80)}……\n卡点：${ep.hook?.substring(0,50)}`
+  // Capture all episodes with full content (not truncated)
+  const lines = bdState.allEps.map(ep =>
+    `第${ep.num}集《${ep.title}》\n${ep.beat || ''}\n卡点：${ep.hook || ''}`
   );
-  const text = lines.join('\n\n') + (bdState.allEps.length > 20 ? `\n\n……共${bdState.allEps.length}集` : '');
+  const text = `【分集细纲 · 共${bdState.allEps.length}集】\n\n` + lines.join('\n\n───\n\n');
   updateAssetCard('breakdown', text);
 }
 
 function archiveScriptCn(){
-  // 从剧本 DOM 提取纯文本
   const body = document.getElementById('script-body');
-  if(!body) return;
-  const text = body.innerText?.substring(0, 3000) || '';
-  if(text.length > 50) updateAssetCard('script-cn', text);
+  if(!body || !body.innerText.trim()) return;
+  const text = extractScriptLines(body, 'all');
+  if(text.length > 50) { updateAssetCard('script-cn', text); saveProject(); }
 }
 
-// 英文剧本在翻译完成后从 DOM 提取（翻译后内容已写回 DOM）
 function archiveScriptEn(){
   const body = document.getElementById('script-body');
-  if(!body) return;
-  const text = body.innerText?.substring(0, 3000) || '';
-  if(text.length > 50) updateAssetCard('script-en', text);
+  if(!body || !body.innerText.trim()) return;
+  const text = extractScriptLines(body, 'all');
+  if(text.length > 50) { updateAssetCard('script-en', text); saveProject(); }
+}
+
+// 制作剧本：保留中文场景/动作描述，台词已翻译为英文
+function archiveScriptProd(){
+  const body = document.getElementById('script-body');
+  if(!body || !body.innerText.trim()) return;
+  const text = extractScriptLines(body, 'prod');
+  if(text.length > 50) { updateAssetCard('script-prod', text); saveProject(); }
+}
+
+// Extract script lines with Hollywood format
+// mode: 'all' = full text, 'prod' = same (CN scene stays, translated dialogue included)
+function extractScriptLines(body, mode) {
+  const out = [];
+  body.querySelectorAll('.script-page').forEach(page => {
+    const titleEl = page.querySelector('.sp-title b');
+    if(titleEl){ out.push(''); out.push(titleEl.textContent.trim()); out.push(''); }
+    page.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition').forEach(el => {
+      const cls = [...el.classList].find(c => c.startsWith('sp-'));
+      const content = el.textContent.trim();
+      if(!content) return;
+      if(cls === 'sp-scene'){ out.push(''); out.push(content.toUpperCase()); out.push(''); }
+      else if(cls === 'sp-char'){ out.push(''); out.push('\t\t\t' + content.toUpperCase()); }
+      else if(cls === 'sp-paren'){ out.push('\t\t' + content); }
+      else if(cls === 'sp-dlg'){ out.push('\t\t' + content); }
+      else if(cls === 'sp-transition'){ out.push(''); out.push('\t\t\t\t\t\t' + content); out.push(''); }
+      else { out.push(content); }
+    });
+    out.push(''); out.push('─'.repeat(40)); out.push('');
+  });
+  return out.join('\n');
+}
+
+// Q3: Clicking asset card in left sidebar shows content in main area (after finalize)
+function viewAssetInMain(key) {
+  const store = ASSET_STORE[key];
+  if(!store) { toggleAssetCard('ac-' + key); return; }
+  if(S.page !== 'script') { toggleAssetCard('ac-' + key); return; }
+  if(!store.text) { showToast(`「${store.label}」暂未归档`); return; }
+
+  const body = document.getElementById('script-body');
+  const scroll = document.getElementById('script-scroll');
+  if(!body || !scroll) { toggleAssetCard('ac-' + key); return; }
+
+  body.innerHTML = `<div class="asset-viewer" style="max-width:700px;margin:32px auto;padding:32px 40px;background:var(--wh);border-radius:var(--r);box-shadow:0 2px 12px rgba(0,0,0,.08)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--bl)">
+      <div>
+        <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:18px;font-weight:600;color:var(--ink)">${store.label}</div>
+        <div style="font-size:11px;color:var(--i4);margin-top:3px">${S.proj||'项目'} · 点击文本可直接编辑</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="asset-btn" onclick="copyAsset('${key}')">复制</button>
+        <button class="asset-btn" onclick="exportAsset('${key}')">导出</button>
+        <button class="btn-ol" style="height:28px;padding:0 12px;font-size:12px" onclick="buildScriptUI()">← 返回剧本</button>
+      </div>
+    </div>
+    <div contenteditable="true" spellcheck="false"
+      style="font-family:'Courier Prime','Courier New',monospace;font-size:12pt;line-height:1.8;white-space:pre-wrap;color:var(--ink);outline:none;min-height:300px"
+      oninput="ASSET_STORE['${key}'].text=this.innerText;updateAssetCard('${key}',this.innerText)"
+    >${escHtml(store.text)}</div>
+  </div>`;
+  scroll.scrollTop = 0;
+  document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
+  const card = document.getElementById('ac-' + key);
+  if(card) card.classList.add('viewing');
 }
 
 // ── 阶段分隔标记 ──
 let _lastStage = '';
-function addStageMark(label){
-  if(label === _lastStage) return; // 不重复插入
+// ══ PROJECT MANAGER ══
+
+function openProjectManager() {
+  const modal = document.getElementById('pm-modal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  renderPMList();
+}
+
+function closePM() {
+  document.getElementById('pm-modal').style.display = 'none';
+}
+
+function renderPMList() {
+  const list = document.getElementById('pm-list');
+  const countEl = document.getElementById('pm-count');
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+
+  if(countEl) countEl.textContent = `共 ${projects.length} 个项目`;
+
+  if(!projects.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--i4);padding:16px 10px;text-align:center">暂无保存的项目</div>';
+    return;
+  }
+
+  list.innerHTML = projects.map((p, i) => {
+    const d = new Date(p.savedAt);
+    const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    const market = p.PROJECT?.source?.market || '';
+    const assetCount = Object.values(p.ASSET_STORE || {}).filter(a => a.text && a.text.length > 10).length;
+    const stage = p.S?.page === 'script' ? '剧本创作' : p.S?.page === 'breakdown' ? '分集细纲' : p.PROJECT?.scheme?.confirmed ? '策划案' : '方案选定';
+    return `<div class="pm-item" id="pmi-${i}" onclick="showPMDetail(${i})" style="padding:10px 10px;border-radius:var(--rs);cursor:pointer;margin-bottom:4px;border:1.5px solid transparent;transition:all .15s" onmouseover="this.style.background='var(--bl)'" onmouseout="if(!this.classList.contains('active'))this.style.background='transparent'">
+      <div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--i4)">${dateStr}</span>
+        ${market ? `<span style="font-size:10px;padding:1px 6px;background:var(--gg);color:var(--gm);border-radius:8px">${escHtml(market)}</span>` : ''}
+        <span style="font-size:10px;color:var(--i3)">${stage}</span>
+        ${assetCount > 0 ? `<span style="font-size:10px;color:var(--i4)">${assetCount}项资产</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showPMDetail(idx) {
+  // Highlight selected
+  document.querySelectorAll('.pm-item').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+    el.style.background = i === idx ? 'var(--gg)' : 'transparent';
+    el.style.borderColor = i === idx ? 'var(--gp)' : 'transparent';
+  });
+
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const p = projects[idx];
+  if(!p) return;
+
+  const detail = document.getElementById('pm-detail');
+  const assetStore = p.ASSET_STORE || {};
+  const src = p.PROJECT?.source || {};
+  const sc = p.PROJECT?.scheme || {};
+  const d = new Date(p.savedAt);
+
+  const assetEntries = Object.entries(assetStore).filter(([k, v]) => v.text && v.text.length > 10);
+  const assetHTML = assetEntries.length > 0
+    ? assetEntries.map(([key, v]) => `
+      <div style="border:1.5px solid var(--bl);border-radius:var(--rs);overflow:hidden;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--bl)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:14px">${{doc:'📄',scheme:'🎯',bible:'📋',breakdown:'📊','script-cn':'✍️','script-en':'🌐','script-prod':'🎬'}[key]||'📁'}</span>
+            <span style="font-size:13px;font-weight:500;color:var(--ink)">${v.label}</span>
+            <span style="font-size:10px;color:var(--i4)">${Math.round(v.text.length/100)/10}k字</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button onclick="navigator.clipboard.writeText(${JSON.stringify(v.text).replace(/</g,'\\x3c')}).then(()=>showToast('已复制'))" class="asset-btn">复制</button>
+            <button onclick="pmExportAsset('${key}',${JSON.stringify(v.label).replace(/</g,'\\x3c')})" class="asset-btn">导出</button>
+          </div>
+        </div>
+        <div style="padding:10px 14px;max-height:120px;overflow-y:auto;font-family:'Courier Prime','Noto Sans SC',monospace;font-size:11px;line-height:1.7;color:var(--i2);white-space:pre-wrap;word-break:break-all">${escHtml(v.text.substring(0, 800))}${v.text.length > 800 ? '\n…（点击复制查看完整内容）' : ''}</div>
+      </div>`).join('')
+    : '<div style="color:var(--i4);font-size:13px;padding:20px 0">该项目暂无归档资产</div>';
+
+  detail.innerHTML = `
+    <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--bl)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:17px;font-weight:600;color:var(--ink);margin-bottom:6px">${escHtml(p.name)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${src.market ? `<span style="font-size:11px;padding:2px 8px;background:var(--gg);color:var(--gm);border-radius:10px">${escHtml(src.market)}</span>` : ''}
+            ${src.genre ? `<span style="font-size:11px;padding:2px 8px;background:var(--bl);color:var(--i3);border-radius:10px">${escHtml(src.genre.split('（')[0])}</span>` : ''}
+            ${src.episodeCount ? `<span style="font-size:11px;color:var(--i4)">${src.episodeCount}集</span>` : ''}
+            <span style="font-size:11px;color:var(--i4)">保存于 ${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}</span>
+          </div>
+          ${sc.title ? `<div style="font-size:12px;color:var(--i3);margin-top:6px">改编方案：${escHtml(sc.title)}</div>` : ''}
+          ${src.docTitle ? `<div style="font-size:12px;color:var(--i3)">原著：${escHtml(src.docTitle)}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="closePM();loadSavedProj('${p.name.replace(/'/g,"\\'")}')" class="gen-btn" style="height:32px;padding:0 16px;font-size:12px">载入项目 →</button>
+          <button onclick="deletePMProject(${idx})" style="height:32px;padding:0 12px;font-size:12px;border:1px solid #e0453a;border-radius:var(--rs);background:none;color:#e0453a;cursor:pointer">删除</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:500;color:var(--i2);margin-bottom:12px">归档资产（${assetEntries.length}项）</div>
+    ${assetHTML}`;
+}
+
+function pmExportAsset(key, label) {
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  // Find the currently viewed project
+  const activeItem = document.querySelector('.pm-item.active');
+  if(!activeItem) return;
+  const idx = parseInt(activeItem.id.replace('pmi-',''));
+  const p = projects[idx];
+  if(!p || !p.ASSET_STORE?.[key]?.text) { showToast('无内容可导出'); return; }
+  const blob = new Blob([p.ASSET_STORE[key].text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${p.name}_${label}.txt`;
+  a.click(); URL.revokeObjectURL(a.href);
+  showToast(`${label}已导出`);
+}
+
+function deletePMProject(idx) {
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  if(!projects[idx]) return;
+  const name = projects[idx].name;
+  if(!confirm(`确认删除项目「${name}」？此操作不可撤销。`)) return;
+  projects.splice(idx, 1);
+  localStorage.setItem('dramamind_projects', JSON.stringify(projects));
+  renderPMList();
+  document.getElementById('pm-detail').innerHTML = '<div style="text-align:center;color:var(--i4);font-size:13px;padding-top:60px">项目已删除</div>';
+  renderRecentProjects();
+  showToast(`「${name}」已删除`);
+}
+
+function addStageMark(label) {
+  if(label === _lastStage) return;
   _lastStage = label;
   const msgs = document.getElementById('global-chat-msgs');
   if(!msgs) return;
@@ -6864,6 +7288,7 @@ async function sendChatReal(ctx) {
 
   const c = document.getElementById(chatId);
   const inp = document.getElementById(iid);
+  if (!c) return; // Container not present — redirect to global chat
 
   // Show history open state for story chat
   if(!isBible){
@@ -6985,6 +7410,24 @@ async function sendChatReal(ctx) {
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button onclick="closeApiConfig()" style="height:34px;padding:0 16px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);cursor:pointer">取消</button>
         <button onclick="persistApiConfig()" id="btn-save-api" style="height:34px;padding:0 16px;border:none;border-radius:var(--rs);background:var(--gm);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#fff;cursor:pointer;font-weight:500">保存配置</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══ PROJECT MANAGER MODAL ══ -->
+<div id="pm-modal" style="display:none;position:fixed;inset:0;background:rgba(10,31,18,.5);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto" onclick="if(event.target===this)closePM()">
+  <div style="background:var(--wh);border-radius:16px;width:860px;max-width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--bl);flex-shrink:0;background:var(--wh)">
+      <div>
+        <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:18px;font-weight:600;color:var(--ink)">项目管理</div>
+        <div id="pm-count" style="font-size:11px;color:var(--i4);margin-top:2px">全部已保存项目</div>
+      </div>
+      <button onclick="closePM()" style="background:none;border:none;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:var(--rs);color:var(--i3);font-size:20px" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='none'">×</button>
+    </div>
+    <div style="display:flex;flex:1;min-height:0;overflow:hidden">
+      <div id="pm-list" style="width:230px;flex-shrink:0;border-right:1px solid var(--bl);overflow-y:auto;padding:8px 6px;background:var(--bg)"></div>
+      <div id="pm-detail" style="flex:1;overflow-y:auto;padding:20px 24px">
+        <div style="text-align:center;color:var(--i4);font-size:13px;padding-top:60px;line-height:2">← 选择左侧项目<br>查看该项目的所有归档资产</div>
       </div>
     </div>
   </div>
