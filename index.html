@@ -1315,7 +1315,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
           <div class="im-sel">
             <label>题材类型</label>
             <select id="sel-genre">
-              <option value="ai">仿真人向（魔幻/奇幻/末世/神话/狼人/吸血鬼）</option>
+              <option value="ai">AI 向（魔幻/奇幻/末世/神话/狼人/吸血鬼）</option>
               <option value="live">真人向（霸总/都市/甜宠/虐恋/情感流/复仇）</option>
             </select>
           </div>
@@ -1331,17 +1331,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
       <textarea class="intake-ta" id="intake-input" placeholder="（可选）粘贴改编方案或创作需求……系统将自动识别并生成方案卡片，无需手动填写每一项"></textarea>
       <div class="upload-area" id="upload-area" style="display:none">
-        <div class="uploaded-f" id="uploaded-f" style="display:none">
-          <span>📄 </span><span id="fname">file.json</span>
-          <span class="f-rem" onclick="rmFile()">×</span>
-        </div>
         <input type="file" id="file-input" style="display:none" accept=".docx,.doc,.pdf" onchange="handleFile(this)">
       </div>
       <div class="intake-tb">
+        <!-- 未上传状态：显示上传按钮 -->
         <button class="tb-btn" id="up-toggle" onclick="document.getElementById('file-input').click()">📎 上传文件 <span style="font-size:10px;opacity:.6;margin-left:2px">.docx/.pdf</span></button>
-        <div class="uploaded-f" id="uploaded-f" style="display:none;margin-top:0;margin-left:4px;flex-shrink:0">
-          <span>📄 </span><span id="fname" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-          <span class="f-rem" onclick="rmFile()">×</span>
+        <!-- 已上传状态：显示文件名 + 删除，默认隐藏 -->
+        <div id="uploaded-f" style="display:none;align-items:center;gap:6px;height:30px;padding:0 10px;background:var(--gg);border:1.5px solid var(--gm);border-radius:var(--rs);font-size:12px;color:var(--gm);max-width:260px;cursor:default">
+          <span id="fname-icon">📄</span>
+          <span id="fname" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px"></span>
+          <span onclick="rmFile()" style="cursor:pointer;font-size:16px;color:var(--i3);line-height:1;flex-shrink:0" title="移除文件">×</span>
         </div>
         <div class="tb-sp"></div>
         <select class="tb-sel" id="sel-path" style="height:30px;margin-right:4px" aria-label="创作路径">
@@ -2203,14 +2202,24 @@ async function parseDocx(arrayBuffer) {
 function handleFile(i){
   const file = i.files[0];
   if(!file) return;
-  document.getElementById('uploaded-f').style.display = 'flex';
-  uploadedDocText = '';
 
+  // Helper: show file pill, hide upload button
+  function showFilePill(name, status) {
+    const pill = document.getElementById('uploaded-f');
+    const btn  = document.getElementById('up-toggle');
+    const icon = document.getElementById('fname-icon');
+    const nameEl = document.getElementById('fname');
+    if(btn) btn.style.display = 'none';
+    if(pill) pill.style.display = 'flex';
+    if(icon) icon.textContent = status === 'loading' ? '⏳' : status === 'ok' ? '✅' : '⚠️';
+    if(nameEl) nameEl.textContent = name;
+  }
+
+  uploadedDocText = '';
   const ext = file.name.split('.').pop().toLowerCase();
+  showFilePill(file.name, 'loading');
 
   if(ext === 'docx' || ext === 'doc'){
-    document.getElementById('fname').textContent = file.name + '  ⏳ 读取中…';
-
     docReadyPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -2240,30 +2249,29 @@ function handleFile(i){
 
         if(text && text.length > 50){
           uploadedDocText = text;
-          document.getElementById('fname').textContent = file.name + '  ✓ ' + uploadedDocText.length + '字';
+          showFilePill(file.name + '  ' + uploadedDocText.length + '字', 'ok');
           showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
         } else {
           uploadedDocText = '';
-          document.getElementById('fname').textContent = file.name + '  ⚠ 解析失败';
+          showFilePill(file.name + '  解析失败', 'warn');
           showToast('⚠ 解析失败 — 请将文档内容粘贴至下方需求框，效果完全一样');
         }
         resolve();
       };
       reader.onerror = () => {
         uploadedDocText = '';
-        document.getElementById('fname').textContent = file.name + '  ⚠ 读取失败';
+        showFilePill(file.name + '  读取失败', 'warn');
         resolve();
       };
       reader.readAsArrayBuffer(file);
     });
 
   } else if(ext === 'txt' || ext === 'md'){
-    document.getElementById('fname').textContent = file.name + '  ⏳ 读取中…';
     docReadyPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         uploadedDocText = e.target.result || '';
-        document.getElementById('fname').textContent = file.name + '  ✓ ' + uploadedDocText.length + '字';
+        showFilePill(file.name + '  ' + uploadedDocText.length + '字', 'ok');
         showToast('文档已读取，共 ' + uploadedDocText.length + ' 字');
         resolve();
       };
@@ -2274,17 +2282,20 @@ function handleFile(i){
   } else if(ext === 'pdf'){
     uploadedDocText = '';
     docReadyPromise = Promise.resolve();
-    document.getElementById('fname').textContent = file.name;
+    showFilePill(file.name + '  （PDF请粘贴内容）', 'warn');
     showToast('PDF 暂不支持自动解析，请将关键内容粘贴至需求描述框');
   } else {
-    document.getElementById('fname').textContent = file.name;
+    showFilePill(file.name, 'ok');
     docReadyPromise = Promise.resolve();
   }
 }
 
 function rmFile(){
-  document.getElementById('uploaded-f').style.display='none';
-  document.getElementById('file-input').value='';
+  const pill = document.getElementById('uploaded-f');
+  const btn  = document.getElementById('up-toggle');
+  if(pill) pill.style.display = 'none';
+  if(btn)  btn.style.display  = 'flex';
+  document.getElementById('file-input').value = '';
   uploadedDocText = '';
   docReadyPromise = null;
 }
