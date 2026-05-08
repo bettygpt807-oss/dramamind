@@ -2610,7 +2610,7 @@ async function startProject(){
 
   // 如果有上传文档内容，存入 source 供后续所有环节使用
   if(uploadedDocText){
-    PROJECT.source.rawDocText = uploadedDocText.substring(0, 12000); // 截取前12000字防止token超限
+    PROJECT.source.rawDocText = uploadedDocText; // Full text; token cap applied at AI call sites
   } else {
     PROJECT.source.rawDocText = '';
   }
@@ -6231,10 +6231,11 @@ function saveProject(){
   try {
     serializeCurrentScript();
     const projectToSave = JSON.parse(JSON.stringify(PROJECT));
-    // rawDocText is large (up to 12000 chars) and can be re-uploaded — don't persist it
-    // But keep all extracted structured fields (docBeatSequence, docHighlights, etc.)
-    // Trim docBeatSequence if it's very long to stay within localStorage budget
-    delete projectToSave.source.rawDocText;
+    // Trim large fields for localStorage budget but keep them persisted so reloads work correctly
+    // rawDocText: store up to 20000 chars (enough for full DramaLens docs)
+    if(projectToSave.source.rawDocText && projectToSave.source.rawDocText.length > 20000){
+      projectToSave.source.rawDocText = projectToSave.source.rawDocText.substring(0, 20000);
+    }
     if(projectToSave.source.docBeatSequence && projectToSave.source.docBeatSequence.length > 3000){
       projectToSave.source.docBeatSequence = projectToSave.source.docBeatSequence.substring(0, 3000) + '\n…[已截断，原始文档重新上传可恢复完整版]';
     }
@@ -6257,6 +6258,8 @@ function saveProject(){
         confirmed: bdState.confirmed,
         chatHistory: bdState.chatHistory,
       },
+      globalChatHistory: JSON.parse(JSON.stringify(globalChatHistory)),
+      inquiryMessages: JSON.parse(JSON.stringify(PROJECT.inquiry.messages || [])),
       savedAt: Date.now(),
     };
     const serialized = JSON.stringify(snapshot);
@@ -6294,6 +6297,10 @@ function debouncedSave(){
 function restoreFromSnap(snap) {
   Object.assign(S, snap.S || {});
   Object.assign(PROJECT, snap.PROJECT);
+  // Restore rawDocText into uploadedDocText so archiveDoc() and subsequent AI calls can use it
+  if(PROJECT.source.rawDocText) {
+    uploadedDocText = PROJECT.source.rawDocText;
+  }
   // Restore ASSET_STORE
   if (snap.ASSET_STORE) {
     Object.keys(ASSET_STORE).forEach(k => {
@@ -6322,6 +6329,12 @@ function restoreFromSnap(snap) {
     bdState.confirmed = snap.bdState.confirmed || false;
     bdState.chatHistory = snap.bdState.chatHistory || [];
   } else if (PROJECT.episodes && PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
+    bdState.acts = snap.bdState.acts || [];
+    bdState.allEps = snap.bdState.allEps || [];
+    bdState.generatedCount = snap.bdState.generatedCount || 0;
+    bdState.confirmed = snap.bdState.confirmed || false;
+    bdState.chatHistory = snap.bdState.chatHistory || [];
+  } else if (PROJECT.episodes && PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
     // Migrate old format: reconstruct bdState from PROJECT.episodes.allData
     const total = PROJECT.source.episodeCount || PROJECT.episodes.allData.length;
     bdState.acts = planActs(total);
@@ -6338,6 +6351,25 @@ function restoreFromSnap(snap) {
     });
     bdState.generatedCount = bdState.allEps.length;
     bdState.confirmed = (PROJECT.episodes.confirmedUpTo || 0) > 0;
+  }
+  // Restore global chat history and re-render the right-panel conversation
+  if(snap.globalChatHistory && snap.globalChatHistory.length > 0){
+    globalChatHistory.length = 0;
+    snap.globalChatHistory.forEach(m => globalChatHistory.push(m));
+    // Defer DOM rendering until after DOMContentLoaded / page restoration
+    setTimeout(() => {
+      const msgs = document.getElementById('global-chat-msgs');
+      if(msgs){
+        msgs.innerHTML = '';
+        globalChatHistory.forEach(m => {
+          const el = document.createElement('div');
+          el.className = 'gc-msg ' + m.role;
+          el.textContent = m.content;
+          msgs.appendChild(el);
+        });
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+    }, 0);
   }
 }
 
@@ -6376,6 +6408,7 @@ function newProject(){
         confirmed: bdState.confirmed,
         chatHistory: bdState.chatHistory,
       },
+      globalChatHistory: JSON.parse(JSON.stringify(globalChatHistory)),
     };
     if(idx >= 0) projects[idx] = snap; else projects.unshift(snap);
     localStorage.setItem('dramamind_projects', JSON.stringify(projects.slice(0, 20)));
@@ -7356,6 +7389,31 @@ function copyAsset(key){
 // ── Currently previewed asset key ──
 let _previewKey = null;
 
+function renderAssetContent(text){
+  // Render text as styled HTML matching the tool's design
+  const lines = text.split('\n');
+  let html = '';
+  for(const line of lines){
+    const t = line.trim();
+    if(!t){ html += '<div style="height:8px"></div>'; continue; }
+    // Section headers like 【...】 or lines starting with ─── or ═══
+    if(/^【.+】$/.test(t) || /^─{10,}/.test(t) || /^═{10,}/.test(t)){
+      html += `<div style="font-family:'Noto Serif SC',serif;font-size:13px;font-weight:600;color:var(--gk);margin:18px 0 6px;padding:8px 12px;background:var(--gg);border-left:3px solid var(--gm);border-radius:0 4px 4px 0">${escHtml(t)}</div>`;
+    } else if(/^节拍\d+【.+】$/.test(t)){
+      html += `<div style="font-size:12px;font-weight:600;color:var(--gm);margin:14px 0 4px;font-family:'DM Mono',monospace">${escHtml(t)}</div>`;
+    } else if(/^(原著\/IP：|策划逻辑：|主要人物：|核心亮点：|结构逻辑：|人物逻辑：|情感逻辑：|节奏逻辑：|悬念布局：|高光情节：|改编方案：|方案\d+·)/.test(t)){
+      html += `<div style="font-size:12px;font-weight:600;color:var(--i2);margin-top:10px;margin-bottom:3px">${escHtml(t)}</div>`;
+    } else if(/^第\d+集《.+》$/.test(t)){
+      html += `<div style="font-size:13px;font-weight:600;color:var(--ink);margin:14px 0 4px;padding:6px 10px;background:var(--bg);border-radius:var(--rs)">${escHtml(t)}</div>`;
+    } else if(/^卡点：/.test(t)){
+      html += `<div style="font-size:12px;color:var(--au);font-style:italic;margin-top:3px">${escHtml(t)}</div>`;
+    } else {
+      html += `<div style="font-size:13px;color:var(--i2);line-height:1.85;margin-bottom:1px">${escHtml(t)}</div>`;
+    }
+  }
+  return html;
+}
+
 function previewAsset(key){
   const store = ASSET_STORE[key];
   if(!store){ showToast('暂无内容'); return; }
@@ -7363,7 +7421,9 @@ function previewAsset(key){
   _previewKey = key;
   document.getElementById('ap-title').textContent = store.label;
   document.getElementById('ap-proj').textContent = S.proj ? `项目：${S.proj}` : '当前项目';
-  document.getElementById('ap-content').textContent = store.text;
+  const contentEl = document.getElementById('ap-content');
+  contentEl.innerHTML = renderAssetContent(store.text);
+  contentEl.style.whiteSpace = 'normal';
   document.getElementById('asset-preview-modal').style.display = 'flex';
 }
 
@@ -7388,13 +7448,22 @@ function exportAssetPdf(){
 
 // ── DOCX export (pure JS, no server needed) ──
 function exportAsDocx(title, text, filename){
-  // Build minimal valid .docx (OOXML) in memory
-  // Uses the Open XML structure: word/document.xml inside a ZIP
   const paragraphs = text.split('\n').map(line => {
-    const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const isBold = /^(第.+幕|第.+集|【.+】|={3,}|─{3,}|故事简介|核心创作逻辑|人物小传|剧情节拍|视觉风格|Logline|LOGLINE)/.test(line.trim());
-    const runProps = isBold ? '<w:rPr><w:b/></w:rPr>' : '';
-    return `<w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r>${runProps}<w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+    const t = line.trim();
+    const escaped = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Section headers
+    const isSectionHead = /^【.+】$/.test(t) || /^─{10,}/.test(t) || /^═{10,}/.test(t);
+    const isBeatHead = /^节拍\d+【.+】$/.test(t);
+    const isEpHead = /^第\d+集《.+》$/.test(t);
+    const isSubHead = /^(原著\/IP：|策划逻辑：|核心亮点：|结构逻辑：|人物逻辑：|情感逻辑：|节奏逻辑：|悬念布局：|高光情节：)/.test(t);
+    const isEmpty = !t;
+
+    if(isEmpty) return `<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>`;
+    if(isSectionHead) return `<w:p><w:pPr><w:spacing w:before="240" w:after="120"/><w:shd w:val="clear" w:color="auto" w:fill="F0F6F2"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="0F2D1A"/><w:sz w:val="28"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+    if(isBeatHead) return `<w:p><w:pPr><w:spacing w:before="180" w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="1E5C3A"/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+    if(isEpHead) return `<w:p><w:pPr><w:spacing w:before="200" w:after="80"/><w:shd w:val="clear" w:color="auto" w:fill="F8FAF9"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="26"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+    if(isSubHead) return `<w:p><w:pPr><w:spacing w:before="120" w:after="60"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+    return `<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
   });
 
   const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -7473,25 +7542,37 @@ ${paragraphs.join('\n')}
 
 // ── PDF export (browser print-to-PDF via hidden iframe) ──
 function exportAsPdf(title, text, filename){
-  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const lines = escaped.split('\n').map(line => {
-    const isBold = /^(第.+幕|第.+集|【.+】|={3,}|─{3,}|故事简介|核心创作逻辑|人物小传|剧情节拍|视觉风格|Logline|LOGLINE)/.test(line.trim());
-    if(!line.trim()) return '<br>';
-    return isBold
-      ? `<p style="font-weight:700;margin:12px 0 4px">${line}</p>`
-      : `<p style="margin:0 0 4px">${line}</p>`;
+  const lines = text.split('\n').map(line => {
+    const t = line.trim();
+    if(!t) return '<div style="height:6px"></div>';
+    const esc = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if(/^【.+】$/.test(t) || /^─{10,}/.test(t) || /^═{10,}/.test(t)){
+      return `<div style="font-weight:700;font-size:14px;color:#0f2d1a;margin:18px 0 6px;padding:8px 12px;background:#f0f6f2;border-left:3px solid #1e5c3a;border-radius:0 4px 4px 0">${esc}</div>`;
+    } else if(/^节拍\d+【.+】$/.test(t)){
+      return `<div style="font-size:12px;font-weight:600;color:#1e5c3a;margin:14px 0 4px;font-family:monospace">${esc}</div>`;
+    } else if(/^第\d+集《.+》$/.test(t)){
+      return `<div style="font-size:13px;font-weight:600;color:#0f1a14;margin:14px 0 4px;padding:5px 10px;background:#f8faf9;border-radius:4px">${esc}</div>`;
+    } else if(/^卡点：/.test(t)){
+      return `<div style="font-size:12px;color:#b8944a;font-style:italic;margin-top:3px">${esc}</div>`;
+    } else if(/^(原著\/IP：|策划逻辑：|核心亮点：|结构逻辑：|人物逻辑：|情感逻辑：|节奏逻辑：|悬念布局：|高光情节：)/.test(t)){
+      return `<div style="font-size:12px;font-weight:600;color:#2a3a2f;margin-top:10px;margin-bottom:3px">${esc}</div>`;
+    } else {
+      return `<p style="margin:0 0 3px;font-size:13px;line-height:1.85;color:#2a3a2f">${esc}</p>`;
+    }
   });
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>${title}</title>
+<title>${title.replace(/</g,'&lt;')}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
-  body{font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#1a2a20;line-height:1.9;padding:40px 52px;max-width:700px;margin:0 auto}
-  h1{font-size:18px;text-align:center;margin-bottom:28px;padding-bottom:14px;border-bottom:2px solid #e4ede7;font-weight:700}
-  p{margin:0 0 4px}
-  @media print{body{padding:0}}
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;600;700&family=Noto+Serif+SC:wght@400;600&display=swap');
+  body{font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#2a3a2f;line-height:1.85;padding:40px 52px;max-width:720px;margin:0 auto;background:#fff}
+  h1{font-family:'Noto Serif SC',serif;font-size:20px;text-align:center;margin-bottom:6px;font-weight:600;color:#0f2d1a}
+  .meta{text-align:center;font-size:11px;color:#8a9e90;margin-bottom:28px;padding-bottom:14px;border-bottom:2px solid #e4ede7}
+  p{margin:0 0 3px}
+  @media print{body{padding:0;max-width:100%}}
 </style>
 </head><body>
-<h1>${title}</h1>
+<h1>${title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</h1>
+<div class="meta">${(S.proj||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>
 ${lines.join('\n')}
 <script>window.onload=function(){setTimeout(function(){window.print();},400)}<\/script>
 </body></html>`;
@@ -7673,9 +7754,19 @@ function exportAllAssets(){
 
 // ── 资料自动入库：各环节 confirm 时调用 ──
 function archiveDoc(){
+  // Use the full uploaded document text when available; fall back to extracted structured fields
   const text = uploadedDocText
-    ? `【文档内容摘要】\n${uploadedDocText.substring(0, 1000)}${uploadedDocText.length > 1000 ? '\n……（共'+uploadedDocText.length+'字）' : ''}`
-    : (PROJECT.source.docTitle ? `原著/IP：${PROJECT.source.docTitle}\n策划逻辑：${PROJECT.source.docPlanningLogic}\n主要人物：${PROJECT.source.docCharacters}` : PROJECT.source.userRequirements);
+    ? uploadedDocText
+    : (PROJECT.source.docTitle
+        ? [
+            PROJECT.source.docTitle ? `原著/IP：${PROJECT.source.docTitle}` : '',
+            PROJECT.source.docPlanningLogic ? `\n【核心策划逻辑】\n${PROJECT.source.docPlanningLogic}` : '',
+            PROJECT.source.docBeatSequence  ? `\n【完整节拍序列】\n${PROJECT.source.docBeatSequence}` : '',
+            PROJECT.source.docCharacters    ? `\n【主要人物】\n${PROJECT.source.docCharacters}` : '',
+            PROJECT.source.docHighlights    ? `\n【高光爆点场景】\n${PROJECT.source.docHighlights}` : '',
+            PROJECT.source.docRhythmRules   ? `\n【节奏规律】\n${PROJECT.source.docRhythmRules}` : '',
+          ].filter(Boolean).join('')
+        : PROJECT.source.userRequirements);
   updateAssetCard('doc', text);
 }
 
@@ -7941,7 +8032,9 @@ function pmPreviewAsset(btn) {
   _pmPreviewStore = { key, label: store.label, text: store.text, projName: p.name };
   document.getElementById('ap-title').textContent = store.label;
   document.getElementById('ap-proj').textContent = `项目：${p.name}`;
-  document.getElementById('ap-content').textContent = store.text;
+  const pmContentEl = document.getElementById('ap-content');
+  pmContentEl.innerHTML = renderAssetContent(store.text);
+  pmContentEl.style.whiteSpace = 'normal';
   // Rebind export buttons to use PM store
   const exportBtns = document.getElementById('ap-export-btns');
   if(exportBtns){
@@ -8220,7 +8313,7 @@ async function sendChatReal(ctx) {
       </div>
     </div>
     <!-- Content -->
-    <div id="ap-content" style="flex:1;padding:28px 32px;font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);line-height:1.9;white-space:pre-wrap;overflow-y:auto">—</div>
+    <div id="ap-content" style="flex:1;padding:28px 32px;font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);line-height:1.9;overflow-y:auto"></div>
   </div>
 </div>
 
