@@ -7426,9 +7426,20 @@ function updateAssetCard(key, text){
   if(!card) return;
   const hasContent = store.text.length > 0;
   card.classList.toggle('ready', hasContent);
-  // 侧边栏卡片只显示前600字预览（UI空间有限），完整内容在弹窗预览和导出中完整呈现
-  if(body) body.textContent = store.text.substring(0, 600) + (store.text.length > 600 ? `\n……（共${store.text.length}字，点击「预览」查看完整内容）` : '');
-  if(status) status.textContent = hasContent ? `✓ 已归档（${store.text.length}字）` : '待生成';
+  // 侧边栏卡片预览：显示前 400 字，字数超出时给提示
+  if(body){
+    const wordCount = store.text.replace(/\s/g,'').length;
+    const preview = store.text.substring(0, 400);
+    const truncated = store.text.length > 400;
+    body.textContent = preview + (truncated ? '…' : '');
+    if(truncated){
+      body.title = `共 ${wordCount.toLocaleString()} 字，点击「预览」查看完整内容`;
+    }
+  }
+  if(status){
+    const wordCount = store.text.replace(/\s/g,'').length;
+    status.textContent = hasContent ? `✓ ${wordCount.toLocaleString()}字` : '待生成';
+  }
 }
 
 function toggleAssetCard(id){
@@ -7459,8 +7470,52 @@ function previewAsset(key){
   if(!store.text){ showToast('暂无内容，请先完成该环节'); return; }
   _previewKey = key;
   document.getElementById('ap-title').textContent = store.label;
-  document.getElementById('ap-proj').textContent = S.proj ? `项目：${S.proj}` : '当前项目';
-  document.getElementById('ap-content').textContent = store.text;
+  const wordCount = store.text.replace(/\s/g,'').length;
+  document.getElementById('ap-proj').textContent = `${S.proj ? S.proj + ' · ' : ''}共 ${wordCount.toLocaleString()} 字`;
+
+  // 格式化渲染：把纯文本转换为带视觉层级的 HTML
+  const lines = store.text.split('\n');
+  let html = '';
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    const trimmed = line.trim();
+    if(!trimmed){ html += '<div style="height:8px"></div>'; continue; }
+
+    // 大标题：===、───、第X幕、第X集
+    if(/^={3,}|^─{3,}|^第[一二三四五六七八九十百\d]+[幕集章]/.test(trimmed)){
+      html += `<div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:15px;font-weight:700;color:var(--ink);margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bl)">${escHtml(trimmed)}</div>`;
+    }
+    // 【】标题块
+    else if(/^【.+】/.test(trimmed)){
+      html += `<div style="font-size:12px;font-weight:700;color:var(--gm);letter-spacing:.05em;margin:16px 0 4px;text-transform:uppercase">${escHtml(trimmed)}</div>`;
+    }
+    // 原著/IP：、策划逻辑：等 label 行
+    else if(/^(原著\/IP|策划逻辑|节拍序列|主要人物|高光爆点|节奏规律|方案\s*\d+|目标市场|受众|题材|体量)[:：]/.test(trimmed)){
+      const colonIdx = trimmed.search(/[:：]/);
+      const label = trimmed.slice(0, colonIdx);
+      const value = trimmed.slice(colonIdx + 1).trim();
+      html += `<div style="margin:6px 0;font-size:13px"><span style="color:var(--i4);font-size:11px;font-weight:600;letter-spacing:.04em;margin-right:8px">${escHtml(label)}</span><span style="color:var(--i2)">${escHtml(value)}</span></div>`;
+    }
+    // ①②③ 编号段落
+    else if(/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(trimmed)){
+      html += `<div style="margin:5px 0 5px 0;padding:6px 12px;background:var(--gg);border-left:2px solid var(--gp);border-radius:0 4px 4px 0;font-size:13px;color:var(--i2);line-height:1.7">${escHtml(trimmed)}</div>`;
+    }
+    // 节拍行：节拍N· 或 【节拍N
+    else if(/^节拍\d+|^【节拍/.test(trimmed)){
+      html += `<div style="margin:10px 0 3px;font-size:12px;font-weight:700;color:var(--gm)">${escHtml(trimmed)}</div>`;
+    }
+    // 普通正文段落
+    else {
+      html += `<div style="margin:2px 0;font-size:13px;color:var(--i2);line-height:1.85">${escHtml(trimmed)}</div>`;
+    }
+  }
+
+  // 如果内容疑似旧的截断版（< 1500字但 docTitle 存在），加提示
+  if(key === 'doc' && wordCount < 1500 && PROJECT.source.docTitle){
+    html = `<div style="margin-bottom:16px;padding:10px 14px;background:#fffbf0;border:1px solid #f0e0a0;border-radius:var(--rs);font-size:12px;color:#7a5c00;line-height:1.6">⚠ 此内容为旧版本存档（${wordCount}字），可能是早期截断版本。重新上传原始文档并生成方案后，资料库将自动更新为完整内容。</div>` + html;
+  }
+
+  document.getElementById('ap-content').innerHTML = html;
   document.getElementById('asset-preview-modal').style.display = 'flex';
 }
 
@@ -8193,10 +8248,12 @@ function initWorkbench(){
     this.style.height = Math.min(this.scrollHeight, 100) + 'px';
   });
   // 初始化资料库（如果有恢复的 PROJECT）
-  if(PROJECT.source.docTitle || uploadedDocText) archiveDoc();
-  if(PROJECT.scheme.confirmed) archiveScheme();
-  if(PROJECT.bible.confirmed) archiveBible();
-  if(bdState.allEps?.length > 0) archiveBreakdown();
+  // 注意：ASSET_STORE 已经从 localStorage 恢复完整内容，不要用精简字段覆盖
+  // 只在 ASSET_STORE.doc 为空时才调用 archiveDoc（补充新建项目场景）
+  if(!ASSET_STORE.doc?.text && (PROJECT.source.docTitle || uploadedDocText)) archiveDoc();
+  if(!ASSET_STORE.scheme?.text && PROJECT.scheme.confirmed) archiveScheme();
+  if(!ASSET_STORE.bible?.text && PROJECT.bible.confirmed) archiveBible();
+  if(!ASSET_STORE.breakdown?.text && bdState.allEps?.length > 0) archiveBreakdown();
   initWbDividers();
 }
 
@@ -8320,7 +8377,7 @@ async function sendChatReal(ctx) {
       </div>
     </div>
     <!-- Content -->
-    <div id="ap-content" style="flex:1;padding:28px 32px;font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);line-height:1.9;white-space:pre-wrap;overflow-y:auto">—</div>
+    <div id="ap-content" style="flex:1;padding:28px 36px;overflow-y:auto;max-height:calc(90vh - 80px)">—</div>
   </div>
 </div>
 
