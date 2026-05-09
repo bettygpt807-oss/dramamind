@@ -2949,6 +2949,13 @@ function startInquiry(){
 
   const sysPrompt = `你是一位专注于竖屏短剧的资深内容开发顾问，擅长帮助创作者把改编方案打磨成符合「快节奏·强冲突·强情绪·强悬念」竖屏短剧叙事特点的完整项目。同时深刻理解经典故事准则（三幕结构、人物弧光、主题升华），在短剧高密度节奏中保持叙事结构完整性和人物血肉感。
 
+【重要认知：节拍与集数的关系】
+每个节拍是一个戏剧/情绪单元，展开为多集时根据该节拍的剧情复杂度灵活决定，通常在3-5集之间浮动，绝不是平均分配。
+- 过渡节拍、交代信息类：2-3集快速推进
+- 核心冲突、情感积累类：4-5集充分展开
+- 高潮爽点、大反转类：可延展至5-6集
+在讨论节拍迁移时，必须基于每个节拍的具体剧情内容来判断集数，不能说"每X集落地1个节拍"这种平均概念。
+
 你的任务：针对创作者已选定的改编方案，提出3-4个最关键的创意决策问题。这些问题要：
 ① 直接关系到原著节拍如何在新设定中迁移（哪些节拍保留原节奏？哪些需要调整？）
 ② 帮助厘清人物语言/名字/身份的本地化决策（人物名用英文还是中文？对白风格？）
@@ -2985,7 +2992,7 @@ ${src.userRequirements}
 目标市场：${src.market}  受众：${src.preference}
 题材：${src.genre}  体量：${src.episodeCount}集
 
-请聚焦于：①原著节拍如何具体迁移到新设定（需要用户确认关键节拍的新版本）②人物名、对白语言等本地化决策 ③最核心爽点和情感破防时刻的选择。开始追问。`;
+请聚焦于：①原著节拍如何具体迁移到新设定（每个节拍根据剧情复杂度分配3-5集，不是平均分配，需要用户逐节拍确认）②人物名、对白语言等本地化决策 ③最核心爽点和情感破防时刻的选择。开始追问。`;
 
   const cfg = getApiConfig();
 
@@ -3051,69 +3058,97 @@ const _icd = {
 };
 
 function renderInquiryResponse(el, text){
-  // Render plain text in the chat bubble (no inline buttons)
   el.textContent = '';
   el.style.whiteSpace = 'pre-wrap';
   el.textContent = text;
 
-  // Parse all question groups from AI response
-  // Supports two formats:
-  // Format A: ### 问题N：title\n context...\nA option\nB option\nC option
-  // Format B: plain context line\nA option\nB option\nC option
-  const choiceRe = /^([A-Ca-c])[.、．\s：:]\s*(.+)/;
-  const lines = text.split('\n');
-
   _icd.groups = [];
 
-  // First pass: find all choice blocks, then determine question labels
-  let i = 0;
-  while(i < lines.length){
-    const line = lines[i].trim();
-    const m = choiceRe.exec(line);
-    if(m){
-      // Found start of a choice block — collect all contiguous A/B/C lines
-      const choices = [];
-      while(i < lines.length){
-        const cm = choiceRe.exec(lines[i].trim());
-        if(cm){ choices.push(lines[i].trim()); i++; }
-        else break;
-      }
+  // ── 全新解析器：先按"问题块"切分，再从每块里提取选项 ──
+  // 问题块边界：### 问题N、--- 分隔线、或连续出现 A/B 选项的段落
+  //
+  // 策略：把整段文本按"A xxx ... B xxx ... C xxx"的模式切分
+  // 每找到一个 A 开头的行，往后收集直到遇到下一个独立的 A 或文本结束
 
-      // Determine question label: look back for nearest ### heading or context line
-      let qText = '';
-      let qSearchLimit = Math.max(0, i - choices.length - 1);
-      for(let back = i - choices.length - 1; back >= qSearchLimit - 6 && back >= 0; back--){
-        const prev = lines[back].trim();
-        if(!prev) continue;
-        // Prefer ### headings as question label
-        if(/^#{1,3}\s*(问题\s*\d+|Question\s*\d+)/i.test(prev)){
-          qText = prev.replace(/^#+\s*/, '').trim();
-          break;
-        }
-        // Otherwise use last meaningful non-choice line
-        if(!choiceRe.exec(prev) && !prev.startsWith('---')){
-          qText = prev.replace(/^#+\s*/, '').replace(/^[🔥⚔️💭✨🎯💡]/u,'').trim();
-          // Truncate very long context lines to keep label readable
-          if(qText.length > 60) qText = qText.substring(0, 60) + '…';
-          break;
-        }
-      }
+  const lines = text.split('\n');
+  const n = lines.length;
 
-      if(choices.length > 0) _icd.groups.push({qText, choices});
-    } else {
-      i++;
+  // Step 1：标记每行是否是"选项行首"（以 A/B/C + 分隔符开头）
+  const optionLineRe = /^([A-Ca-c])[\s.、．：:]\s*\S/;
+  const isOptionStart = lines.map(l => optionLineRe.test(l.trim()));
+
+  // Step 2：找出所有 A 选项的行号（每个 A 代表一个问题组的开始）
+  const aLineIndices = [];
+  for(let i = 0; i < n; i++){
+    const trimmed = lines[i].trim();
+    if(/^[Aa][\s.、．：:]\s*\S/.test(trimmed)){
+      // 确认它是真正的选项A（后面必须有B）
+      let hasB = false;
+      for(let j = i+1; j < Math.min(i+20, n); j++){
+        if(/^[Bb][\s.、．：:]\s*\S/.test(lines[j].trim())){ hasB = true; break; }
+        // 如果遇到另一个A说明这个A是独立的，停止
+        if(/^[Aa][\s.、．：:]\s*\S/.test(lines[j].trim())) break;
+      }
+      if(hasB) aLineIndices.push(i);
     }
   }
 
+  // Step 3：对每个 A 选项，提取完整的问题组
+  for(let gi = 0; gi < aLineIndices.length; gi++){
+    const start = aLineIndices[gi];
+    const end = gi + 1 < aLineIndices.length ? aLineIndices[gi+1] : n;
+
+    // 在 [start, end) 范围内收集所有选项（A/B/C/D 开头的行，允许跨行内容）
+    const choices = [];
+    let currentChoice = null;
+    for(let i = start; i < end; i++){
+      const trimmed = lines[i].trim();
+      // 遇到分隔线或下一个问题标题，终止当前选项追加
+      if(trimmed.startsWith('---') || /^#{1,3}\s/.test(trimmed)){
+        if(currentChoice !== null){ choices.push(currentChoice); currentChoice = null; }
+        continue;
+      }
+      const m = /^([A-Da-d])[\s.、．：:]\s*(.+)/.exec(trimmed);
+      if(m){
+        if(currentChoice !== null) choices.push(currentChoice);
+        currentChoice = trimmed;
+      } else if(currentChoice !== null && trimmed){
+        // 多行选项内容：追加到当前选项（只追加短行，长段落说明是下一题的描述）
+        if(trimmed.length < 100) currentChoice += ' ' + trimmed;
+        else { choices.push(currentChoice); currentChoice = null; }
+      }
+    }
+    if(currentChoice !== null) choices.push(currentChoice);
+
+    if(choices.length < 2) continue; // 少于2个选项不算有效问题组
+
+    // 找问题标题：往 start 前找最近的 ### 标题或非空非选项行
+    let qText = '';
+    for(let back = start - 1; back >= Math.max(0, start - 10); back--){
+      const prev = lines[back].trim();
+      if(!prev) continue;
+      if(optionLineRe.test(prev)) break; // 遇到上一个问题的选项，停止
+      if(/^#{1,3}\s*(问题\s*\d+)/i.test(prev)){
+        qText = prev.replace(/^#+\s*/, '').trim();
+        break;
+      }
+      if(!prev.startsWith('---')){
+        qText = prev.replace(/^#+\s*/, '').replace(/^[🔥⚔️💭✨🎯💡]/u, '').trim();
+        if(qText.length > 80) qText = qText.substring(0, 80) + '…';
+        break;
+      }
+    }
+
+    _icd.groups.push({ qText, choices });
+  }
+
   _icd.current = 0;
-  _icd.answers = {};  // 清空上一轮的答案缓存
+  _icd.answers = {};
   if(_icd.groups.length > 0){
     hideFollowupPanel();
     showChoiceDock();
   } else if(inquiryMode){
-    // AI gave a narrative response without choices
     hideChoiceDock();
-    // Don't auto-show followup here — it shows when user finishes answering choices
   } else {
     hideChoiceDock();
     hideFollowupPanel();
@@ -3260,6 +3295,20 @@ function skipChoice(){
   }
 }
 
+function showCustomChoice(){
+  const wrap = document.getElementById('icd-custom-wrap');
+  if(wrap) wrap.classList.add('show');
+  const ta = document.getElementById('icd-custom-ta');
+  if(ta){ ta.value = ''; ta.focus(); }
+}
+
+function cancelCustomChoice(){
+  const wrap = document.getElementById('icd-custom-wrap');
+  if(wrap) wrap.classList.remove('show');
+  const ta = document.getElementById('icd-custom-ta');
+  if(ta) ta.value = '';
+}
+
 function submitCustomChoice(){
   const ta = document.getElementById('icd-custom-ta');
   const val = ta?.value?.trim();
@@ -3315,7 +3364,7 @@ function sendInquiryBatch(){
   const beatInfo = src.docBeatCount > 0 ? `原著${src.docBeatCount}个节拍，` : '';
   const docSummary = src.docTitle ? `原著《${src.docTitle}》，${beatInfo}` : '';
   const sysPrompt = `你是一位竖屏短剧内容开发顾问。正在与创作者就「${sc.title}」进行策划追问。背景：${docSummary}市场：${src.market}，${src.episodeCount}集。${src.docBeatSequence ? `\n原著节拍摘要（追问时参考）：${src.docBeatSequence.substring(0, 500)}` : ''}
-根据创作者回答继续深入追问或提建议。如果还有需要选择的问题，选项格式：每个选项单独一行，以"A "、"B "、"C "开头。当你认为已获得足够信息时，在回复末尾加上「✓ 我们可以生成创意策划案了」。`;
+重要：每个节拍展开为3-5集，根据该节拍剧情复杂度浮动，不是平均分配，不能说"每X集1个节拍"。根据创作者回答继续深入追问或提建议。如果还有需要选择的问题，选项格式：每个选项单独一行，以"A "、"B "、"C "开头。当你认为已获得足够信息时，在回复末尾加上「✓ 我们可以生成创意策划案了」。`;
 
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
@@ -3382,7 +3431,7 @@ function sendInquiryMsg(){
   const beatInfo = src.docBeatCount > 0 ? `原著${src.docBeatCount}个节拍，` : '';
   const docSummary = src.docTitle ? `原著《${src.docTitle}》，${beatInfo}` : '';
   const sysPrompt = `你是一位竖屏短剧内容开发顾问。正在与创作者就「${sc.title}」进行策划追问。背景：${docSummary}市场：${src.market}，${src.episodeCount}集。${src.docBeatSequence ? `\n原著节拍摘要（追问时参考）：${src.docBeatSequence.substring(0, 500)}` : ''}
-根据创作者回答继续深入追问或提建议。如果还有需要选择的问题，选项格式：每个选项单独一行，以"A "、"B "、"C "开头。当你认为已获得足够信息时，在回复末尾加上「✓ 我们可以生成创意策划案了」。`;
+重要：每个节拍展开为3-5集，根据该节拍剧情复杂度浮动，不是平均分配，不能说"每X集1个节拍"。根据创作者回答继续深入追问或提建议。如果还有需要选择的问题，选项格式：每个选项单独一行，以"A "、"B "、"C "开头。当你认为已获得足够信息时，在回复末尾加上「✓ 我们可以生成创意策划案了」。`;
 
   const messages = inquiryHistory.map(m=>({role:m.role==='ai'?'assistant':'user', content:m.content}));
 
@@ -4942,29 +4991,52 @@ function restoreStoryUI(){
       const lastAiMsg = lastMsg?.role === 'ai' ? lastMsg : null;
       if(lastAiMsg && lastAiMsg.content && !lastAiMsg.content.includes('✓')){
         setTimeout(() => {
+          // 用新解析器重新解析最后一条 AI 消息，恢复选项弹窗
           _icd.groups = [];
           _icd.current = 0;
           _icd.answers = {};
-          const choiceRe = /^([A-Ca-c])[.、．\s：:]\s*(.+)/;
-          const textLines = lastAiMsg.content.split('\n');
-          let i = 0;
-          while(i < textLines.length){
-            const m2 = choiceRe.exec(textLines[i].trim());
-            if(m2){
-              let qText = '';
-              for(let back = i-1; back >= Math.max(0,i-8); back--){
-                const prev = textLines[back].trim();
-                if(!prev) continue;
-                if(/^#{1,3}\s*(问题\s*\d+)/i.test(prev)){ qText = prev.replace(/^#+\s*/,'').trim(); break; }
-                if(!choiceRe.exec(prev) && !prev.startsWith('---')){ qText = prev.replace(/^#+\s*/,'').substring(0,60); break; }
+          const content = lastAiMsg.content;
+          const rLines = content.split('\n');
+          const rn = rLines.length;
+          const optRe = /^([A-Ca-c])[\s.、．：:]\s*\S/;
+          const aIndices = [];
+          for(let i = 0; i < rn; i++){
+            const t = rLines[i].trim();
+            if(/^[Aa][\s.、．：:]\s*\S/.test(t)){
+              let hasB = false;
+              for(let j = i+1; j < Math.min(i+20, rn); j++){
+                if(/^[Bb][\s.、．：:]\s*\S/.test(rLines[j].trim())){ hasB = true; break; }
+                if(/^[Aa][\s.、．：:]\s*\S/.test(rLines[j].trim())) break;
               }
-              const choices = [];
-              while(i < textLines.length){
-                const cm = choiceRe.exec(textLines[i].trim());
-                if(cm){ choices.push(textLines[i].trim()); i++; } else break;
+              if(hasB) aIndices.push(i);
+            }
+          }
+          for(let gi = 0; gi < aIndices.length; gi++){
+            const start = aIndices[gi];
+            const end = gi+1 < aIndices.length ? aIndices[gi+1] : rn;
+            const choices = [];
+            let cur = null;
+            for(let i = start; i < end; i++){
+              const t = rLines[i].trim();
+              if(t.startsWith('---') || /^#{1,3}\s/.test(t)){
+                if(cur){ choices.push(cur); cur = null; }
+                continue;
               }
-              if(choices.length > 0) _icd.groups.push({qText, choices});
-            } else { i++; }
+              const m2 = /^([A-Da-d])[\s.、．：:]\s*(.+)/.exec(t);
+              if(m2){ if(cur) choices.push(cur); cur = t; }
+              else if(cur && t){ if(t.length < 100) cur += ' ' + t; else { choices.push(cur); cur = null; } }
+            }
+            if(cur) choices.push(cur);
+            if(choices.length < 2) continue;
+            let qText = '';
+            for(let back = start-1; back >= Math.max(0, start-10); back--){
+              const prev = rLines[back].trim();
+              if(!prev) continue;
+              if(optRe.test(prev)) break;
+              if(/^#{1,3}\s*(问题\s*\d+)/i.test(prev)){ qText = prev.replace(/^#+\s*/,'').trim(); break; }
+              if(!prev.startsWith('---')){ qText = prev.replace(/^#+\s*/,'').replace(/^[🔥⚔️💭✨🎯💡]/u,'').trim().substring(0,80); break; }
+            }
+            _icd.groups.push({qText, choices});
           }
           if(_icd.groups.length > 0) showChoiceDock();
         }, 300);
