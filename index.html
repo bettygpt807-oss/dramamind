@@ -2993,10 +2993,12 @@ ${src.userRequirements}
     renderInquiryResponse(loadEl, reply);
     const msgs = document.getElementById('global-chat-msgs');
     if(msgs) msgs.scrollTop = msgs.scrollHeight;
-    // ── 第一条只存简洁摘要，避免每轮后续追问都重复注入完整文档原文 ──
+    // 第一条用户消息存简洁摘要（避免重复注入完整文档），同时存入 PROJECT 供恢复
     const historyUserMsg = `我选定了改编方案「${sc.title}」（${sc.num}），故事：${sc.storyBrief?.substring(0,100)}…请开始追问。`;
     inquiryHistory.push({role:'user', content: historyUserMsg});
     inquiryHistory.push({role:'assistant', content: reply});
+    // 两条都存入 PROJECT.inquiry.messages，确保刷新/历史入口能完整恢复
+    PROJECT.inquiry.messages.push({role:'user', content: historyUserMsg});
     PROJECT.inquiry.messages.push({role:'ai', content: reply});
     inquiryMsgCount++;
     saveProject();
@@ -3290,7 +3292,7 @@ function sendInquiryBatch(){
   // 组装：问题N → 答案N
   const lines = _icd.groups.map((g, i) => {
     const ans = _icd.answers[i] || '（跳过）';
-    return `问题${i+1}「${g.question}」：${ans}`;
+    return `问题${i+1}「${g.qText || ''}」：${ans}`;
   });
   const batchMsg = lines.join('\n');
 
@@ -4901,6 +4903,89 @@ function renderRecentProjects(){
   }).join('');
 }
 
+// ── 统一的 story 页 UI 重建函数 ──
+// 无论是刷新恢复、还是从历史项目入口载入，都必须经过这里
+function restoreStoryUI(){
+  // 1. 方案卡片
+  const savedSchemes = PROJECT._savedSchemes || [];
+  if(savedSchemes.length > 0){
+    renderSchemeCards(savedSchemes);
+    if(PROJECT.scheme.num){
+      document.querySelectorAll('.sc').forEach(c => {
+        const numEl = c.querySelector('.sc-num');
+        if(numEl && numEl.textContent.trim() === PROJECT.scheme.num) c.classList.add('sel');
+      });
+    }
+    document.getElementById('gen-mask')?.classList.remove('show');
+    const ph = document.getElementById('scheme-cards-placeholder');
+    if(ph) ph.style.display = 'none';
+  }
+
+  // 2. 聊天记录重建
+  const msgs = PROJECT.inquiry?.messages || [];
+  if(msgs.length > 0){
+    inquiryMode = true;
+    inquiryMsgCount = msgs.length;
+    const chatContainer = document.getElementById('global-chat-msgs');
+    if(chatContainer){
+      chatContainer.innerHTML = '';
+      msgs.forEach(m => appendGlobalMsg(m.role === 'ai' ? 'ai' : 'user', m.content));
+      setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
+    }
+    // 追问结束后显示「生成策划案」按钮
+    const bibleBtn = document.getElementById('wb-gen-bible-btn');
+    if(bibleBtn) bibleBtn.classList.add('show');
+
+    // 如果 bible 未确认，且最后一条是 AI 消息且含未回答的选项，恢复选项弹窗
+    if(!PROJECT.bible?.confirmed){
+      const lastMsg = msgs[msgs.length - 1];
+      const lastAiMsg = lastMsg?.role === 'ai' ? lastMsg : null;
+      if(lastAiMsg && lastAiMsg.content && !lastAiMsg.content.includes('✓')){
+        setTimeout(() => {
+          _icd.groups = [];
+          _icd.current = 0;
+          _icd.answers = {};
+          const choiceRe = /^([A-Ca-c])[.、．\s：:]\s*(.+)/;
+          const textLines = lastAiMsg.content.split('\n');
+          let i = 0;
+          while(i < textLines.length){
+            const m2 = choiceRe.exec(textLines[i].trim());
+            if(m2){
+              let qText = '';
+              for(let back = i-1; back >= Math.max(0,i-8); back--){
+                const prev = textLines[back].trim();
+                if(!prev) continue;
+                if(/^#{1,3}\s*(问题\s*\d+)/i.test(prev)){ qText = prev.replace(/^#+\s*/,'').trim(); break; }
+                if(!choiceRe.exec(prev) && !prev.startsWith('---')){ qText = prev.replace(/^#+\s*/,'').substring(0,60); break; }
+              }
+              const choices = [];
+              while(i < textLines.length){
+                const cm = choiceRe.exec(textLines[i].trim());
+                if(cm){ choices.push(textLines[i].trim()); i++; } else break;
+              }
+              if(choices.length > 0) _icd.groups.push({qText, choices});
+            } else { i++; }
+          }
+          if(_icd.groups.length > 0) showChoiceDock();
+        }, 300);
+      }
+    }
+  }
+
+  // 3. 策划案已确认：渲染策划案内容，跳到 step 3
+  if(PROJECT.bible?.confirmed && PROJECT.bible.logline){
+    try { renderBible(PROJECT.bible); } catch(e){}
+    goStep(3);
+  } else if(savedSchemes.length > 0){
+    // 有方案但未确认策划案：停在 step 1（方案选择）
+    goStep(1);
+  }
+
+  // 4. 恢复 inquiryHistory（供后续追问 API 多轮调用）
+  // 已在 restoreFromSnap 里处理，这里只确保 inquiryMode 标志正确
+  if(msgs.length > 0 && !PROJECT.bible?.confirmed) inquiryMode = true;
+}
+
 function loadSavedProj(name){
   const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   const snap = projects.find(p => p.name === name);
@@ -4912,59 +4997,45 @@ function loadSavedProj(name){
   const lbl = document.getElementById('story-lbl');
   if(lbl) lbl.textContent = snap.name;
 
-  // Update workflow nav done states
+  // 同步首页工作流状态标记
   const wfDone = [];
   if(PROJECT.scheme.confirmed) wfDone.push('story');
   if(bdState.generatedCount > 0 || PROJECT.episodes.allData.length > 0) wfDone.push('breakdown');
   if(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0) wfDone.push('script');
   ['story','breakdown','script'].forEach(id=>{
-    const tab=document.getElementById('wf-'+id);
+    const tab = document.getElementById('wf-'+id);
     if(tab) tab.classList.toggle('done', wfDone.includes(id));
   });
 
-  // Determine best landing page: use last active page from saved state
-  const savedPage = snap.S?.page;
-  const targetPage = (savedPage && savedPage !== 'home') ? savedPage : 'story';
-  showPage(targetPage);
+  // 先展示 story 页（确保 DOM 已就位），再重建内容
+  showPage('story');
 
-  // Always re-render story stage data regardless of targetPage
-  if(PROJECT.scheme.confirmed) {
-    goStep(3);
-    if(PROJECT.bible && PROJECT.bible.logline) {
-      try { renderBible(PROJECT.bible); } catch(e){}
-    }
-  } else if(PROJECT.schemes && PROJECT.schemes.length > 0) {
-    goStep(2);
-    try { renderSchemeCards(PROJECT.schemes); } catch(e){}
-  } else {
-    goStep(1);
-  }
+  // ── 统一用 restoreStoryUI 重建 story 页所有 UI ──
+  restoreStoryUI();
 
-  // Navigate to the correct target page (after story data is rendered)
-  if(targetPage !== 'story') {
-    showPage(targetPage);
-  }
-
-  // Always render breakdown if data exists (regardless of targetPage)
-  if(bdState.acts.length > 0) {
+  // 细纲页内容重建
+  if(bdState.acts.length > 0){
     renderActNav();
     renderActsContainer();
     bdState.acts.forEach((act, i) => {
       if(act.eps && act.eps.length > 0) renderActCards(i);
     });
     showBdChatBar();
-    if(bdState.confirmed) {
+    if(bdState.confirmed){
       const btn = document.getElementById('bd-confirm-btn');
-      if(btn) btn.style.display='flex';
+      if(btn) btn.style.display = 'flex';
     }
   }
 
-  // Always render script if data exists (regardless of targetPage)
-  if(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0) {
-    setTimeout(() => {
-      buildScriptUI();
-      updateScriptStats();
-    }, 100);
+  // 剧本页内容重建
+  if(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0){
+    setTimeout(() => { buildScriptUI(); updateScriptStats(); }, 100);
+  }
+
+  // 跳到用户上次所在页面
+  const savedPage = snap.S?.page;
+  if(savedPage && savedPage !== 'home' && savedPage !== 'story'){
+    setTimeout(() => showPage(savedPage), 50);
   }
 
   showToast(`已载入项目「${name.substring(0,20)}」`);
@@ -6838,48 +6909,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
       showPage(S.page);
       if(S.page === 'story' && S.step) goStep(S.step);
 
-      // ── story 页：重建方案卡片 + 追问聊天记录 ──
-      if(S.page === 'story'){
-        // 重建改编方案卡片
-        const savedSchemes = PROJECT._savedSchemes || [];
-        if(savedSchemes.length > 0){
-          renderSchemeCards(savedSchemes);
-          // 恢复选中状态
-          if(PROJECT.scheme.num){
-            document.querySelectorAll('.sc').forEach(c => {
-              const numEl = c.querySelector('.sc-num');
-              if(numEl && numEl.textContent.trim() === PROJECT.scheme.num){
-                c.classList.add('sel');
-              }
-            });
-          }
-          document.getElementById('gen-mask')?.classList.remove('show');
-          // 隐藏占位提示
-          const ph = document.getElementById('scheme-cards-placeholder');
-          if(ph) ph.style.display = 'none';
-        }
-
-        // 重建追问聊天记录
-        if(PROJECT.inquiry.messages && PROJECT.inquiry.messages.length > 0){
-          inquiryMode = true;
-          const chatContainer = document.getElementById('global-chat-msgs');
-          if(chatContainer){
-            chatContainer.innerHTML = '';
-            PROJECT.inquiry.messages.forEach(m => {
-              appendGlobalMsg(m.role === 'ai' ? 'ai' : 'user', m.content);
-            });
-            setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
-          }
-          // 有追问记录说明策划案按钮应该显示
-          const bibleBtn = document.getElementById('wb-gen-bible-btn');
-          if(bibleBtn) bibleBtn.classList.add('show');
-        }
-
-        // 如果策划案已确认，渲染策划案内容
-        if(PROJECT.bible.confirmed && PROJECT.bible.logline){
-          renderBible(PROJECT.bible);
-        }
-      }
+      // ── 无论在哪个页面，都预先重建 story 数据 ──
+      // 这样用户切回 story tab 时方案卡片和聊天记录都在
+      restoreStoryUI();
       if(S.page === 'breakdown' && bdState.acts.length > 0){
         renderActNav();
         renderActsContainer();
