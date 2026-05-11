@@ -3188,13 +3188,13 @@ function showChoiceDock(){
   // Question label
   qLabel.textContent = group.qText || `问题 ${_icd.current + 1}`;
 
-  // Build choice buttons
+  // Build choice buttons — 用索引传参避免选项文字含引号破坏 onclick 属性
   const letters = ['A','B','C','D','E'];
   choicesEl.innerHTML = group.choices.map((c, idx) => {
     const escaped = c.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    return `<button class="icd-btn" onclick="pickChoice(${JSON.stringify(c)})">
+    return `<button class="icd-btn" onclick="pickChoiceByIndex(${idx})">
       <div class="icd-btn-letter">${letters[idx]||idx+1}</div>
-      <span>${escaped.replace(/^[A-C][.、．\s：:]\s*/,'')}</span>
+      <span>${escaped.replace(/^[A-Da-d][.、．\s：:]\s*/,'')}</span>
     </button>`;
   }).join('') +
   `<button class="icd-btn other" onclick="showCustomChoice()">
@@ -3255,6 +3255,14 @@ function submitFollowup(){
 // ── 策划追问选项交互 ──
 // 设计：AI 一次返回多个问题，用户逐题选答案，全部答完后一次性组装发送
 // _icd.answers 存储每题的选择，全部完成后统一调用 sendInquiryBatch()
+
+// 按索引取选项内容，彻底避免选项文字含引号破坏 onclick 属性
+function pickChoiceByIndex(idx){
+  const group = _icd.groups[_icd.current];
+  if(!group) return;
+  const choice = group.choices[idx] || '';
+  pickChoice(choice);
+}
 
 function pickChoice(choice){
   // 立即锁定整个 dock，防止重复点击
