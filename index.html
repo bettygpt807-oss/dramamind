@@ -2696,7 +2696,7 @@ ${src.userRequirements ? `用户补充需求：${src.userRequirements}` : ''}
 返回JSON数组。`;
     }
 
-    return callAny(userMsg, sysPrompt, hasRawDoc ? 6000 : 4096)
+    return callAny(userMsg, sysPrompt, hasRawDoc ? 6000 : 4096, 'scheme')
       .catch(e => { console.error('generateSchemes error:', e); return null; });
   };
 
@@ -2708,7 +2708,7 @@ ${src.userRequirements ? `用户补充需求：${src.userRequirements}` : ''}
 {"docTitle":"原著/IP名称","docPlanningLogic":"核心策划逻辑200字内","docBeatCount":0,"docBeatSequence":"完整节拍序列（每节拍【节拍N·标题】完整描述200-300字，换行分隔，不能省略任何节拍，宁可多也不能少）","docCharacters":"主要人物150字内","docHighlights":"高光情节列表·分隔","docRhythmRules":"节奏规律","docExistingSchemes":"文档中已有改编方案（无则空字符串）"}
 注意：docBeatCount 填写文档中节拍的总数量（整数），docBeatSequence 必须包含文档中所有节拍，一个都不能少。`;
     callAny(`【DramaLens 拆解文档】
-${docText}`, sysPrompt, 6000)
+${docText}`, sysPrompt, 6000, 'extract')
       .then(raw => {
         try {
           const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
@@ -3020,7 +3020,7 @@ ${src.userRequirements}
     return;
   }
 
-  const callFn = callAny;
+  const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'inquiry');
   callFn(userMsg, sysPrompt, 3000)
     .then(doAsk)
     .catch((err) => {
@@ -3398,7 +3398,7 @@ function sendInquiryBatch(){
     content: m.content
   }));
 
-  callDoubao_multiTurn(historyForApi, sysPrompt, 2500).then(reply => {
+  callDoubao_multiTurn(historyForApi, sysPrompt, 2500, 'inquiry').then(reply => {
     inquiryHistory.push({role:'assistant', content:reply});
     renderInquiryResponse(loadEl, reply);
     if(msgs) msgs.scrollTop = msgs.scrollHeight;
@@ -3446,7 +3446,7 @@ function sendInquiryMsg(){
   // ── 标准多轮对话：历史作为 messages 数组而非拼入 systemPrompt，避免截断 ──
   const callWithHistory = async () => {
     const historyForApi = messages.map(m => ({ role: m.role, content: m.content }));
-    return callDoubao_multiTurn(historyForApi, sysPrompt, 2500);
+    return callDoubao_multiTurn(historyForApi, sysPrompt, 2500, 'inquiry');
   };
 
   const showBibleBtn = () => {
@@ -3484,7 +3484,7 @@ function sendInquiryMsg(){
 // ══ STEP 2 → STEP 3: Generate Creative Bible ══
 async function generateBible(){
   const cfg = getApiConfig();
-  const callFn = callAny;
+  const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'bible');
   const src = PROJECT.source;
   const sc = PROJECT.scheme;
 
@@ -4413,7 +4413,7 @@ ${buildLockedEditsContext()}
     rawData = buildMockActData(act);
   } else {
     try {
-      const callFn = callAny;
+      const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'breakdown');
       const raw = await callFn(userMsg, sysPrompt, 6000);
       rawData = parseEpJSON(raw, act.from - 1, act.count);
     } catch(e) {
@@ -4753,7 +4753,7 @@ async function sendActReviewChat(actIdx) {
   const sysPrompt=`你是专业短剧编剧顾问，正在帮创作者修改「${sc.title||'项目'}」第${actIdx+1}幕（${act.name}，第${act.from}-${act.to}集）的分集细纲。故事简介：${b.logline||''}。核心创作逻辑：${b.schemePoints?.structure||''}。请给出具体修改建议，标明集数和字段，语气平等简洁。`;
   
   try {
-    const callFn = callAny;
+    const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'breakdown');
     const reply = await callFn(msg, sysPrompt);
     aEl.textContent = reply;
   } catch(e) { aEl.textContent='请求失败，请重试。'; }
@@ -5387,7 +5387,7 @@ async function generateScriptAct(actIdx) {
   appendActGeneratingPlaceholder(actIdx);
 
   const cfg = getApiConfig();
-  const callFn = callAny;
+  const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'script');
   const epSlice = PROJECT.episodes.allData.slice(act.from - 1, act.to);
   const b = PROJECT.bible, sc = PROJECT.scheme, src = PROJECT.source;
   const transcript = PROJECT.inquiry.messages.length > 0
@@ -5737,7 +5737,7 @@ async function sendScriptActChatById(actIdx) {
   const messages = scriptState.chatHistory.map(m=>({role:m.role==='ai'?'assistant':'user',content:m.content}));
 
   try {
-    const callFn = callAny;
+    const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'script');
     const reply = await callFn(msg, sysPrompt, 1500);
     aEl.textContent = reply;
     scriptState.chatHistory.push({role:'assistant',content:reply});
@@ -7373,21 +7373,65 @@ function getApiConfig() {
   catch(e) { return {}; }
 }
 
-// ── Universal caller: 统一使用豆包 ──
-async function callAny(userMsg, systemPrompt, maxTokens=2000) {
-  return callDoubao(userMsg, systemPrompt, maxTokens);
+// ── 模式说明 ──
+// 专业模式（balanced）：策划阶段+翻译 → Claude Sonnet（无Key时 fallback doubao-seed-2-0-pro）
+//                      细纲 → doubao-seed-2-0-pro；剧本 → doubao-seed-2-0-lite
+// 经济模式（lite）：全程 doubao-seed-2-0-lite
+
+const DOUBAO_PRO  = 'doubao-seed-2-0-pro-260215';
+const DOUBAO_LITE = 'doubao-seed-2-0-lite-260428';
+
+// 判断该环节是否应该用 Claude（专业模式且有 Key）
+function shouldUseClaude(stage) {
+  const cfg = getApiConfig();
+  if(!cfg.claudeKey) return false;
+  const mode = cfg.doubaoMode || 'balanced';
+  if(mode === 'lite') return false;
+  // 专业模式：策划阶段 + 翻译用 Claude
+  const claudeStages = ['scheme', 'extract', 'inquiry', 'bible', 'translate'];
+  return claudeStages.includes(stage);
+}
+
+// 豆包模型选择（不用 Claude 时）
+// 专业模式无 Claude Key：策划阶段 fallback Pro，细纲 Pro，剧本 Lite
+// 经济模式：全程 Lite
+function getModelForStage(stage) {
+  const cfg = getApiConfig();
+  const mode = cfg.doubaoMode || 'balanced';
+  if(mode === 'lite') return DOUBAO_LITE;
+  // 专业模式：策划阶段+细纲+剧本全部用Pro，翻译无Key时fallback Lite
+  const proStages = ['scheme', 'extract', 'inquiry', 'bible', 'breakdown', 'script', 'translate'];
+  return proStages.includes(stage) ? DOUBAO_PRO : DOUBAO_LITE;
+}
+
+// ── 统一调用入口：自动选 Claude 或豆包 ──
+async function callAny(userMsg, systemPrompt, maxTokens=2000, stage='default') {
+  if(shouldUseClaude(stage)){
+    return callClaude(userMsg, systemPrompt, maxTokens);
+  }
+  return callDoubao(userMsg, systemPrompt, maxTokens, stage);
 }
 
 function openApiConfig() {
   const cfg = getApiConfig();
   document.getElementById('doubao-key-input').value = cfg.doubaoKey || '';
-  // select 的 value 赋值会自动选中对应 option；若存的是旧模型 ID 则 fallback 到默认
-  const modelEl = document.getElementById('doubao-model-input');
-  const savedModel = cfg.doubaoModel || 'doubao-seed-2-0-lite-260428';
-  // 如果 select 里有这个值就选中，否则选第一个
-  modelEl.value = savedModel;
-  if(!modelEl.value) modelEl.selectedIndex = 0;
+  const mode = cfg.doubaoMode || 'balanced';
+  document.querySelectorAll('input[name="dramamind-mode"]').forEach(r => { r.checked = r.value === mode; });
+  _updateModeHighlight(mode);
+  document.getElementById('doubao-model-input').value = mode;
+  // Claude 翻译配置
+  document.getElementById('claude-key-input').value = cfg.claudeKey || '';
+  document.getElementById('claude-base-input').value = cfg.claudeBase || '';
   document.getElementById('api-config-modal').style.display = 'flex';
+}
+
+function _updateModeHighlight(mode){
+  ['balanced','lite'].forEach(m => {
+    const el = document.getElementById('mode-opt-' + m);
+    if(el) el.style.borderColor = m === mode ? 'var(--gm)' : 'var(--bd)';
+  });
+  const hidden = document.getElementById('doubao-model-input');
+  if(hidden) hidden.value = mode;
 }
 
 function closeApiConfig() {
@@ -7407,9 +7451,13 @@ function persistApiConfig() {
     document.getElementById('doubao-key-input').focus();
     return;
   }
+  const selectedMode = document.querySelector('input[name="dramamind-mode"]:checked')?.value || 'balanced';
   const cfg = {
     doubaoKey: keyVal,
-    doubaoModel: document.getElementById('doubao-model-input').value.trim() || 'doubao-seed-2-0-lite-260428',
+    doubaoMode: selectedMode,
+    doubaoModel: selectedMode,
+    claudeKey: (document.getElementById('claude-key-input')?.value || '').trim(),
+    claudeBase: (document.getElementById('claude-base-input')?.value || '').trim().replace(/\/+$/, ''),
   };
   localStorage.setItem('dramamind_api_config', JSON.stringify(cfg));
   localStorage.setItem('dramamind_api_prompted', '1');
@@ -7482,22 +7530,37 @@ async function callClaude(userMsg, systemPrompt, maxTokens) {
 
 // ── 真正的多轮对话调用：接受完整 messages 数组，第一条 content 可以很大（文档上下文），
 //    后续轮次只是普通对话，不会每次都重复注入文档，避免 prompt 臃肿 ──
-async function callDoubao_multiTurn(messages, systemPrompt, maxTokens) {
+async function callDoubao_multiTurn(messages, systemPrompt, maxTokens, stage='inquiry') {
+  // 专业模式且有 Claude Key：用 Claude 多轮对话（追问阶段）
+  if(shouldUseClaude(stage)){
+    const cfg = getApiConfig();
+    const base = cfg.claudeBase || 'https://api.anthropic.com';
+    const url = base.endsWith('/v1/messages') ? base : `${base}/v1/messages`;
+    const headers = { 'content-type':'application/json', 'x-api-key':cfg.claudeKey, 'Authorization':`Bearer ${cfg.claudeKey}`, 'anthropic-version':'2023-06-01' };
+    if(!cfg.claudeBase) headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    const res = await fetch(url, {
+      method:'POST', headers,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: maxTokens || 2500,
+        system: systemPrompt,
+        messages: messages,
+      }),
+    });
+    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Claude API 错误 ${res.status}`); }
+    const data = await res.json();
+    return data.content[0].text;
+  }
+  // 经济模式或无 Claude Key：用豆包（专业模式无Key时 fallback Pro）
   const cfg = getApiConfig();
   if (!cfg.doubaoKey) { showToast('请先点击右上角「API配置」填写豆包 API Key'); throw new Error('no key'); }
   const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${cfg.doubaoKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Authorization': `Bearer ${cfg.doubaoKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: cfg.doubaoModel || 'doubao-seed-2-0-lite-260428',
+      model: getModelForStage(stage),
       max_tokens: maxTokens || 2500,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-      ],
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
     }),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
@@ -7505,22 +7568,16 @@ async function callDoubao_multiTurn(messages, systemPrompt, maxTokens) {
   return data.choices[0].message.content;
 }
 
-async function callDoubao(userMsg, systemPrompt, maxTokens) {
+async function callDoubao(userMsg, systemPrompt, maxTokens, stage='default') {
   const cfg = getApiConfig();
   if (!cfg.doubaoKey) { showToast('请先点击右上角「API配置」填写豆包 API Key'); throw new Error('no key'); }
   const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${cfg.doubaoKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Authorization': `Bearer ${cfg.doubaoKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: cfg.doubaoModel || 'doubao-seed-2-0-lite-260428',
+      model: getModelForStage(stage),
       max_tokens: maxTokens || 4096,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMsg },
-      ],
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }],
     }),
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
@@ -7539,8 +7596,8 @@ async function translateScriptReal(mode) {
   document.getElementById('stb-translate-menu').style.display = 'none';
 
   const cfg = getApiConfig();
-  if (!cfg.doubaoKey) {
-    showToast('请先配置 API Key');
+  if (!cfg.doubaoKey && !cfg.claudeKey) {
+    showToast('请先配置豆包或 Claude API Key');
     return;
   }
 
@@ -7622,7 +7679,8 @@ Translation rules:
     try {
       const userMsg = `Translate the following Chinese short drama script to English. Each line starts with a tag like [sp-scene], [sp-action], [sp-char], [sp-dlg], [sp-paren] — keep these tags exactly as-is, only translate the content after the tag.\n\n${sourceText}`;
       const maxTok = Math.min(4096, sourceText.length * 3);
-      const raw = await callDoubao(userMsg, '你是专业短剧剧本翻译，将中文竖屏短剧剧本翻译为英文，保持戏剧张力和格式标签。', maxTok);
+      // callAny 自动根据模式选 Claude（平衡模式）或豆包Lite（经济模式）
+      const raw = await callAny(userMsg, sysPrompt, maxTok, 'translate');
 
       const translatedLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
       const tagMap = {};
@@ -8536,6 +8594,11 @@ function initWorkbench(){
   if(!ASSET_STORE.bible?.text && PROJECT.bible.confirmed) archiveBible();
   if(!ASSET_STORE.breakdown?.text && bdState.allEps?.length > 0) archiveBreakdown();
   initWbDividers();
+
+  // 使用模式 radio 切换高亮
+  document.querySelectorAll('input[name="dramamind-mode"]').forEach(r => {
+    r.addEventListener('change', () => _updateModeHighlight(r.value));
+  });
 }
 
 function initWbDividers(){
@@ -8716,12 +8779,42 @@ async function sendChatReal(ctx) {
         <input type="password" id="doubao-key-input" placeholder="请输入你自己的豆包 API Key" style="width:100%;height:36px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 12px;font-size:13px;font-family:'Noto Sans SC',sans-serif;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
       </div>
       <div style="margin-bottom:20px">
-        <label style="display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);margin-bottom:6px">模型版本 <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--i4)">（不确定就选默认）</span></label>
-        <select id="doubao-model-input" style="width:100%;height:36px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 12px;font-size:13px;font-family:'DM Mono',monospace;outline:none;transition:border-color .15s;background:var(--wh);color:var(--ink);cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238A9E90' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
-          <option value="doubao-seed-2-0-lite-260428">doubao-seed-2-0-lite-260428（默认 · 速度快）</option>
-          <option value="doubao-seed-2-0-pro-260215">doubao-seed-2-0-pro-260215（Pro · 质量更高）</option>
-        </select>
-        <div style="font-size:11px;color:var(--i4);margin-top:5px">lite 版速度更快、成本更低；pro 版生成质量更高、JSON 格式更稳定，推荐正式使用时切换</div>
+        <label style="display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);margin-bottom:8px">使用模式</label>
+        <div id="mode-selector" style="display:flex;flex-direction:column;gap:8px">
+          <label id="mode-opt-balanced" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;transition:border-color .15s">
+            <input type="radio" name="dramamind-mode" value="balanced" style="margin-top:3px;accent-color:var(--gm)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ink)">🏆 专业模式 <span style="font-size:11px;font-weight:400;color:var(--gm);margin-left:6px">推荐</span></div>
+              <div style="font-size:11px;color:var(--i4);margin-top:3px;line-height:1.6">
+                策划阶段（方案·提取·追问·策划案）→ <b style="color:var(--gm)">Claude Sonnet</b>（无 Claude Key 时 fallback doubao-seed-2-0-pro）<br>
+                分集细纲 → <b style="color:var(--gm)">doubao-seed-2-0-pro</b><br>
+                剧本生成 → <b style="color:var(--gm)">doubao-seed-2-0-pro</b><br>
+                剧本翻译 → <b style="color:var(--gm)">Claude Sonnet</b>（无 Claude Key 时 fallback doubao-seed-2-0-pro）
+              </div>
+            </div>
+          </label>
+          <label id="mode-opt-lite" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;transition:border-color .15s">
+            <input type="radio" name="dramamind-mode" value="lite" style="margin-top:3px;accent-color:var(--gm)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ink)">⚡ 经济模式</div>
+              <div style="font-size:11px;color:var(--i4);margin-top:3px;line-height:1.6">全程使用 doubao-seed-2-0-lite，速度最快，成本最低（约为专业模式的 30%）</div>
+            </div>
+          </label>
+        </div>
+        <input type="hidden" id="doubao-model-input" value="balanced">
+      </div>
+      <!-- Claude 翻译配置（可选） -->
+      <div style="margin-bottom:16px;padding:12px 14px;background:#f8fafb;border:1px solid var(--bl);border-radius:var(--rs)">
+        <div style="font-size:11px;font-weight:700;color:var(--i3);letter-spacing:.05em;margin-bottom:10px">🌐 Claude 翻译配置（可选）</div>
+        <div style="font-size:11px;color:var(--i4);line-height:1.6;margin-bottom:10px">配置后，专业模式的策划阶段和翻译将使用 Claude Sonnet；未配置则 fallback doubao-seed-2-0-pro（策划+翻译）和 doubao-seed-2-0-lite（经济模式）。</div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--i4);margin-bottom:5px">Claude API Key</label>
+          <input type="password" id="claude-key-input" placeholder="sk-ant-..." style="width:100%;height:34px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:12px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--i4);margin-bottom:5px">中转站地址 <span style="font-weight:400;text-transform:none;color:var(--i4)">（国内必填，如 https://claude2.sssaicode.com/api）</span></label>
+          <input type="text" id="claude-base-input" placeholder="https://claude2.sssaicode.com/api" style="width:100%;height:34px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:12px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
+        </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button onclick="closeApiConfig()" style="height:34px;padding:0 16px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);cursor:pointer">取消</button>
