@@ -1049,7 +1049,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .badge-g{background:var(--gp);color:var(--gm)}
 /* WORKFLOW NAV — horizontal tab bar shown on story/script/prod pages */
 .workflow-nav{height:40px;background:var(--wh);border-bottom:1px solid var(--bd);display:flex;align-items:stretch;flex-shrink:0;justify-content:center;gap:0}
-.wf-tab{display:flex;align-items:center;gap:6px;padding:0 18px;font-size:13px;color:var(--i3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap}
+.wf-tab{display:flex;align-items:center;gap:6px;padding:0 18px;font-size:13px;color:var(--i3);cursor:default;user-select:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap}
 .wf-tab:hover{color:var(--ink)}
 .wf-tab.active{color:var(--gm);border-bottom-color:var(--gm);font-weight:500}
 .wf-tab.done .wf-num{background:rgba(46,122,80,.2);color:var(--gm);border-color:transparent}
@@ -1285,15 +1285,15 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   </div>
 </div>
 
-<!-- WORKFLOW NAV — shown after project starts, hidden on home -->
+<!-- WORKFLOW NAV — 进度指示器，不可点击，由左侧导航驱动 -->
 <div class="workflow-nav" id="workflow-nav" style="display:none">
-  <div class="wf-tab" id="wf-story" onclick="showPage('story')">
+  <div class="wf-tab" id="wf-story">
     <span class="wf-num">01</span>创意策划
   </div>
-  <div class="wf-tab" id="wf-breakdown" onclick="showPage('breakdown')">
+  <div class="wf-tab" id="wf-breakdown">
     <span class="wf-num">02</span>分集细纲
   </div>
-  <div class="wf-tab" id="wf-script" onclick="showPage('script')">
+  <div class="wf-tab" id="wf-script">
     <span class="wf-num">03</span>剧本创作
   </div>
 </div>
@@ -1439,13 +1439,28 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   <div class="story-layout">
     <div class="story-main">
 
+      <!-- 原始文档展示（ss0） -->
+      <div id="ss0" style="display:none">
+        <div class="sec-head">
+          <div>
+            <div class="sec-title" style="font-size:14px;font-weight:600;color:var(--ink)">原始文档</div>
+            <div class="sec-desc">DramaLens 拆解文档完整内容</div>
+          </div>
+          <button onclick="exportSingleAsset('doc')" style="height:28px;padding:0 12px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:11px;color:var(--i2);cursor:pointer;white-space:nowrap">↓ 导出文档</button>
+        </div>
+        <div id="ss0-content" style="font-size:13px;color:var(--i2);line-height:1.9;white-space:pre-wrap;padding:4px 0"></div>
+      </div>
+
       <!-- 改编方案 -->
       <div id="ss1">
         <div class="sec-head">
-          <div class="sec-title" style="font-size:14px;font-weight:600;color:var(--ink)">改编方案</div>
-          <div class="sec-desc" id="ss1-desc">
-            <span id="scheme-source-badge" class="scheme-source-badge scheme-source-doc">📄 来自 DramaLens 拆解文档</span>
+          <div>
+            <div class="sec-title" style="font-size:14px;font-weight:600;color:var(--ink)">改编方案</div>
+            <div class="sec-desc" id="ss1-desc">
+              <span id="scheme-source-badge" class="scheme-source-badge scheme-source-doc">📄 来自 DramaLens 拆解文档</span>
+            </div>
           </div>
+          <button onclick="exportSingleAsset('scheme')" style="height:28px;padding:0 12px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:11px;color:var(--i2);cursor:pointer;white-space:nowrap">↓ 导出方案</button>
         </div>
         <div class="scheme-cards" id="scheme-cards-container">
           <div id="scheme-cards-placeholder" style="padding:32px 20px;text-align:center;color:var(--i4);font-size:13px;border:1.5px dashed var(--bl);border-radius:var(--r)">
@@ -1466,8 +1481,15 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       <!-- 创意策划案（生成后显示） -->
       <div id="ss3" style="display:none">
         <div class="sec-head" style="margin-top:24px;padding-top:20px;border-top:1px solid var(--bl)">
-          <div class="sec-title" style="font-size:14px;font-weight:600;color:var(--ink)">创意策划案</div>
-          <div class="sec-desc">点击任意字段可直接编辑</div>
+          <div>
+            <div class="sec-title" style="font-size:14px;font-weight:600;color:var(--ink)">创意策划案</div>
+            <div class="sec-desc">点击任意字段可直接编辑</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="bible-history-btn" onclick="openBibleHistory()" style="display:none;height:28px;padding:0 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:11px;color:var(--i3);cursor:pointer;font-family:'Noto Sans SC',sans-serif">历史版本 <span id="bible-history-count" style="color:var(--gm)">0</span></button>
+            <button onclick="regenBibleFromChat()" style="height:28px;padding:0 12px;border:1px solid var(--gp);border-radius:var(--rs);background:var(--gg);font-size:11px;color:var(--gm);cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-weight:500">↺ 重新生成</button>
+            <button onclick="exportSingleAsset('bible')" style="height:28px;padding:0 12px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:11px;color:var(--i2);cursor:pointer;font-family:'Noto Sans SC',sans-serif">↓ 导出策划案</button>
+          </div>
         </div>
 
         <!-- 1. 项目基本信息 -->
@@ -1646,9 +1668,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <div class="stb-translate-wrap" id="stb-translate-wrap">
               <button class="stb-action-btn" onclick="toggleTranslateMenu(event)">一键翻译 ▾</button>
               <div class="stb-dropdown" id="stb-translate-menu" style="display:none">
-                <div class="stb-dd-item" onclick="translateScript('current-act')">当前幕翻译（全英）</div>
-                <div class="stb-dd-item" onclick="translateScript('current-act-dialogue')">当前幕翻译（只翻台词）</div>
-                <div class="stb-dd-item" onclick="translateScript('all')">全本翻译（全英）</div>
+                <div class="stb-dd-item" onclick="translateScript('current-act')">当前幕 → 英文剧本（全英翻译）</div>
+                <div class="stb-dd-item" onclick="translateScript('current-act-dialogue')">当前幕 → 制作剧本（只翻台词）</div>
+                <div class="stb-dd-item" onclick="translateScript('all')">全本 → 英文剧本（全英翻译）</div>
               </div>
             </div>
             <div class="stb-sep"></div>
@@ -1927,6 +1949,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
 
 <!-- ══ 三栏工作台：全局左栏 + 右栏（共用） ══ -->
+<!-- 策划案历史版本抽屉 -->
+<div id="bible-history-drawer" style="display:none;position:fixed;top:0;right:0;width:340px;height:100vh;background:var(--wh);box-shadow:-4px 0 24px rgba(0,0,0,.12);z-index:200;overflow-y:auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bl);position:sticky;top:0;background:var(--wh)">
+    <span style="font-size:14px;font-weight:600;color:var(--ink)">历史版本</span>
+    <button onclick="closeBibleHistory()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--i3);line-height:1">×</button>
+  </div>
+  <div id="bible-history-list" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px"></div>
+</div>
+<div id="bible-history-overlay" onclick="closeBibleHistory()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:199"></div>
+
 <div id="workbench-wrap" style="display:none;flex:1;overflow:hidden;min-height:0">
 
   <!-- 左栏：项目资料库 -->
@@ -1936,93 +1968,72 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     </div>
     <div class="wb-left-body" id="wb-asset-list">
 
-      <div class="asset-card" id="ac-doc" onclick="toggleAssetCard('ac-doc')">
+      <div class="asset-card" id="ac-doc" onclick="navTo('doc')">
         <div class="asset-card-head">
           <span class="asset-card-icon">📄</span>
           <span class="asset-card-label">原始文档</span>
           <span class="asset-card-status" id="ac-doc-status">待上传</span>
         </div>
         <div class="asset-card-body" id="ac-doc-body">—</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('doc')">预览</button>
-        </div>
       </div>
 
-      <div class="asset-card" id="ac-scheme" onclick="toggleAssetCard('ac-scheme')">
+      <div class="asset-card" id="ac-scheme" onclick="navTo('scheme')">
         <div class="asset-card-head">
           <span class="asset-card-icon">🎯</span>
           <span class="asset-card-label">改编方案</span>
           <span class="asset-card-status" id="ac-scheme-status">待确认</span>
         </div>
         <div class="asset-card-body" id="ac-scheme-body">—</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('scheme')">预览</button>
-        </div>
       </div>
 
-      <div class="asset-card" id="ac-bible" onclick="toggleAssetCard('ac-bible')">
+      <div class="asset-card" id="ac-bible" onclick="navTo('bible')">
         <div class="asset-card-head">
           <span class="asset-card-icon">📋</span>
           <span class="asset-card-label">创意策划案</span>
           <span class="asset-card-status" id="ac-bible-status">待生成</span>
         </div>
         <div class="asset-card-body" id="ac-bible-body">—</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('bible')">预览</button>
-        </div>
       </div>
 
-      <div class="asset-card" id="ac-breakdown" onclick="toggleAssetCard('ac-breakdown')">
+      <div class="asset-card" id="ac-breakdown" onclick="navTo('breakdown')">
         <div class="asset-card-head">
           <span class="asset-card-icon">📊</span>
           <span class="asset-card-label">分集细纲</span>
           <span class="asset-card-status" id="ac-breakdown-status">待生成</span>
         </div>
         <div class="asset-card-body" id="ac-breakdown-body">—</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('breakdown')">预览</button>
-        </div>
       </div>
 
-      <div class="asset-card" id="ac-script-cn" onclick="toggleAssetCard('ac-script-cn')">
+      <div class="asset-card" id="ac-script-cn" onclick="navTo('script-cn')">
         <div class="asset-card-head">
           <span class="asset-card-icon">✍️</span>
           <span class="asset-card-label">中文剧本</span>
           <span class="asset-card-status" id="ac-script-cn-status">待生成</span>
         </div>
         <div class="asset-card-body" id="ac-script-cn-body">—</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('script-cn')">预览</button>
-        </div>
       </div>
 
-      <div class="asset-card" id="ac-script-en" onclick="toggleAssetCard('ac-script-en')">
+      <div class="asset-card" id="ac-script-prod" onclick="navTo('script-prod')">
+        <div class="asset-card-head">
+          <span class="asset-card-icon">🎬</span>
+          <span class="asset-card-label">制作剧本</span>
+          <span class="asset-card-status" id="ac-script-prod-status">待生成</span>
+        </div>
+        <div class="asset-card-body" id="ac-script-prod-body">翻译台词后自动归档</div>
+      </div>
+
+      <div class="asset-card" id="ac-script-en" onclick="navTo('script-en')">
         <div class="asset-card-head">
           <span class="asset-card-icon">🌐</span>
           <span class="asset-card-label">英文剧本</span>
           <span class="asset-card-status" id="ac-script-en-status">待翻译</span>
         </div>
         <div class="asset-card-body" id="ac-script-en-body">—</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('script-en')">预览</button>
-        </div>
-      </div>
-
-      <div class="asset-card" id="ac-script-prod" onclick="viewAssetInMain('script-prod')">
-        <div class="asset-card-head">
-          <span class="asset-card-icon">🎬</span>
-          <span class="asset-card-label">制作剧本</span>
-          <span class="asset-card-status" id="ac-script-prod-status">待生成</span>
-        </div>
-        <div class="asset-card-body" id="ac-script-prod-body">翻译台词后自动归档 · 中文场景/动作行 + 英文台词</div>
-        <div class="asset-card-actions">
-          <button class="asset-btn" onclick="event.stopPropagation();previewAsset('script-prod')">预览</button>
-        </div>
       </div>
 
     </div><!-- wb-asset-list -->
     <div class="wb-left-footer">
-      <button class="wb-export-btn" onclick="openExportModal()">⬇ 导出项目资料</button>
+      <button class="wb-export-btn" onclick="openExportModal()">↓ 导出全部资料</button>
     </div>
   </div><!-- wb-left -->
 
@@ -2100,9 +2111,20 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       <button onclick="closeExportModal()" style="background:none;border:none;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:var(--rs);color:var(--i3);font-size:18px;transition:all .15s" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='none'">×</button>
     </div>
     <div id="export-modal-items" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px"></div>
-    <div class="export-modal-footer">
-      <button onclick="closeExportModal()" style="height:34px;padding:0 16px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:13px;font-family:'Noto Sans SC',sans-serif;color:var(--i2);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gm)'" onmouseout="this.style.borderColor='var(--bd)'">取消</button>
-      <button onclick="exportAllAssets()" style="height:34px;padding:0 18px;border:none;border-radius:var(--rs);background:var(--gm);font-size:13px;font-family:'Noto Sans SC',sans-serif;color:#fff;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:6px;transition:background .15s" onmouseover="this.style.background='var(--gi)'" onmouseout="this.style.background='var(--gm)'">⬇ 全部导出</button>
+    <div class="export-modal-footer" style="flex-direction:column;gap:10px;align-items:stretch">
+      <div style="display:flex;gap:16px;align-items:center;padding:0 2px">
+        <span style="font-size:11px;color:var(--i4);white-space:nowrap">导出格式：</span>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--i2)">
+          <input type="radio" name="export-fmt" value="zip" checked style="accent-color:var(--gm)"> ZIP 压缩包（每项独立文件）
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--i2)">
+          <input type="radio" name="export-fmt" value="single" style="accent-color:var(--gm)"> 合并为单个 Word 文档
+        </label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button onclick="closeExportModal()" style="height:34px;padding:0 16px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:13px;font-family:'Noto Sans SC',sans-serif;color:var(--i2);cursor:pointer">取消</button>
+        <button onclick="exportAllAssets()" style="height:34px;padding:0 18px;border:none;border-radius:var(--rs);background:var(--gm);font-size:13px;font-family:'Noto Sans SC',sans-serif;color:#fff;cursor:pointer;font-weight:500">⬇ 全部导出</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2872,13 +2894,26 @@ function loadProj(name){
 
 function goStep(n){
   S.step=n;
+  const ss0 = document.getElementById('ss0');
   const ss1 = document.getElementById('ss1');
   const ss3 = document.getElementById('ss3');
-  // Mutually exclusive: show only the active step, hide the other
-  if(n===1){
+  if(n===0){
+    if(ss0) ss0.style.display='block';
+    if(ss1) ss1.style.display='none';
+    if(ss3) ss3.style.display='none';
+    // 填充文档内容
+    const content = document.getElementById('ss0-content');
+    if(content && ASSET_STORE.doc?.text){
+      content.textContent = ASSET_STORE.doc.text;
+    } else if(content){
+      content.innerHTML = '<div style="color:var(--i4);text-align:center;padding:32px 0">文档内容将在生成方案后归档</div>';
+    }
+  } else if(n===1){
+    if(ss0) ss0.style.display='none';
     if(ss1) ss1.style.display='block';
     if(ss3) ss3.style.display='none';
   } else if(n===3){
+    if(ss0) ss0.style.display='none';
     if(ss3) ss3.style.display='block';
     if(ss1) ss1.style.display='none';
   }
@@ -2920,13 +2955,77 @@ function confirmScheme(){
   // Show workbench with right panel visible
   if(S.page !== 'story') showPage('story');
 
-  // Start inquiry in right panel
-  inquiryMode = true;
-  // Add a stage mark in right panel
-  addStageMark('策划追问');
-  appendGlobalMsg('ai', `已选定「${selTitle}」，接下来我会问你几个关键问题，帮助完善创意策划案。`);
-  startInquiry();
   archiveScheme();
+
+  // ── 先弹剧名推荐，用户选定后再进入策划追问 ──
+  _showTitleRecs(PROJECT.scheme.titleRecs || [], () => {
+    inquiryMode = true;
+    addStageMark('策划追问');
+    appendGlobalMsg('ai', `已选定「${selTitle}」，接下来我会问你几个关键问题，帮助完善创意策划案。`);
+    startInquiry();
+  });
+}
+
+// 剧名推荐浮窗：选定后回调 onDone
+function _showTitleRecs(titleRecs, onDone){
+  if(!titleRecs || titleRecs.length === 0){ onDone(); return; }
+
+  const dock = document.getElementById('inquiry-choice-dock');
+  if(!dock){ onDone(); return; }
+
+  // 构建剧名选择 UI，注入 choice dock
+  const labelEl = dock.querySelector('.icd-label');
+  const choicesEl = dock.querySelector('.icd-choices');
+  const skipEl = dock.querySelector('.icd-skip-row');
+  if(!labelEl || !choicesEl){ onDone(); return; }
+
+  labelEl.textContent = '请选择项目剧名（可跳过稍后修改）';
+  if(skipEl) skipEl.style.display = 'flex';
+
+  choicesEl.innerHTML = titleRecs.slice(0, 5).map((t, idx) => {
+    const zh = t.zh || ''; const en = t.en || '';
+    const safe = (zh + (en ? ' / ' + en : '')).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<button class="icd-btn" onclick="_pickTitle(${idx})">
+      <div class="icd-btn-letter">${idx+1}</div>
+      <span>${safe}</span>
+    </button>`;
+  }).join('') + `<button class="icd-btn other" onclick="_skipTitle()">
+    <div class="icd-btn-letter">✎</div><span>自定义剧名</span>
+  </button>`;
+
+  dock.style.display = 'flex';
+  _titleRecsDone = onDone;
+  _titleRecsData = titleRecs;
+}
+
+let _titleRecsDone = null;
+let _titleRecsData = [];
+
+function _pickTitle(idx){
+  const t = _titleRecsData[idx];
+  if(!t){ _finishTitlePick(''); return; }
+  const name = t.zh || t.en || '';
+  _finishTitlePick(name);
+}
+
+function _skipTitle(){
+  hideChoiceDock();
+  if(_titleRecsDone){ _titleRecsDone(); _titleRecsDone = null; }
+}
+
+function _finishTitlePick(name){
+  if(name){
+    S.proj = name;
+    PROJECT.scheme.selectedTitle = name;
+    const projNameEl = document.getElementById('proj-name');
+    if(projNameEl) projNameEl.textContent = name;
+    const storyLbl = document.getElementById('story-lbl');
+    if(storyLbl) storyLbl.textContent = name;
+    showToast(`剧名已设为「${name}」`);
+    saveProject();
+  }
+  hideChoiceDock();
+  if(_titleRecsDone){ _titleRecsDone(); _titleRecsDone = null; }
 }
 
 // ══ STEP 2: AI Inquiry ══
@@ -3483,6 +3582,8 @@ function sendInquiryMsg(){
 
 // ══ STEP 2 → STEP 3: Generate Creative Bible ══
 async function generateBible(){
+  // 如果已有策划案内容，先存入历史版本
+  if(PROJECT.bible.logline) saveBibleSnapshot(`第 ${bibleHistory.length + 1} 版`);
   const cfg = getApiConfig();
   const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'bible');
   const src = PROJECT.source;
@@ -3654,6 +3755,8 @@ actStructure 字段必须参考原著文档的幕数和每幕划分方式——�
     } catch(err){ bibleData=null; }
     if(!bibleData){ bibleData=getMockBible(); usedMock=true; }
     renderBible(bibleData);
+    // 更新历史版本按钮
+    _updateBibleHistoryBtn();
     // Exit inquiry mode, show bible in middle panel
     inquiryMode = false;
     hideChoiceDock();
@@ -3677,7 +3780,69 @@ actStructure 字段必须参考原著文档的幕数和每幕划分方式——�
     return;
   }
 
-  try { const raw = await callFn(userMsg, sysPrompt, 12000); doRender(raw); }
+  // ── 两段式生成（解决 Claude 8192 token 输出上限导致的截断问题）──
+  // 第一段：生成元数据（titleRecs/actStructure/logline/visual/characters/schemePoints）
+  // 第二段：专门生成 beats 节拍序列
+  // 两段结果合并后统一渲染，每段都在 6000 token 以内，完全安全
+
+  const sysPromptMeta = sysPrompt + '\n\n【本次只输出以下字段，不输出 beats 数组】：titleRecs、actStructure、logline、visual、characters、schemePoints。beats 字段留空数组 []。';
+
+  const sysPromptBeats = `你是一位顶级短剧策划。请基于以下改编方案和原著节拍逻辑，生成完整的剧情节拍序列。
+
+【核心原则】
+- 原著节拍序列是骨架，必须逐一迁移到新设定，不能跳过或合并任何节拍
+- 每个节拍的情绪设计+冲突结构+卡点逻辑必须与原著对应节拍一一呼应
+- 每个节拍展开为多集时按剧情复杂度浮动（3-5集），不平均分配
+- 节拍叙述风格参考原著文档节拍序列的写法
+
+严格返回JSON数组，不要任何额外文字或markdown代码块：
+[{"num":1,"title":"节拍标题（8字内，有画面感）","summary":"${beatWords}字：①场景与人物状态 ②核心冲突/事件 ③情绪落点 ④结尾悬念卡点"}]`;
+
+  const userMsgBeats = `【改编方案】
+${sc.num} · ${sc.title}
+故事简介：${sc.storyBrief?.substring(0, 300)}
+节拍迁移：${sc.beatMapping || '（见原著节拍序列）'}
+
+${docContext.substring(0, 8000)}
+
+【策划追问结论】
+${transcript || '（跳过追问，直接生成）'}
+
+请严格生成 ${beatCount} 个剧情节拍（原著有${docBeatCount > 0 ? docBeatCount + '个节拍，' : ''}不得减少），每节拍${beatWords}字。`;
+
+  document.getElementById('gen-txt').textContent = '正在生成策划案（1/2）项目基础信息…';
+
+  try {
+    // 第一段：元数据
+    const raw1 = await callFn(userMsg, sysPromptMeta, 6000);
+
+    document.getElementById('gen-txt').textContent = '正在生成策划案（2/2）剧情节拍序列…';
+
+    // 第二段：beats
+    const raw2 = await callFn(userMsgBeats, sysPromptBeats, 6000);
+
+    // 合并两段结果
+    let bibleData = {};
+    try {
+      const c1 = raw1.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      const s1 = c1.indexOf('{'), e1 = c1.lastIndexOf('}');
+      if(s1 >= 0 && e1 >= 0) bibleData = JSON.parse(c1.slice(s1, e1+1));
+    } catch(err){ console.warn('Bible meta parse error:', err); }
+
+    try {
+      const c2 = raw2.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      const s2 = c2.indexOf('['), e2 = c2.lastIndexOf(']');
+      if(s2 >= 0 && e2 >= 0) bibleData.beats = JSON.parse(c2.slice(s2, e2+1));
+    } catch(err){ console.warn('Bible beats parse error:', err); }
+
+    if(!bibleData.beats || bibleData.beats.length === 0){
+      bibleData.beats = Array.from({length: beatCount}, (_,i) => ({
+        num: i+1, title: `节拍 ${i+1}`, summary: '（节拍解析失败，请重新生成策划案）'
+      }));
+    }
+
+    doRender(JSON.stringify(bibleData));
+  }
   catch(e){ document.getElementById('gen-mask').classList.remove('show'); if(e.message!=='no key') showToast('生成失败：'+e.message); doRender(JSON.stringify(getMockBible())); }
 }
 
@@ -3897,8 +4062,52 @@ function saveBeatField(el){
   const field = el.dataset.beatField;
   if(isNaN(idx)||!field) return;
   if(!PROJECT.bible.beats[idx]) PROJECT.bible.beats[idx] = {num:idx+1,title:'',summary:''};
-  PROJECT.bible.beats[idx][field] = el.textContent.trim();
+  const oldVal = PROJECT.bible.beats[idx][field] || '';
+  const newVal = el.textContent.trim();
+  PROJECT.bible.beats[idx][field] = newVal;
   saveProject();
+
+  // 节拍内容有改动 → 标记细纲需要更新
+  if(oldVal !== newVal && field === 'summary'){
+    _markBeatChanged(idx);
+  }
+}
+
+// 节拍改动后在细纲区域显示提示
+const _changedBeatIdxs = new Set();
+function _markBeatChanged(beatIdx){
+  _changedBeatIdxs.add(beatIdx);
+  _showBeatChangedBanner();
+}
+
+function _showBeatChangedBanner(){
+  if(document.getElementById('beat-changed-banner')) return; // 已显示
+  const bdPage = document.getElementById('page-breakdown');
+  if(!bdPage) return;
+  const banner = document.createElement('div');
+  banner.id = 'beat-changed-banner';
+  banner.style.cssText = 'position:sticky;top:0;z-index:50;background:#fffbf0;border-bottom:1px solid #f0e0a0;padding:8px 24px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#7a5c00';
+  banner.innerHTML = `
+    <span>⚠ 策划案节拍已更新，建议重新生成分集细纲以保持一致</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="regenBreakdownFromBeat()" style="height:26px;padding:0 12px;border:none;border-radius:var(--rs);background:#e0a000;color:#fff;font-size:11px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-weight:500">重新生成细纲</button>
+      <button onclick="document.getElementById('beat-changed-banner').remove();_changedBeatIdxs.clear()" style="height:26px;padding:0 10px;border:1px solid #f0e0a0;border-radius:var(--rs);background:#fffbf0;color:#7a5c00;font-size:11px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">忽略</button>
+    </div>`;
+  // 插入到细纲页面顶部
+  const bdHeader = bdPage.querySelector('.bd-header') || bdPage.firstElementChild;
+  if(bdHeader) bdPage.insertBefore(banner, bdHeader);
+  else bdPage.prepend(banner);
+}
+
+function regenBreakdownFromBeat(){
+  document.getElementById('beat-changed-banner')?.remove();
+  _changedBeatIdxs.clear();
+  // 重置细纲状态，重新生成
+  bdState.allEps = [];
+  bdState.generatedCount = 0;
+  bdState.confirmed = false;
+  showPage('breakdown');
+  startBreakdown();
 }
 
 // ── Edit tracking ──
@@ -4010,7 +4219,368 @@ function showBibleChat(){
   if(a)a.style.display=a.style.display==='none'?'block':'none';
 }
 
+// ── 策划案历史版本管理 ──
+const bibleHistory = []; // [{ts, label, data}]
+
+function saveBibleSnapshot(label) {
+  if(!PROJECT.bible.logline) return;
+  const snap = JSON.parse(JSON.stringify(PROJECT.bible));
+  bibleHistory.unshift({ ts: Date.now(), label: label || `版本 ${bibleHistory.length + 1}`, data: snap });
+  if(bibleHistory.length > 10) bibleHistory.pop(); // 最多保留10个历史版本
+  _updateBibleHistoryBtn();
+}
+
+function _updateBibleHistoryBtn() {
+  const btn = document.getElementById('bible-history-btn');
+  const cnt = document.getElementById('bible-history-count');
+  if(!btn || !cnt) return;
+  if(bibleHistory.length > 0){ btn.style.display = ''; cnt.textContent = bibleHistory.length; }
+  else btn.style.display = 'none';
+}
+
+function openBibleHistory() {
+  const list = document.getElementById('bible-history-list');
+  if(!list) return;
+  if(bibleHistory.length === 0){ showToast('暂无历史版本'); return; }
+  list.innerHTML = bibleHistory.map((v, i) => {
+    const d = new Date(v.ts);
+    const timeStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const preview = v.data.logline?.substring(0, 60) || '（无预览）';
+    return `<div style="border:1px solid var(--bl);border-radius:var(--rs);padding:10px 12px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gm)'" onmouseout="this.style.borderColor='var(--bl)'" onclick="restoreBibleSnapshot(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600;color:var(--ink)">${v.label}</span>
+        <span style="font-size:10px;color:var(--i4)">${timeStr}</span>
+      </div>
+      <div style="font-size:11px;color:var(--i4);line-height:1.5">${preview}…</div>
+      <div style="font-size:10px;color:var(--gm);margin-top:6px">点击恢复此版本</div>
+    </div>`;
+  }).join('');
+  document.getElementById('bible-history-drawer').style.display = 'block';
+  document.getElementById('bible-history-overlay').style.display = 'block';
+}
+
+function closeBibleHistory() {
+  document.getElementById('bible-history-drawer').style.display = 'none';
+  document.getElementById('bible-history-overlay').style.display = 'none';
+}
+
+function restoreBibleSnapshot(idx) {
+  const v = bibleHistory[idx];
+  if(!v) return;
+  saveBibleSnapshot('恢复前自动保存'); // 恢复前保存当前版本
+  Object.assign(PROJECT.bible, JSON.parse(JSON.stringify(v.data)));
+  renderBible(PROJECT.bible);
+  closeBibleHistory();
+  showToast(`已恢复「${v.label}」`);
+  saveProject();
+}
+
+// 在对话框沟通后，基于最新对话记录重新生成策划案，结果直接更新中间展示窗口
+function regenBibleFromChat() {
+  if(!PROJECT.scheme.confirmed){ showToast('请先确认改编方案'); return; }
+  // 保存当前版本到历史
+  if(PROJECT.bible.logline) saveBibleSnapshot(`第 ${bibleHistory.length + 1} 版`);
+  // 直接调用 generateBible，它会更新中间窗口
+  generateBible();
+}
+
+// 单项导出（中间展示区右上角按钮触发）— 支持 docx 和 pdf
+function exportSingleAsset(key){
+  const store = ASSET_STORE[key];
+  if(!store?.text){ showToast('暂无内容可导出'); return; }
+
+  // ── 英文/制作剧本导出前：校准中文剧本是否有未同步的编辑 ──
+  if(key === 'script-en' || key === 'script-prod'){
+    const diff = getDiffEps(key);
+    const hasChanges = diff.changed.length > 0;
+
+    if(hasChanges){
+      const targetLabel = key === 'script-en' ? '英文剧本' : '制作剧本';
+      const translateMode = key === 'script-en' ? 'changed-en' : 'changed-prod';
+
+      const existing = document.getElementById('script-stale-warning');
+      if(existing) existing.remove();
+
+      const changedDesc = diff.changed.length <= 8
+        ? `第 ${diff.changed.map(i=>i+1).join('、')} 集`
+        : `${diff.changed.length} 集`;
+
+      const dialog = document.createElement('div');
+      dialog.id = 'script-stale-warning';
+      dialog.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--wh);border:1px solid var(--au);border-radius:var(--r);padding:24px 28px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.15);max-width:360px;width:90vw';
+      dialog.innerHTML = `
+        <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:8px">⚠️ 中文剧本有未同步的改动</div>
+        <div style="font-size:12px;color:var(--i3);line-height:1.8;margin-bottom:16px">
+          检测到 <b style="color:var(--ink)">${changedDesc}</b> 与上次翻译时有差异<br>
+          （共 ${diff.total} 集，其中 <b style="color:var(--gm)">${diff.unchanged.length} 集</b>已同步，<b style="color:var(--au)">${diff.changed.length} 集</b>有改动）
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="document.getElementById('script-stale-warning').remove();translateChangedOnly('${key}')" style="height:36px;border:none;border-radius:var(--rs);background:var(--gm);color:#fff;font-size:13px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-weight:500">
+            ✦ 只翻译 ${diff.changed.length} 集改动内容（推荐）
+          </button>
+          <button onclick="document.getElementById('script-stale-warning').remove();translateScript('all')" style="height:34px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);color:var(--i2);font-size:13px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">
+            全部重翻（${diff.total} 集）
+          </button>
+          <button onclick="document.getElementById('script-stale-warning').remove();_doExportAsset('${key}')" style="height:34px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);color:var(--i3);font-size:12px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">
+            直接导出当前版本
+          </button>
+          <button onclick="document.getElementById('script-stale-warning').remove()" style="height:28px;border:none;background:none;color:var(--i4);font-size:12px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-top:2px">取消</button>
+        </div>`;
+      document.body.appendChild(dialog);
+      setTimeout(()=>{
+        const close=(e)=>{if(!dialog.contains(e.target)){dialog.remove();document.removeEventListener('click',close);}};
+        document.addEventListener('click',close);
+      },100);
+      return;
+    }
+  }
+
+  _doExportAsset(key);
+}
+
+// 实际导出弹窗（格式选择）
+function _doExportAsset(key){
+  const store = ASSET_STORE[key];
+  if(!store?.text){ showToast('暂无内容可导出'); return; }
+  const label = store.label || key;
+
+  const existing = document.getElementById('export-fmt-popup');
+  if(existing) existing.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'export-fmt-popup';
+  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--wh);border:1px solid var(--bd);border-radius:var(--r);padding:20px 24px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.15);min-width:220px;text-align:center';
+  popup.innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:14px">导出「${label}」</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="(()=>{const s=ASSET_STORE['${key}'];if(s?.text)_exportAsDocxRaw(s.label,s.text,(S.proj||'DramaMind')+'_'+s.label);document.getElementById('export-fmt-popup').remove()})()" style="height:34px;border:1px solid var(--gp);border-radius:var(--rs);background:var(--gg);color:var(--gm);font-size:13px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">↓ 导出为 Word (.docx)</button>
+      <button onclick="exportAsPdfByKey('${key}');document.getElementById('export-fmt-popup').remove()" style="height:34px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);color:var(--i2);font-size:13px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">↓ 导出为 PDF</button>
+      <button onclick="document.getElementById('export-fmt-popup').remove()" style="height:28px;border:none;background:none;color:var(--i4);font-size:12px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-top:4px">取消</button>
+    </div>`;
+  document.body.appendChild(popup);
+
+  setTimeout(() => {
+    const close = (e) => { if(!popup.contains(e.target)){ popup.remove(); document.removeEventListener('click',close); } };
+    document.addEventListener('click', close);
+  }, 100);
+}
+
+// ── Diff 检测：找出中文剧本在翻译后有改动的集 ──
+// targetKey: 'script-en' 或 'script-prod'
+// 返回 {changed: [epIdx], unchanged: [epIdx], total: n}
+function getDiffEps(targetKey){
+  const hashByEp = targetKey === 'script-en'
+    ? scriptState.enHashByEp
+    : scriptState.prodHashByEp;
+
+  // 收集所有已生成剧本的集
+  const allEpWraps = [...document.querySelectorAll('[id^="script-ep-wrap-"]')];
+  const allEpIdxs = allEpWraps.map(w => parseInt(w.dataset.ep)).filter(n => !isNaN(n));
+
+  const changed = [], unchanged = [];
+  allEpIdxs.forEach(epIdx => {
+    const currentText = getEpTextForHash(epIdx);
+    if(!currentText){ unchanged.push(epIdx); return; }
+    const currentHash = hashStr(currentText);
+    const translatedHash = hashByEp[epIdx];
+    if(!translatedHash || currentHash !== translatedHash){
+      changed.push(epIdx); // 从未翻译 或 内容有改动
+    } else {
+      unchanged.push(epIdx);
+    }
+  });
+
+  return { changed, unchanged, total: allEpIdxs.length };
+}
+
+function exportAsPdfByKey(key){
+  const store = ASSET_STORE[key];
+  if(!store?.text){ showToast('暂无内容可导出'); return; }
+  exportAsPdf(store.label, store.text, (S.proj||'DramaMind') + '_' + store.label);
+}
+
+const NAV_ROUTE = {
+  'doc':        { page:'story',     step:0,  hasContent: ()=> !!(ASSET_STORE.doc?.text)           },
+  'scheme':     { page:'story',     step:1,  hasContent: ()=> PROJECT.scheme.confirmed || (PROJECT._savedSchemes?.length > 0) },
+  'bible':      { page:'story',     step:3,  hasContent: ()=> !!(PROJECT.bible?.logline)          },
+  'breakdown':  { page:'breakdown', step:null,hasContent: ()=> bdState.allEps?.length > 0         },
+  'script-cn':  { page:'script',    step:null,hasContent: ()=> !!(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0) },
+  'script-prod':{ page:'script',    step:null,hasContent: ()=> !!(ASSET_STORE['script-prod']?.text) },
+  'script-en':  { page:'script',    step:null,hasContent: ()=> !!(ASSET_STORE['script-en']?.text)  },
+};
+
+function navTo(key){
+  // 高亮当前节点
+  document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
+  const card = document.getElementById('ac-' + key);
+  if(card) card.classList.add('viewing');
+  S.navKey = key;
+
+  const route = NAV_ROUTE[key];
+  if(!route){ return; }
+
+  if(route.hasContent()){
+    showPage(route.page);
+    if(route.step !== null) goStep(route.step);
+    // script 页面需要额外处理子tab
+    if(route.page === 'script') _scriptNavSub(key);
+  } else {
+    // 没有内容：展示占位说明（仍导航过去，但显示空状态）
+    showPage(route.page);
+    if(route.step !== null) goStep(route.step);
+    if(route.page === 'script') _scriptNavSub(key);
+  }
+}
+
+function _scriptNavSub(key){
+  const tabMap = { 'script-cn':'cn', 'script-prod':'prod', 'script-en':'en' };
+  const sub = tabMap[key];
+  if(sub && typeof switchScriptTab === 'function') switchScriptTab(sub);
+
+  if(key === 'script-en' || key === 'script-prod'){
+    _showTranslatedScriptInBody(key);
+  } else if(key === 'script-cn'){
+    // 如果工具栏被替换过（说明之前展示的是翻译视图），才需要恢复
+    const tbWrap = document.getElementById('stb-translate-wrap');
+    if(tbWrap && tbWrap.dataset.origHtml){
+      _restoreCnScriptView();
+    }
+    // 否则已经是中文视图，什么都不做
+  }
+}
+
+// 在 script-body 里展示翻译版本（英文/制作），工具栏换成比对按钮
+function _showTranslatedScriptInBody(key){
+  const store = ASSET_STORE[key];
+  const label = store?.label || (key === 'script-en' ? '英文剧本' : '制作剧本');
+
+  // 替换工具栏翻译按钮区域为比对+导出按钮
+  const tbWrap = document.getElementById('stb-translate-wrap');
+  if(tbWrap && !tbWrap.dataset.origHtml){
+    tbWrap.dataset.origHtml = tbWrap.innerHTML;
+  }
+  if(tbWrap){
+    const diff = getDiffEps(key);
+    const diffBadge = diff.changed.length > 0
+      ? `<span style="margin-left:6px;background:var(--au);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px">${diff.changed.length}集有改动</span>`
+      : `<span style="margin-left:6px;color:var(--gm);font-size:10px">✓ 已同步</span>`;
+    tbWrap.innerHTML = `
+      <button class="stb-action-btn" onclick="_showDiffPanel('${key}')">⇆ 比对中文剧本${diffBadge}</button>
+      <button class="stb-action-btn" onclick="exportSingleAsset('${key}')" style="margin-left:6px">↓ 导出${label}</button>
+      <button class="stb-action-btn" onclick="_restoreCnScriptView()" style="margin-left:6px;color:var(--i3)">← 返回中文剧本</button>`;
+  }
+
+  // 在 script-body 里展示翻译文本
+  const body = document.getElementById('script-body');
+  if(!body) return;
+
+  if(!store?.text){
+    body.innerHTML = `<div style="padding:48px 32px;text-align:center;color:var(--i4)">
+      <div style="font-size:24px;margin-bottom:12px">📄</div>
+      <div style="font-size:14px;color:var(--i3);margin-bottom:8px">${label}尚未生成</div>
+      <div style="font-size:12px">在中文剧本页面点击「一键翻译」生成此版本</div>
+    </div>`;
+    return;
+  }
+
+  // 格式化展示翻译文本
+  const lines = store.text.split('\n');
+  let html = '<div style="max-width:680px;margin:0 auto;padding:24px 32px;font-family:\'DM Mono\',monospace">';
+  lines.forEach(line => {
+    const t = line.trim();
+    if(!t){ html += '<div style="height:6px"></div>'; return; }
+    if(/^【.+】/.test(t)){
+      html += `<div style="font-size:11px;color:var(--i4);letter-spacing:.05em;margin:16px 0 4px">${t}</div>`;
+    } else if(/^=== 第\d+集/.test(t)){
+      html += `<div style="font-size:13px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--bl);padding:12px 0 6px;margin:16px 0 8px">${t}</div>`;
+    } else if(/^INT\.|^EXT\./.test(t)){
+      html += `<div style="font-size:12px;font-weight:600;color:var(--ink);margin:10px 0 2px">${t}</div>`;
+    } else if(/^\[sp-char\]/.test(t) || /^[A-Z\s]{3,}$/.test(t)){
+      html += `<div style="font-size:12px;font-weight:700;color:var(--i2);text-align:center;margin:8px 0 0">${t.replace('[sp-char]','')}</div>`;
+    } else if(/^\[sp-dlg\]/.test(t)){
+      html += `<div style="font-size:13px;color:var(--i2);line-height:1.7;padding:0 48px;margin:2px 0">${t.replace('[sp-dlg]','')}</div>`;
+    } else {
+      html += `<div style="font-size:12px;color:var(--i3);line-height:1.6;margin:2px 0">${t.replace(/^\[sp-[a-z]+\]/,'')}</div>`;
+    }
+  });
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+// 返回中文剧本视图（恢复工具栏+重建中文剧本 DOM）
+function _restoreCnScriptView(){
+  const tbWrap = document.getElementById('stb-translate-wrap');
+  if(tbWrap && tbWrap.dataset.origHtml){
+    tbWrap.innerHTML = tbWrap.dataset.origHtml;
+    delete tbWrap.dataset.origHtml;
+  }
+  // 重建中文剧本内容
+  const body = document.getElementById('script-body');
+  if(body) body.innerHTML = '';
+  Object.keys(scriptState.actScripts).sort((a,b)=>a-b).forEach(aIdx => {
+    if(scriptState.actScripts[aIdx]?.status === 'done') appendActToBody(parseInt(aIdx), false);
+  });
+  // 只更新左侧高亮，不调 navTo（避免无限递归）
+  document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
+  const card = document.getElementById('ac-script-cn');
+  if(card) card.classList.add('viewing');
+  S.navKey = 'script-cn';
+}
+
+// 比对面板：列出各集同步状态
+function _showDiffPanel(key){
+  const diff = getDiffEps(key);
+  const label = key === 'script-en' ? '英文剧本' : '制作剧本';
+
+  const existing = document.getElementById('diff-panel-modal');
+  if(existing) existing.remove();
+
+  const rows = [...diff.unchanged.map(i=>({epIdx:i,status:'ok'})), ...diff.changed.map(i=>({epIdx:i,status:'changed'}))]
+    .sort((a,b)=>a.epIdx-b.epIdx)
+    .map(({epIdx,status}) => {
+      const badge = status === 'ok'
+        ? `<span style="color:var(--gm);font-size:11px">✓ 已同步</span>`
+        : `<span style="color:var(--au);font-size:11px">⚠ 有改动</span>`;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bl)">
+        <span style="font-size:12px;color:var(--i2)">第 ${epIdx+1} 集</span>${badge}</div>`;
+    }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'diff-panel-modal';
+  modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--wh);border:1px solid var(--bd);border-radius:var(--r);z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.15);width:320px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column';
+  modal.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bl)">
+      <span style="font-size:13px;font-weight:600;color:var(--ink)">与中文剧本比对 · ${label}</span>
+      <button onclick="document.getElementById('diff-panel-modal').remove()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--i3)">×</button>
+    </div>
+    <div style="padding:8px 18px;overflow-y:auto;flex:1">${rows}</div>
+    <div style="padding:12px 18px;border-top:1px solid var(--bl);display:flex;flex-direction:column;gap:8px">
+      ${diff.changed.length > 0
+        ? `<button onclick="document.getElementById('diff-panel-modal').remove();translateChangedOnly('${key}')" style="height:34px;border:none;border-radius:var(--rs);background:var(--gm);color:#fff;font-size:13px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-weight:500">只更新 ${diff.changed.length} 集改动内容</button>`
+        : `<div style="text-align:center;font-size:12px;color:var(--gm);padding:4px 0">✓ 所有集已与中文剧本同步</div>`}
+      <button onclick="document.getElementById('diff-panel-modal').remove()" style="height:28px;border:none;background:none;color:var(--i4);font-size:12px;cursor:pointer">关闭</button>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>{
+    const close=(e)=>{if(!modal.contains(e.target)){modal.remove();document.removeEventListener('click',close);}};
+    document.addEventListener('click',close);
+  },100);
+}
+
+// 同步更新左侧高亮（供 showPage/goStep 调用后更新）
+function syncNavHighlight(){
+  const page = S.page, step = S.step, navKey = S.navKey;
+  if(navKey){
+    document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
+    const card = document.getElementById('ac-' + navKey);
+    if(card) card.classList.add('viewing');
+  }
+}
+
 function confirmBibleAndNext(){
+  // 清除节拍变更提示（用户确认策划案意味着已知晓当前状态）
+  document.getElementById('beat-changed-banner')?.remove();
+  _changedBeatIdxs?.clear();
   if(!PROJECT.bible.logline){ showToast('策划案尚未生成，请先完成策划追问'); return; }
 
   // Force-sync any in-progress contenteditable edits before archiving
@@ -4076,7 +4646,7 @@ function exportBible(){
     ...(b.beats||[]).map(beat=>`\n节拍${String(beat.num).padStart(2,'0')}【${beat.title}】\n${beat.summary}`),
   ].filter(Boolean).join('\n');
   const title = sc.title || '创意策划案';
-  exportAsDocx(title, text, `${title}_创意策划案`);
+  _exportAsDocxRaw(title, text, `${title}_创意策划案`);
 }
 
 function escHtml(str){
@@ -4905,7 +5475,7 @@ function exportBreakdown() {
     lines.push('');
   });
   const title = sc.title || '分集细纲';
-  exportAsDocx(title, lines.join('\n'), `${title}_细纲`);
+  _exportAsDocxRaw(title, lines.join('\n'), `${title}_细纲`);
 }
 
 function autoH(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
@@ -5070,6 +5640,12 @@ function loadSavedProj(name){
   const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   const snap = projects.find(p => p.name === name);
   if(!snap){ showToast('项目数据不存在'); return; }
+
+  // 切换前自动保存当前项目（如有）
+  if(S.proj && S.proj !== name){
+    saveProject();
+    showToast(`已自动保存「${S.proj.substring(0,16)}」，正在切换…`);
+  }
 
   restoreFromSnap(snap);
 
@@ -5263,7 +5839,28 @@ const scriptState = {
   finalized: false,
   actScripts: {},    // {actIdx: {eps:{epIdx:html}, status, modified}}
   chatHistory: [],
+  cnLastEditTs: 0,   // 中文剧本最后编辑时间戳
+  enTranslateTs: 0,  // 英文剧本最后翻译时间戳
+  prodTranslateTs: 0, // 制作剧本最后翻译时间戳
+  cnHashByEp: {},    // {epIdx: hash} 每集中文原文的内容 hash
+  enHashByEp: {},    // {epIdx: hash} 英文翻译时记录的源文 hash（用于 diff）
+  prodHashByEp: {},  // {epIdx: hash} 制作版翻译时记录的源文 hash
 };
+
+// 轻量字符串 hash（djb2，够用于 diff 比对）
+function hashStr(str){
+  let h = 5381;
+  for(let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
+// 提取某集的纯文字内容（用于 hash 计算，去除 HTML 标签）
+function getEpTextForHash(epIdx){
+  const wrap = document.getElementById(`script-ep-wrap-${epIdx}`);
+  if(!wrap) return '';
+  return [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
+    .map(el => el.textContent.trim()).join('|');
+}
 let currentEp = 0;
 let currentActIdx = 0;
 
@@ -5517,8 +6114,14 @@ ${lockedEdits ? `【用户锁定修改——必须严格继承】\n${lockedEdits
       PROJECT.script.allData[epIdx] = html;
     }
 
-    // Append this act's content to body
-    appendActToBody(actIdx, true);
+    // 初始化该幕所有集的内容 hash（作为基准版本，后续编辑后 hash 变化才触发 diff 翻译）
+    setTimeout(() => {
+      for(let i = 0; i < act.count; i++){
+        const epIdx = act.from - 1 + i;
+        const text = getEpTextForHash(epIdx);
+        if(text) scriptState.cnHashByEp[epIdx] = hashStr(text);
+      }
+    }, 200); // 等 DOM 渲染完
     renderActTabs();
 
     currentActIdx = actIdx;
@@ -5911,6 +6514,11 @@ function saveScriptField(el) {
   const epIdx = parseInt(el.dataset.ep);
   if (isNaN(epIdx)) return;
   serializeCurrentScript();
+  // 更新该集的中文内容 hash（用于后续 diff 翻译）
+  const text = getEpTextForHash(epIdx);
+  if(text) scriptState.cnHashByEp[epIdx] = hashStr(text);
+  // 记录中文剧本最后编辑时间（用于导出前校准）
+  scriptState.cnLastEditTs = Date.now();
   saveProject();
 }
 
@@ -6029,7 +6637,7 @@ function exportCurrentScript() {
   });
 
   const content = lines.join('\n');
-  exportAsDocx(projTitle + ' · 剧本', content, `${projTitle}_剧本`);
+  _exportAsDocxRaw(projTitle + ' · 剧本', content, `${projTitle}_剧本`);
   showToast('剧本正在导出为 Word 文档');
 }
 
@@ -6554,6 +7162,12 @@ function saveProject(){
         finalized: scriptState.finalized,
         actScripts: JSON.parse(JSON.stringify(scriptState.actScripts)),
         chatHistory: scriptState.chatHistory,
+        cnLastEditTs: scriptState.cnLastEditTs || 0,
+        enTranslateTs: scriptState.enTranslateTs || 0,
+        prodTranslateTs: scriptState.prodTranslateTs || 0,
+        cnHashByEp: JSON.parse(JSON.stringify(scriptState.cnHashByEp || {})),
+        enHashByEp: JSON.parse(JSON.stringify(scriptState.enHashByEp || {})),
+        prodHashByEp: JSON.parse(JSON.stringify(scriptState.prodHashByEp || {})),
       },
       bdState: {
         acts: JSON.parse(JSON.stringify(bdState.acts)),
@@ -6630,6 +7244,12 @@ function restoreFromSnap(snap) {
     scriptState.finalized = snap.scriptState.finalized || false;
     scriptState.actScripts = snap.scriptState.actScripts || {};
     scriptState.chatHistory = snap.scriptState.chatHistory || [];
+    scriptState.cnLastEditTs = snap.scriptState.cnLastEditTs || 0;
+    scriptState.enTranslateTs = snap.scriptState.enTranslateTs || 0;
+    scriptState.prodTranslateTs = snap.scriptState.prodTranslateTs || 0;
+    scriptState.cnHashByEp = snap.scriptState.cnHashByEp || {};
+    scriptState.enHashByEp = snap.scriptState.enHashByEp || {};
+    scriptState.prodHashByEp = snap.scriptState.prodHashByEp || {};
   }
   // Restore bdState
   if (snap.bdState) {
@@ -6988,6 +7608,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(S.page && S.page !== 'home'){
       showPage(S.page);
       if(S.page === 'story' && S.step) goStep(S.step);
+      else if(S.page === 'story' && S.step === 0) goStep(0);
 
       // ── 无论在哪个页面，都预先重建 story 数据 ──
       // 这样用户切回 story tab 时方案卡片和聊天记录都在
@@ -7592,7 +8213,18 @@ function getGenApi() {
 }
 
 // ── 一键翻译：将剧本中文内容翻译为英文并写回界面 ──
-async function translateScriptReal(mode) {
+// 只翻译和中文剧本有差异的集（diff 翻译）
+async function translateChangedOnly(targetKey){
+  const diff = getDiffEps(targetKey);
+  if(diff.changed.length === 0){ showToast('所有集已同步，无需翻译'); return; }
+  const dialogueOnly = targetKey === 'script-prod';
+  // 传 forceEpIdxs 绕过范围收集逻辑，直接翻指定集
+  const mode = dialogueOnly ? 'current-act-dialogue' : 'all';
+  showToast(`开始差异翻译：${diff.changed.length} 集有改动`);
+  await translateScriptReal(mode, diff.changed);
+}
+
+async function translateScriptReal(mode, forceEpIdxs = null) {
   document.getElementById('stb-translate-menu').style.display = 'none';
 
   const cfg = getApiConfig();
@@ -7601,20 +8233,22 @@ async function translateScriptReal(mode) {
     return;
   }
 
-  // 确定翻译范围
-  const isCurrent = mode === 'current-ep';
   const isCurrentAct = mode === 'current-act' || mode === 'current-act-dialogue';
   const dialogueOnly = mode === 'current-act-dialogue';
+  const isAll = mode === 'all';
 
-  // 翻译前先归档当前中文剧本（翻译意味着中文版已定稿）
+  // ── 翻译前：先归档中文剧本原文（不破坏 DOM，只提取文本存入 ASSET_STORE） ──
   archiveScriptCn();
 
-  // 收集需要翻译的集
+  // ── 收集需要翻译的集 epWraps ──
   let epWraps = [];
-  if (isCurrent) {
-    const wrap = document.getElementById(`script-ep-wrap-${currentEp}`);
-    if (wrap) epWraps = [wrap];
-    else { showToast('找不到当前集内容'); return; }
+  if(forceEpIdxs){
+    // diff 翻译：只处理指定集
+    forceEpIdxs.forEach(idx => {
+      const wrap = document.getElementById(`script-ep-wrap-${idx}`);
+      if(wrap) epWraps.push(wrap);
+    });
+    if(!epWraps.length){ showToast('指定集的剧本内容不存在'); return; }
   } else if (isCurrentAct) {
     const act = bdState.acts[currentActIdx];
     if (act) {
@@ -7627,91 +8261,95 @@ async function translateScriptReal(mode) {
   } else {
     epWraps = [...document.querySelectorAll('[id^="script-ep-wrap-"]')];
   }
-
   if (!epWraps.length) { showToast('暂无剧本内容可翻译'); return; }
 
   const actName = isCurrentAct && bdState.acts[currentActIdx] ? bdState.acts[currentActIdx].name : '';
-  const modeLabel = dialogueOnly ? '（只翻台词）' : '（全英）';
-  const totalLabel = isCurrent ? `第${(currentEp||0)+1}集` : isCurrentAct ? `${actName}${modeLabel}（${epWraps.length}集）` : `全本（${epWraps.length}集）`;
+  const modeLabel = dialogueOnly ? '（只翻台词·制作版）' : '（全英·英文版）';
+  const totalLabel = forceEpIdxs
+    ? `差异集（${epWraps.length} 集）${modeLabel}`
+    : isCurrentAct
+      ? `${actName}${modeLabel}（${epWraps.length}集）`
+      : `全本${modeLabel}（${epWraps.length}集）`;
   document.getElementById('gen-txt').textContent = `正在翻译 ${totalLabel}……`;
   document.getElementById('gen-mask').classList.add('show');
 
   const sysPrompt = dialogueOnly
-    ? `You are a professional short drama script translator. Translate ONLY the dialogue and parenthetical lines from Chinese to English. Rules:
-- [sp-dlg] lines: translate to natural, emotionally resonant English that matches the character's tone and personality
-- [sp-paren] lines: translate the stage direction/emotion notes naturally
-- Keep all formatting tags exactly as-is — only translate the text content after the tag
-- Return ONLY the translated lines, no explanations`
-    : `You are a professional short drama script translator specializing in Chinese-to-English translation for vertical-screen short dramas targeting international streaming platforms.
-
-Translation rules:
-- Preserve all screenplay formatting (scene headings, action lines, character names, dialogue, parentheticals)
-- Keep scene headings in standard format: INT./EXT. LOCATION — TIME
-- Character names: translate to natural English equivalents or keep original if it's a proper name
-- Dialogue: natural, emotionally resonant English — match the tone (cold, tender, fierce) of the original
+    ? `You are a professional script translator. ONLY translate dialogue [sp-dlg] and parenthetical [sp-paren] lines from Chinese to English. Return ALL lines with their tags, keeping non-dialogue lines (scene headings, action, character names) completely unchanged in Chinese. Format: [tag]content`
+    : `You are a professional short drama script translator. Translate the full script from Chinese to English. Rules:
+- Scene headings: INT./EXT. LOCATION — TIME
+- Character names: translate to English equivalents (ALL CAPS)
+- Dialogue: natural, emotionally resonant English matching the original tone
 - Action lines: vivid, present tense, cinematic
-- Return ONLY the translated script text, no explanations`;
+- Keep all [sp-xxx] tags exactly as-is, only translate the content after the tag
+- Return ONLY the translated script, no explanations`;
 
+  // ── 按集翻译，结果累积到 outputByEp（不写入 DOM）──
+  const outputByEp = {}; // epIdx → translatedText
   let failedEps = [];
 
   for (let i = 0; i < epWraps.length; i++) {
     const wrap = epWraps[i];
     const epIdx = parseInt(wrap.dataset.ep);
 
-    // For dialogue-only mode, only extract dialogue and parenthetical lines
+    // 从原始 DOM 提取源文本（中文原文）
     const elements = dialogueOnly
-      ? [...wrap.querySelectorAll('.sp-dlg,.sp-paren')]
+      ? [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
       : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
     if (!elements.length) continue;
 
     const lines = elements.map(el => {
       const cls = [...el.classList].find(c => c.startsWith('sp-')) || 'sp-action';
       return `[${cls}]${el.textContent.trim()}`;
-    }).filter(l => !l.includes('[sp-title]') || l.length > 10);
-
+    });
     const sourceText = lines.join('\n');
     if (!sourceText.trim()) continue;
 
-    if (!isCurrent) {
-      document.getElementById('gen-txt').textContent = `正在翻译第${epIdx+1}集（${i+1}/${epWraps.length}）……`;
-    }
+    document.getElementById('gen-txt').textContent = `正在翻译第${epIdx+1}集（${i+1}/${epWraps.length}）……`;
 
     try {
-      const userMsg = `Translate the following Chinese short drama script to English. Each line starts with a tag like [sp-scene], [sp-action], [sp-char], [sp-dlg], [sp-paren] — keep these tags exactly as-is, only translate the content after the tag.\n\n${sourceText}`;
+      const userMsg = dialogueOnly
+        ? `Translate the dialogue and parenthetical lines to English. Keep scene headings, action lines, and character name lines unchanged (in Chinese). Return all lines with their [sp-xxx] tags:\n\n${sourceText}`
+        : `Translate all lines to English, keeping [sp-xxx] tags:\n\n${sourceText}`;
       const maxTok = Math.min(4096, sourceText.length * 3);
-      // callAny 自动根据模式选 Claude（平衡模式）或豆包Lite（经济模式）
       const raw = await callAny(userMsg, sysPrompt, maxTok, 'translate');
 
+      // 解析翻译结果，重建每集的格式化文本
       const translatedLines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-      const tagMap = {};
-      translatedLines.forEach(line => {
-        const match = line.match(/^\[(sp-[a-z]+)\](.*)$/);
-        if (match) {
-          const tag = match[1];
-          if (!tagMap[tag]) tagMap[tag] = [];
-          tagMap[tag].push(match[2].trim());
-        }
-      });
 
-      const tagCounters = {};
-      elements.forEach(el => {
-        const cls = [...el.classList].find(c => c.startsWith('sp-'));
-        if (!cls || cls === 'sp-title') return;
-        if (!tagCounters[cls]) tagCounters[cls] = 0;
-        const translations = tagMap[cls];
-        if (translations && tagCounters[cls] < translations.length) {
-          el.textContent = translations[tagCounters[cls]];
-          tagCounters[cls]++;
-        }
-      });
+      // 对于 dialogueOnly：把中文的非台词行 + 英文台词行合并
+      let epText = '';
+      if(dialogueOnly){
+        // 构建 tag → 中文原行 的顺序映射
+        const cnLines = lines; // 原始中文行（含所有 tag）
+        const enDialogue = []; // 只有翻译了的 dlg/paren 行
+        translatedLines.forEach(l => {
+          const m = l.match(/^\[(sp-[a-z]+)\](.*)$/);
+          if(m && (m[1]==='sp-dlg'||m[1]==='sp-paren')) enDialogue.push({tag:m[1],text:m[2].trim()});
+        });
+        let enIdx = 0;
+        epText = cnLines.map(l => {
+          const m = l.match(/^\[(sp-[a-z]+)\](.*)$/);
+          if(!m) return l;
+          if(m[1]==='sp-dlg'||m[1]==='sp-paren'){
+            const en = enDialogue[enIdx++];
+            return en ? `[${en.tag}]${en.text}` : l; // fallback to CN if translation missing
+          }
+          return l; // 保留中文原文（场景/动作/人名行）
+        }).join('\n');
+      } else {
+        epText = translatedLines.join('\n');
+      }
 
-      const epWrapEl = document.getElementById(`script-ep-wrap-${epIdx}`);
-      if (epWrapEl) {
-        PROJECT.script.allData[epIdx] = epWrapEl.innerHTML;
-        const actIdx = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
-        if (actIdx >= 0 && scriptState.actScripts[actIdx]) {
-          scriptState.actScripts[actIdx].eps[epIdx] = epWrapEl.innerHTML;
-        }
+      // 加集标题分隔
+      const epNum = epIdx + 1;
+      outputByEp[epIdx] = `\n=== 第${epNum}集 ===\n${epText}`;
+
+      // 记录翻译时的源文 hash（diff 基准）
+      const epHash = hashStr(sourceText);
+      if(dialogueOnly){
+        scriptState.prodHashByEp[epIdx] = epHash;
+      } else {
+        scriptState.enHashByEp[epIdx] = epHash;
       }
 
     } catch(e) {
@@ -7721,23 +8359,45 @@ Translation rules:
   }
 
   document.getElementById('gen-mask').classList.remove('show');
+
+  // ── 把翻译结果写入对应的独立资产，不修改中文剧本 DOM ──
+  const targetKey = dialogueOnly ? 'script-prod' : 'script-en';
+  const targetLabel = dialogueOnly ? '制作剧本' : '英文剧本';
+
+  // 读取已有的目标资产内容（可能有其他幕的已翻译内容），按集号合并
+  const existing = ASSET_STORE[targetKey]?.text || '';
+  // 简单策略：把新翻译的集追加/替换进去
+  // 解析 existing 里的集标记，再合并
+  const existingByEp = {};
+  existing.split(/(?=\n=== 第\d+集 ===)/).forEach(chunk => {
+    const m = chunk.match(/=== 第(\d+)集 ===/);
+    if(m) existingByEp[parseInt(m[1])-1] = chunk;
+  });
+  // 用新翻译覆盖对应集
+  Object.assign(existingByEp, outputByEp);
+  // 按集号排序输出
+  const merged = Object.keys(existingByEp).sort((a,b)=>a-b).map(k=>existingByEp[k]).join('\n');
+  const header = `【${S.proj||'项目'} · ${targetLabel}】\n${dialogueOnly?'格式：中文场景/动作 + 英文台词':'格式：完整英文剧本'}\n生成时间：${new Date().toLocaleString('zh-CN')}\n`;
+  const finalText = header + '\n' + merged;
+
+  updateAssetCard(targetKey, finalText);
+  // 记录翻译时间戳，供导出前校准使用
+  if(dialogueOnly || mode === 'current-act-dialogue'){
+    scriptState.prodTranslateTs = Date.now();
+  } else {
+    scriptState.enTranslateTs = Date.now();
+  }
   saveProject();
 
+  // ── 翻译完成：自动切换到对应展示窗口 ──
   if (failedEps.length) {
-    showToast(`翻译完成，第 ${failedEps.join('、')} 集失败，可单集重试`);
+    showToast(`翻译完成，第 ${failedEps.join('、')} 集失败，可重试`);
   } else {
-    // Q1: Any translation = CN script is finalized for that scope → archive CN
-    archiveScriptCn();
-    if (dialogueOnly) {
-      // Q2: Dialogue-only = prod script (CN scenes + EN dialogue) → archive prod
-      archiveScriptProd();
-      showToast(`${totalLabel}台词翻译完成 ✓ · 中文剧本及制作剧本已归档`);
-    } else {
-      // Full EN translation → archive EN script too
-      archiveScriptEn();
-      showToast(`${totalLabel}翻译完成 ✓ · 中文剧本及英文剧本已归档`);
-    }
+    showToast(`${totalLabel}翻译完成 ✓ · 已归档至「${targetLabel}」`);
   }
+
+  // 中文剧本原文完整保留，切换到翻译版本展示
+  navTo(targetKey);
 }
 
 // ══════════════════════════════════════════════════
@@ -7867,7 +8527,7 @@ function exportAssetDocx(){
   const key = _previewKey;
   const store = ASSET_STORE[key];
   if(!store?.text){ showToast('暂无内容可导出'); return; }
-  exportAsDocx(store.label, store.text, (S.proj || '项目') + '_' + store.label);
+  _exportAsDocxRaw(store.label, store.text, (S.proj || '项目') + '_' + store.label);
 }
 
 function exportAssetPdf(){
@@ -7878,7 +8538,7 @@ function exportAssetPdf(){
 }
 
 // ── DOCX export (pure JS, no server needed) ──
-function exportAsDocx(title, text, filename){
+function _exportAsDocxRaw(title, text, filename){
   // Build minimal valid .docx (OOXML) in memory
   // Uses the Open XML structure: word/document.xml inside a ZIP
   const paragraphs = text.split('\n').map(line => {
@@ -8107,7 +8767,7 @@ function exportAsset(key){
   // Legacy: now routes to docx
   const store = ASSET_STORE[key];
   if(!store?.text){ showToast('暂无内容可导出'); return; }
-  exportAsDocx(store.label, store.text, (S.proj || '项目') + '_' + store.label);
+  _exportAsDocxRaw(store.label, store.text, (S.proj || '项目') + '_' + store.label);
 }
 
 // ── 导出弹窗 ──
@@ -8153,13 +8813,132 @@ function closeExportModal(){
 }
 
 function exportAllAssets(){
-  const ready = Object.entries(ASSET_STORE).filter(([,s]) => s.text.length > 0);
+  const ready = Object.entries(ASSET_STORE).filter(([,s]) => s.text && s.text.length > 10);
   if(!ready.length){ showToast('暂无可导出的内容'); return; }
-  const all = ready.map(([,s]) => `${'═'.repeat(40)}\n${s.label}\n${'═'.repeat(40)}\n\n${s.text}`).join('\n\n\n');
+
   const projName = S.proj || '项目';
-  exportAsDocx(projName + ' · 全部资料', all, projName + '_全部资料');
+  const fmt = document.querySelector('input[name="export-fmt"]:checked')?.value || 'zip';
+
+  if(fmt === 'single'){
+    // 原有：合并成一个大文档
+    const all = ready.map(([,s]) => `${'═'.repeat(40)}\n${s.label}\n${'═'.repeat(40)}\n\n${s.text}`).join('\n\n\n');
+    _exportAsDocxRaw(projName + ' · 全部资料', all, projName + '_全部资料');
+    closeExportModal();
+    showToast('全部资料正在导出为 Word 文档');
+    return;
+  }
+
+  // ZIP 模式：每个资产生成独立文件，打包成 zip
   closeExportModal();
-  showToast('全部资料正在导出为 Word 文档');
+  showToast('正在打包导出…');
+
+  // 收集所有 docx 文件
+  const zipFiles = {};
+
+  ready.forEach(([key, store]) => {
+    const filename = `${projName}_${store.label}`;
+    // 生成 docx 内容（复用 _exportAsDocxRaw 的内部逻辑）
+    const docxBlob = _buildDocxBlob(store.label, store.text);
+    if(docxBlob) zipFiles[filename + '.docx'] = docxBlob;
+  });
+
+  // 打包成 ZIP
+  _downloadAsZip(projName + '_全部资料', zipFiles);
+}
+
+// 生成单个 docx 的 ArrayBuffer（不触发下载）
+function _buildDocxBlob(title, text){
+  const paragraphs = text.split('\n').map(line => {
+    const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const isBold = /^(第.+幕|第.+集|【.+】|={3,}|─{3,})/.test(line.trim());
+    const runProps = isBold ? '<w:rPr><w:b/></w:rPr>' : '';
+    return `<w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r>${runProps}<w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+  });
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="28"/></w:rPr><w:t>${title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</w:t></w:r></w:p>${paragraphs.join('')}<w:sectPr/></w:body></w:document>`;
+  const relsXml = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:sz w:val="24"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`;
+  const ctXml = `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
+  const appRels = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  return buildSimpleZip({'[Content_Types].xml':ctXml,'_rels/.rels':appRels,'word/document.xml':docXml,'word/styles.xml':stylesXml,'word/_rels/document.xml.rels':relsXml});
+}
+
+// 把多个文件打包成 ZIP 并下载
+function _downloadAsZip(zipFilename, filesObj){
+  // filesObj: { 'filename.docx': Uint8Array/ArrayBuffer, ... }
+  // 我们已有 buildSimpleZip，但它接受 {filename: xmlString} 类型
+  // 需要支持二进制内容，用最简单的 store（不压缩）ZIP 格式
+  const enc = new TextEncoder();
+  const parts = [];
+  const centralDir = [];
+  let offset = 0;
+
+  Object.entries(filesObj).forEach(([name, content]) => {
+    const nameBytes = enc.encode(name);
+    const data = content instanceof Uint8Array ? content : new Uint8Array(content);
+
+    // Local file header
+    const lh = new Uint8Array(30 + nameBytes.length);
+    const lhView = new DataView(lh.buffer);
+    lhView.setUint32(0, 0x04034b50, true);   // signature
+    lhView.setUint16(4, 20, true);            // version needed
+    lhView.setUint16(6, 0, true);             // flags
+    lhView.setUint16(8, 0, true);             // compression (store)
+    lhView.setUint16(10, 0, true);            // mod time
+    lhView.setUint16(12, 0, true);            // mod date
+    lhView.setUint32(14, _crc32(data), true); // CRC32
+    lhView.setUint32(18, data.length, true);  // compressed size
+    lhView.setUint32(22, data.length, true);  // uncompressed size
+    lhView.setUint16(26, nameBytes.length, true);
+    lhView.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+    parts.push(lh, data);
+
+    // Central dir entry
+    const cd = new Uint8Array(46 + nameBytes.length);
+    const cdv = new DataView(cd.buffer);
+    cdv.setUint32(0, 0x02014b50, true);
+    cdv.setUint16(4, 20, true); cdv.setUint16(6, 20, true);
+    cdv.setUint16(8, 0, true); cdv.setUint16(10, 0, true);
+    cdv.setUint16(12, 0, true); cdv.setUint16(14, 0, true);
+    cdv.setUint32(16, _crc32(data), true);
+    cdv.setUint32(20, data.length, true);
+    cdv.setUint32(24, data.length, true);
+    cdv.setUint16(28, nameBytes.length, true);
+    cdv.setUint16(30, 0, true); cdv.setUint16(32, 0, true);
+    cdv.setUint16(34, 0, true); cdv.setUint16(36, 0, true);
+    cdv.setUint32(38, 0, true);
+    cdv.setUint32(42, offset, true);
+    cd.set(nameBytes, 46);
+    centralDir.push(cd);
+    offset += lh.length + data.length;
+  });
+
+  const cdStart = offset;
+  const cdBytes = _concatU8(centralDir);
+  const eocd = new Uint8Array(22);
+  const eocdv = new DataView(eocd.buffer);
+  eocdv.setUint32(0, 0x06054b50, true);
+  eocdv.setUint16(4, 0, true); eocdv.setUint16(6, 0, true);
+  eocdv.setUint16(8, centralDir.length, true);
+  eocdv.setUint16(10, centralDir.length, true);
+  eocdv.setUint32(12, cdBytes.length, true);
+  eocdv.setUint32(16, cdStart, true);
+  eocdv.setUint16(20, 0, true);
+
+  const zip = _concatU8([..._flatParts(parts), cdBytes, eocd]);
+  const blob = new Blob([zip], {type:'application/zip'});
+  downloadBlob(blob, zipFilename + '.zip');
+  showToast(`已打包 ${Object.keys(filesObj).length} 个文件为 ZIP`);
+}
+
+function _flatParts(parts){ return parts.map(p => p instanceof Uint8Array ? p : new Uint8Array(p)); }
+function _concatU8(arrays){ const len=arrays.reduce((s,a)=>s+a.length,0); const r=new Uint8Array(len); let off=0; arrays.forEach(a=>{r.set(a,off);off+=a.length;}); return r; }
+function _crc32(data){
+  let crc=0xFFFFFFFF;
+  const t=new Uint32Array(256);
+  for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?(0xEDB88320^(c>>>1)):c>>>1;t[i]=c;}
+  for(let i=0;i<data.length;i++)crc=t[(crc^data[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
 }
 
 // ── 资料自动入库：各环节 confirm 时调用 ──
@@ -8221,6 +9000,7 @@ function archiveBreakdown(){
   updateAssetCard('breakdown', text);
 }
 
+// 中文剧本归档：从 DOM 提取原文文本存入 ASSET_STORE
 function archiveScriptCn(){
   const body = document.getElementById('script-body');
   if(!body || !body.innerText.trim()) return;
@@ -8228,19 +9008,16 @@ function archiveScriptCn(){
   if(text.length > 50) { updateAssetCard('script-cn', text); saveProject(); }
 }
 
+// 英文剧本/制作剧本归档：内容由 translateScriptReal 直接写入 ASSET_STORE，
+// 这两个函数保留供手动触发或兼容旧代码调用，实际内容已在翻译时写入
 function archiveScriptEn(){
-  const body = document.getElementById('script-body');
-  if(!body || !body.innerText.trim()) return;
-  const text = extractScriptLines(body, 'all');
-  if(text.length > 50) { updateAssetCard('script-en', text); saveProject(); }
+  // 翻译结果已由 translateScriptReal 直接写入 ASSET_STORE['script-en']，无需重复提取
+  // 此函数保留以兼容可能的外部调用
 }
 
-// 制作剧本：保留中文场景/动作描述，台词已翻译为英文
+// 制作剧本：同上
 function archiveScriptProd(){
-  const body = document.getElementById('script-body');
-  if(!body || !body.innerText.trim()) return;
-  const text = extractScriptLines(body, 'prod');
-  if(text.length > 50) { updateAssetCard('script-prod', text); saveProject(); }
+  // 翻译结果已由 translateScriptReal 直接写入 ASSET_STORE['script-prod']，无需重复提取
 }
 
 // Extract script lines with Hollywood format
@@ -8419,7 +9196,7 @@ function pmExportAsset(key, label) {
   const idx = parseInt(activeItem.id.replace('pmi-',''));
   const p = projects[idx];
   if(!p || !p.ASSET_STORE?.[key]?.text) { showToast('无内容可导出'); return; }
-  exportAsDocx(label, p.ASSET_STORE[key].text, `${p.name}_${label}`);
+  _exportAsDocxRaw(label, p.ASSET_STORE[key].text, `${p.name}_${label}`);
   showToast(`${label}正在导出 Word 文档`);
 }
 
@@ -8440,7 +9217,7 @@ function pmPreviewAsset(btn) {
   const exportBtns = document.getElementById('ap-export-btns');
   if(exportBtns){
     exportBtns.innerHTML = `
-      <button onclick="exportAsDocx(_pmPreviewStore.label,_pmPreviewStore.text,_pmPreviewStore.projName+'_'+_pmPreviewStore.label)" style="height:32px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer">📄 导出 Word</button>
+      <button onclick="_exportAsDocxRaw(_pmPreviewStore.label,_pmPreviewStore.text,_pmPreviewStore.projName+'_'+_pmPreviewStore.label)" style="height:32px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer">📄 导出 Word</button>
       <button onclick="exportAsPdf(_pmPreviewStore.label,_pmPreviewStore.text,_pmPreviewStore.projName+'_'+_pmPreviewStore.label)" style="height:32px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer">📋 导出 PDF</button>`;
   }
   document.getElementById('asset-preview-modal').style.display = 'flex';
