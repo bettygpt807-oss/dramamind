@@ -1328,7 +1328,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
 /* ══ WORKBENCH THREE-COLUMN LAYOUT ══ */
 /* Left column — dark sidebar */
-.wb-left{width:220px;flex-shrink:0;background:var(--gd);display:flex;flex-direction:column;overflow:hidden}
+.wb-left{width:220px;min-width:160px;max-width:400px;flex:0 0 220px;background:var(--gd);display:flex;flex-direction:column;overflow:hidden}
 .wb-left-head{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .wb-left-title{font-size:12px;font-weight:500;color:rgba(255,255,255,.65);letter-spacing:.02em}
 .wb-left-body{flex:1;overflow-y:auto;padding:8px 10px;scrollbar-width:thin}
@@ -1420,7 +1420,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8)}
 
 /* Draggable dividers */
-.wb-divider{width:8px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10;margin:0 -2px}
+.wb-divider{width:12px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10;margin:0 -3px}
 .wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.08)}
 .wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:48px;background:var(--bd);border-radius:2px;transition:background .15s}
 .wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm)}
@@ -1429,7 +1429,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .wb-mid{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
 
 /* Right column — chat panel */
-.wb-right{width:280px;flex-shrink:0;background:var(--wh);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.wb-right{width:280px;min-width:220px;max-width:500px;flex:0 0 280px;background:var(--wh);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
 .wb-right-head{padding:11px 14px;border-bottom:1px solid var(--bl);background:var(--bg);display:flex;align-items:center;gap:8px;flex-shrink:0}
 .wb-right-title{font-size:13px;font-weight:500;color:var(--ink);flex:1}
 .wb-right-stage{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--gp);color:var(--gm);font-weight:500;letter-spacing:.03em}
@@ -2484,6 +2484,19 @@ function showPage(p){
     const stageLabels = {story:'改编策划', breakdown:'分集细纲', script:'剧本创作'};
     const stageTag = document.getElementById('wb-stage-tag');
     if(stageTag) stageTag.textContent = stageLabels[p] || p;
+    // 非策划页：隐藏「生成策划案」按钮
+    const _bibleBtn = document.getElementById('wb-gen-bible-btn');
+    if(_bibleBtn){
+      if(p !== 'story') {
+        _bibleBtn.classList.remove('show');
+      } else {
+        // story 页：仅在追问进行中且策划案未确认时显示
+        const _hasInquiry = (PROJECT.inquiry?.messages||[]).length > 0;
+        const _bibleConfirmed = !!(PROJECT.bible?.confirmed);
+        if(_hasInquiry && !_bibleConfirmed) _bibleBtn.classList.add('show');
+        else _bibleBtn.classList.remove('show');
+      }
+    }
     // 添加阶段分隔消息到对话框
     addStageMark(stageLabels[p] || p);
   } else {
@@ -3788,7 +3801,7 @@ function sendInquiryBatch(){
 
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
-    if(btn) btn.classList.add('show');
+    if(btn && !PROJECT.bible?.confirmed) btn.classList.add('show');
   };
 
   if(!cfg.doubaoKey){
@@ -3863,7 +3876,7 @@ function sendInquiryMsg(){
 
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
-    if(btn) btn.classList.add('show');
+    if(btn && !PROJECT.bible?.confirmed) btn.classList.add('show');
   };
 
   if(!cfg.doubaoKey){
@@ -4218,68 +4231,8 @@ function renderBible(data){
 
   // 1. Meta
   const src=PROJECT.source, sc=PROJECT.scheme;
-  const titleRecs = sc.titleRecs && sc.titleRecs.length > 0 ? sc.titleRecs : null;
-  
-  // Build title recommendation UI
-  let titleRecsHtml = '';
-  if (titleRecs && titleRecs.length > 0) {
-    const recsHtml = titleRecs.map((tr, idx) => `
-      <div class="title-rec-item ${idx===0?'selected':''}" data-idx="${idx}" onclick="selectTitleRec(${idx})" style="
-        display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--rs);
-        border:1.5px solid ${idx===0?'var(--gm)':'var(--bl)'};
-        background:${idx===0?'var(--gg)':'var(--wh)'};
-        cursor:pointer;transition:all .18s;margin-bottom:6px;
-      ">
-        <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${idx===0?'var(--gm)':'var(--bd)'};
-          background:${idx===0?'var(--gm)':'transparent'};flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;">
-          ${idx===0?'<div style="width:6px;height:6px;border-radius:50%;background:#fff"></div>':''}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:600;color:var(--ink);font-family:'Playfair Display','Noto Serif SC',serif">${escHtml(tr.zh)}</div>
-          <div style="font-size:12px;color:var(--i3);font-style:italic;margin-top:1px">${escHtml(tr.en)}</div>
-          ${tr.note?`<div style="font-size:11px;color:var(--i4);margin-top:3px">${escHtml(tr.note)}</div>`:''}
-        </div>
-        ${idx===0?'<span style="font-size:10px;background:var(--gm);color:#fff;padding:2px 7px;border-radius:10px;flex-shrink:0;align-self:center">首推</span>':''}
-      </div>`).join('');
-    
-    titleRecsHtml = `<div class="bible-block" style="margin-bottom:14px">
-      <div class="bible-block-head">
-        <span class="bible-block-icon">🎬</span>
-        <span class="bible-block-label">剧名推荐（点击选定，项目名称自动更新）</span>
-        <span class="bible-edit-hint" id="title-selected-badge" style="background:var(--gg);color:var(--gm);padding:2px 8px;border-radius:10px;font-size:11px">已选：${escHtml(titleRecs[0].zh)}</span>
-      </div>
-      <div class="bible-block-body">${recsHtml}</div>
-    </div>`;
-  }
-  
-  document.getElementById('bible-meta-grid').innerHTML = `
-    <div class="bible-meta-item"><div class="bible-meta-label">目标市场</div><div class="bible-meta-val">${escHtml(src.market)}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">受众偏好</div><div class="bible-meta-val">${escHtml(src.preference)}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">题材类型</div><div class="bible-meta-val">${escHtml((src.genre||'').split('（')[0])}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">体量规划</div><div class="bible-meta-val">${src.episodeCount}集</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">改编路径</div><div class="bible-meta-val">${escHtml(src.path||'拆解改编')}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">原著/IP</div><div class="bible-meta-val">${escHtml(src.docTitle || sc.title || src.userRequirements.substring(0,30))}</div></div>
-    <div class="bible-meta-item" style="grid-column:1/-1"><div class="bible-meta-label">选定方案</div><div class="bible-meta-val">${escHtml(sc.num)} · ${escHtml(sc.title)}</div></div>
-  `;
-  
-  // Insert title recs before the main bible content
-  const ss3 = document.getElementById('ss3');
-  if (ss3) {
-    let existingRecsBlock = document.getElementById('title-recs-block');
-    if (!existingRecsBlock) {
-      existingRecsBlock = document.createElement('div');
-      existingRecsBlock.id = 'title-recs-block';
-      const secHead = ss3.querySelector('.sec-head');
-      if (secHead && secHead.nextSibling) {
-        ss3.insertBefore(existingRecsBlock, secHead.nextSibling);
-      } else {
-        ss3.insertBefore(existingRecsBlock, ss3.firstChild.nextSibling || ss3.firstChild);
-      }
-    }
-    existingRecsBlock.innerHTML = titleRecsHtml;
-  }
 
-  // 2. 故事简介（字段名保持 logline 向后兼容）
+  // 2. 故事简介ne 向后兼容）
   const logEl = document.getElementById('bible-logline');
   logEl.textContent = data.logline||'';
   initEditTracking(logEl,'logline');
@@ -4891,6 +4844,9 @@ function confirmBibleAndNext(){
   _changedBeatIdxs?.clear();
   if(!PROJECT.bible.logline){ showToast('策划案尚未生成，请先完成策划追问'); return; }
   hideConfirmDock();
+  // 隐藏「生成策划案」按钮（策划案已确认，不再需要）
+  const _bb = document.getElementById('wb-gen-bible-btn');
+  if(_bb) _bb.classList.remove('show');
 
   // Force-sync any in-progress contenteditable edits before archiving
   document.querySelectorAll('[data-field]').forEach(el => {
@@ -5528,27 +5484,39 @@ ${hookSummary}</div>
       <div style="font-size:12px;color:var(--i3);line-height:1.7;margin-bottom:12px">
         请检查本幕细纲，如需修改可直接点击卡片字段编辑，或在右侧对话框告诉 AI。确认无误后点击「生成下一幕」继续。
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn-ol" style="height:32px;padding:0 14px;font-size:12px" onclick="this.closest('.act-end-panel').querySelector('.act-review-chat').style.display='block';this.style.display='none'">💬 AI 修改本幕</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn-ol" style="height:32px;padding:0 14px;font-size:12px" onclick="jumpToScriptForAct(${actIdx})">
+          ✍️ 生成本幕剧本
+        </button>
         <button class="gen-btn" style="height:36px;padding:0 20px" onclick="confirmActAndGenerateNext(${actIdx}, this)">
           确认本幕，生成${nextAct.name} →
         </button>
       </div>
-      <div class="act-review-chat" style="display:none;margin-top:12px">
-        <div style="border:1px solid var(--bl);border-radius:var(--rs);overflow:hidden">
-          <div id="act-review-chat-msgs-${actIdx}" style="max-height:140px;overflow-y:auto;padding:10px 12px;background:var(--bg);display:flex;flex-direction:column;gap:6px"></div>
-          <div style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--bl)">
-            <textarea class="ci" id="ci-act-review-${actIdx}" rows="1"
-              placeholder="针对本幕提出修改建议……"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendActReviewChat(${actIdx})}"
-              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
-              style="border:1px solid var(--bd);border-radius:var(--rs);padding:7px 10px;background:var(--wh);flex:1;font-family:'Noto Sans SC',sans-serif;font-size:12px"></textarea>
-            <button class="cs-btn" onclick="sendActReviewChat(${actIdx})">↑</button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>`;
+}
+
+// Jump to script page and start generating the script for a specific act
+function jumpToScriptForAct(actIdx) {
+  const act = bdState.acts[actIdx];
+  if (!act) { showToast('幕数据不存在'); return; }
+  // Ensure breakdown is marked confirmed so script page unlocks
+  if (!bdState.confirmed) {
+    bdState.confirmed = true;
+    PROJECT.outline = PROJECT.outline || {};
+    PROJECT.outline.confirmed = true;
+    saveProject();
+  }
+  showPage('script');
+  buildScriptUI();
+  // After page renders, generate this specific act's script
+  setTimeout(() => {
+    if (!scriptState.actScripts[actIdx] || scriptState.actScripts[actIdx].status !== 'done') {
+      generateScriptAct(actIdx);
+    } else {
+      showToast(`${act.name}剧本已生成`);
+    }
+  }, 300);
 }
 
 function buildFinalActEndHTML() {
@@ -5898,9 +5866,9 @@ function restoreStoryUI(){
       msgs.forEach(m => appendGlobalMsg(m.role === 'ai' ? 'ai' : 'user', m.content));
       setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
     }
-    // 追问结束后显示「生成策划案」按钮
+    // 追问结束后显示「生成策划案」按钮（仅当策划案尚未确认时）
     const bibleBtn = document.getElementById('wb-gen-bible-btn');
-    if(bibleBtn) bibleBtn.classList.add('show');
+    if(bibleBtn && !PROJECT.bible?.confirmed) bibleBtn.classList.add('show');
 
     // 如果 bible 未确认，且最后一条是 AI 消息且含未回答的选项，恢复选项弹窗
     if(!PROJECT.bible?.confirmed){
@@ -9912,31 +9880,34 @@ function initWorkbench(){
 function initWbDividers(){
   function makeDraggable(divider, getTarget, side){
     let startX, startW;
-    divider.addEventListener('mousedown', e=>{
-      e.preventDefault();
+    const onMove = e => {
+      const dx = e.clientX - startX;
+      const nw = side === 'left' ? startW + dx : startW - dx;
+      const wrap = document.getElementById('workbench-wrap');
+      const totalW = wrap ? wrap.offsetWidth : window.innerWidth;
+      const minW = side === 'left' ? 160 : 220;
+      const maxW = totalW - 400;
+      const clamped = Math.max(minW, Math.min(maxW, nw));
       const target = getTarget();
-      startX = e.clientX; startW = target.offsetWidth;
+      target.style.width = clamped + 'px';
+      target.style.minWidth = clamped + 'px';
+      target.style.maxWidth = clamped + 'px';
+      target.style.flex = '0 0 ' + clamped + 'px';
+    };
+    const onUp = () => {
+      divider.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    divider.addEventListener('mousedown', e => {
+      e.preventDefault();
+      startX = e.clientX;
+      startW = getTarget().offsetWidth;
       divider.classList.add('dragging');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
-      const onMove = e=>{
-        const dx = e.clientX - startX;
-        const nw = side==='left' ? startW+dx : startW-dx;
-        const wrap = document.getElementById('workbench-wrap');
-        const maxW = wrap ? wrap.offsetWidth - 160 : window.innerWidth - 160;
-        const clamped = Math.max(80, Math.min(maxW, nw));
-        target.style.width = clamped+'px';
-        target.style.flexBasis = clamped+'px';
-        target.style.flexShrink = '0';
-        target.style.flexGrow = '0';
-      };
-      const onUp = ()=>{
-        divider.classList.remove('dragging');
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
