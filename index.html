@@ -111,9 +111,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
   background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);
   font-family:'Noto Sans SC',sans-serif;font-size:11px;
-  padding:5px 10px;border-radius:5px;white-space:nowrap;
-  pointer-events:none;opacity:0;transition:opacity .15s;z-index:999;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);max-width:160px;overflow:hidden;text-overflow:ellipsis;
+  padding:5px 12px;border-radius:5px;white-space:nowrap;
+  pointer-events:none;opacity:0;transition:opacity .15s;z-index:1000;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);max-width:240px;
 }
 .sb-proj-dot:hover::after{opacity:1}
 
@@ -2448,6 +2448,17 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 const S={page:'home',step:1,scheme:0};
 
 function showPage(p){
+  // 离页前刷新所有未保存的编辑
+  try {
+    const ae = document.activeElement;
+    if (ae && ae.isContentEditable) ae.blur();
+    if (typeof _scriptEditTimers === 'object') {
+      Object.keys(_scriptEditTimers).forEach(k => { clearTimeout(_scriptEditTimers[k]); delete _scriptEditTimers[k]; });
+    }
+    if (typeof serializeCurrentScript === 'function') serializeCurrentScript();
+    if (typeof saveProject === 'function') saveProject();
+  } catch(_e) {}
+
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   ['nav-home'].forEach(id=>{
     const el=document.getElementById(id);
@@ -2484,19 +2495,6 @@ function showPage(p){
     const stageLabels = {story:'改编策划', breakdown:'分集细纲', script:'剧本创作'};
     const stageTag = document.getElementById('wb-stage-tag');
     if(stageTag) stageTag.textContent = stageLabels[p] || p;
-    // 非策划页：隐藏「生成策划案」按钮
-    const _bibleBtn = document.getElementById('wb-gen-bible-btn');
-    if(_bibleBtn){
-      if(p !== 'story') {
-        _bibleBtn.classList.remove('show');
-      } else {
-        // story 页：仅在追问进行中且策划案未确认时显示
-        const _hasInquiry = (PROJECT.inquiry?.messages||[]).length > 0;
-        const _bibleConfirmed = !!(PROJECT.bible?.confirmed);
-        if(_hasInquiry && !_bibleConfirmed) _bibleBtn.classList.add('show');
-        else _bibleBtn.classList.remove('show');
-      }
-    }
     // 添加阶段分隔消息到对话框
     addStageMark(stageLabels[p] || p);
   } else {
@@ -4232,7 +4230,7 @@ function renderBible(data){
   // 1. Meta
   const src=PROJECT.source, sc=PROJECT.scheme;
 
-  // 2. 故事简介ne 向后兼容）
+  // 2. 故事简介（字段名保持 logline 向后兼容）
   const logEl = document.getElementById('bible-logline');
   logEl.textContent = data.logline||'';
   initEditTracking(logEl,'logline');
@@ -4632,26 +4630,39 @@ function _doExportAsset(key){
 // ── Diff 检测：找出中文剧本在翻译后有改动的集 ──
 // targetKey: 'script-en' 或 'script-prod'
 // 返回 {changed: [epIdx], unchanged: [epIdx], total: n}
+// DOM-independent: compares stored cnHashByEp vs en/prodHashByEp
 function getDiffEps(targetKey){
-  const hashByEp = targetKey === 'script-en'
+  const translatedHashByEp = targetKey === 'script-en'
     ? scriptState.enHashByEp
     : scriptState.prodHashByEp;
 
-  // 收集所有已生成剧本的集
-  const allEpWraps = [...document.querySelectorAll('[id^="script-ep-wrap-"]')];
-  const allEpIdxs = allEpWraps.map(w => parseInt(w.dataset.ep)).filter(n => !isNaN(n));
+  // Collect all generated ep indices from actScripts — works even when DOM replaced
+  const allEpIdxs = [];
+  bdState.acts.forEach((act, aIdx) => {
+    const as = scriptState.actScripts[aIdx];
+    if (as && as.status === 'done') {
+      for (let i = act.from - 1; i < act.to; i++) allEpIdxs.push(i);
+    }
+  });
+  // Fallback to DOM if bdState empty
+  if (allEpIdxs.length === 0) {
+    document.querySelectorAll('[id^="script-ep-wrap-"]').forEach(w => {
+      const i = parseInt(w.dataset.ep); if (!isNaN(i)) allEpIdxs.push(i);
+    });
+  }
 
   const changed = [], unchanged = [];
   allEpIdxs.forEach(epIdx => {
-    const currentText = getEpTextForHash(epIdx);
-    if(!currentText){ unchanged.push(epIdx); return; }
-    const currentHash = hashStr(currentText);
-    const translatedHash = hashByEp[epIdx];
-    if(!translatedHash || currentHash !== translatedHash){
-      changed.push(epIdx); // 从未翻译 或 内容有改动
-    } else {
-      unchanged.push(epIdx);
+    let cnHash = scriptState.cnHashByEp[epIdx];
+    if (!cnHash) {
+      // Try live DOM
+      const t = getEpTextForHash(epIdx);
+      if (t) { cnHash = hashStr(t); scriptState.cnHashByEp[epIdx] = cnHash; }
+      else { changed.push(epIdx); return; } // no hash available → assume changed
     }
+    const translatedHash = translatedHashByEp[epIdx];
+    if (!translatedHash || cnHash !== translatedHash) changed.push(epIdx);
+    else unchanged.push(epIdx);
   });
 
   return { changed, unchanged, total: allEpIdxs.length };
@@ -4739,13 +4750,22 @@ function _showTranslatedScriptInBody(key){
   if(!body) return;
 
   if(!store?.text){
-    const emptyDesc = key === 'script-prod'
-      ? '请在中文剧本页面点击「翻译当前幕 ▾」→「制作剧本（只翻台词）」生成'
-      : '请在中文剧本页面点击「翻译当前幕 ▾」→「英文剧本（全英翻译）」生成';
-    body.innerHTML = `<div style="padding:48px 32px;text-align:center;color:var(--i4)">
-      <div style="font-size:24px;margin-bottom:12px">📄</div>
-      <div style="font-size:14px;color:var(--i3);margin-bottom:8px">${label}尚未生成</div>
-      <div style="font-size:12px">${emptyDesc}</div>
+    const isProd = key === 'script-prod';
+    const icon = isProd ? '🎬' : '🌐';
+    const typeTitle = isProd ? '制作剧本（中文场景 + 英文台词）' : '英文剧本（好莱坞全英格式）';
+    const relation = isProd
+      ? '基于中文剧本生成：保留中文场景与动作描述，仅将对白翻译为英文，供中英对照制作使用。'
+      : '基于中文剧本生成：将场景、动作、对白全部翻译为英文好莱坞格式，适合海外投递。';
+    const opStep = isProd
+      ? '请先完成中文剧本，然后在工具栏点击「翻译当前幕 ▾」→「只翻台词 → 制作剧本」'
+      : '请先完成中文剧本，然后在工具栏点击「翻译当前幕 ▾」→「全文翻译 → 英文剧本」';
+    body.innerHTML = `<div style="padding:48px 32px;text-align:center;max-width:480px;margin:0 auto">
+      <div style="font-size:28px;margin-bottom:14px">${icon}</div>
+      <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:10px">${typeTitle}</div>
+      <div style="font-size:13px;color:var(--i3);line-height:1.85;margin-bottom:14px">${relation}</div>
+      <div style="font-size:12px;color:var(--i3);padding:10px 14px;background:var(--gg);border-radius:var(--rs);border:1px solid var(--bl);text-align:left;line-height:1.7">
+        <b style="color:var(--gm)">操作步骤：</b><br>${opStep}
+      </div>
     </div>`;
     return;
   }
@@ -4844,9 +4864,6 @@ function confirmBibleAndNext(){
   _changedBeatIdxs?.clear();
   if(!PROJECT.bible.logline){ showToast('策划案尚未生成，请先完成策划追问'); return; }
   hideConfirmDock();
-  // 隐藏「生成策划案」按钮（策划案已确认，不再需要）
-  const _bb = document.getElementById('wb-gen-bible-btn');
-  if(_bb) _bb.classList.remove('show');
 
   // Force-sync any in-progress contenteditable edits before archiving
   document.querySelectorAll('[data-field]').forEach(el => {
@@ -5260,6 +5277,13 @@ ${buildLockedEditsContext()}
   updateActSectionStatus(actIdx, 'done');
 
   saveProject();
+
+  // 每幕生成完毕 → 右侧对话框弹出确认提示
+  const _isLastAct = actIdx >= bdState.acts.length - 1;
+  setTimeout(() => {
+    if (_isLastAct) showConfirmDock('breakdown');
+    else showConfirmDock('bd_act', { actIdx });
+  }, 500);
 }
 
 function enrichEp(raw, idx) {
@@ -5466,7 +5490,6 @@ function buildEpCardHTML(ep) {
 }
 
 function buildActEndHTML(act, nextAct, actIdx) {
-  // Generate a summary of this act's hooks
   const hookSummary = act.eps.slice(0,3).map(e=>`第${e.num}集 · ${e.hook.substring(0,35)}…`).join('\n');
   return `<div class="act-end-panel" style="margin-top:16px">
     <div class="act-end-head">
@@ -5481,42 +5504,12 @@ ${hookSummary}</div>
         <div class="act-end-next-title">${nextAct.name}·${nextAct.label}（第${nextAct.from}-${nextAct.to}集）</div>
         <div class="act-end-next-desc">${nextAct.desc} · ${nextAct.storyPhase||nextAct.phase}</div>
       </div>
-      <div style="font-size:12px;color:var(--i3);line-height:1.7;margin-bottom:12px">
-        请检查本幕细纲，如需修改可直接点击卡片字段编辑，或在右侧对话框告诉 AI。确认无误后点击「生成下一幕」继续。
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn-ol" style="height:32px;padding:0 14px;font-size:12px" onclick="jumpToScriptForAct(${actIdx})">
-          ✍️ 生成本幕剧本
-        </button>
-        <button class="gen-btn" style="height:36px;padding:0 20px" onclick="confirmActAndGenerateNext(${actIdx}, this)">
-          确认本幕，生成${nextAct.name} →
-        </button>
+      <div style="font-size:12px;color:var(--i3);line-height:1.8;margin-top:10px">
+        请检查本幕细纲，如需修改可直接编辑集标题/卡点，或在右侧对话框告诉 AI。<br>
+        右侧对话框已弹出确认按钮，点击确认后自动生成 ${nextAct.name} 细纲。
       </div>
     </div>
   </div>`;
-}
-
-// Jump to script page and start generating the script for a specific act
-function jumpToScriptForAct(actIdx) {
-  const act = bdState.acts[actIdx];
-  if (!act) { showToast('幕数据不存在'); return; }
-  // Ensure breakdown is marked confirmed so script page unlocks
-  if (!bdState.confirmed) {
-    bdState.confirmed = true;
-    PROJECT.outline = PROJECT.outline || {};
-    PROJECT.outline.confirmed = true;
-    saveProject();
-  }
-  showPage('script');
-  buildScriptUI();
-  // After page renders, generate this specific act's script
-  setTimeout(() => {
-    if (!scriptState.actScripts[actIdx] || scriptState.actScripts[actIdx].status !== 'done') {
-      generateScriptAct(actIdx);
-    } else {
-      showToast(`${act.name}剧本已生成`);
-    }
-  }, 300);
 }
 
 function buildFinalActEndHTML() {
@@ -5779,18 +5772,19 @@ function exportBreakdown() {
 // Kept for script page compat
 
 
-// Serialize current script DOM to PROJECT.script.allData
+// Serialize all rendered ep-wraps to PROJECT.script.allData
 function serializeCurrentScript(){
-  // 只序列化单集的 ep-wrap，而非整个 body（整个 body 会导致存储体积翻倍）
-  if(currentEp === undefined || currentEp === null) return;
-  const epWrap = document.getElementById(`script-ep-wrap-${currentEp}`);
-  if(epWrap){
-    PROJECT.script.allData[currentEp] = epWrap.innerHTML;
-    const actIdx = bdState.acts.findIndex(a => currentEp >= a.from-1 && currentEp < a.to);
-    if(actIdx >= 0 && scriptState.actScripts[actIdx]){
-      scriptState.actScripts[actIdx].eps[currentEp] = epWrap.innerHTML;
+  const body = document.getElementById('script-body');
+  if (!body) return;
+  body.querySelectorAll('[id^="script-ep-wrap-"]').forEach(epWrap => {
+    const epIdx = parseInt(epWrap.dataset.ep);
+    if (isNaN(epIdx)) return;
+    PROJECT.script.allData[epIdx] = epWrap.innerHTML;
+    const aIdx = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
+    if (aIdx >= 0 && scriptState.actScripts[aIdx]) {
+      scriptState.actScripts[aIdx].eps[epIdx] = epWrap.innerHTML;
     }
-  }
+  });
 }
 
 function toggleTranslateMenu(e){
@@ -5816,7 +5810,7 @@ function renderRecentProjects(){
   }
   listWrap.innerHTML = projects.slice(0,8).map(p => {
     const isActive = S.proj === p.name;
-    const tipText = p.name.length > 18 ? p.name.substring(0,18) + '…' : p.name;
+    const tipText = p.name.length > 24 ? p.name.substring(0,24) + '…' : p.name;
     return `<div class="sb-proj-dot${isActive?' active':''}" onclick="loadSavedProj('${p.name.replace(/'/g,"\\'")}');" data-tip="${tipText}">
       <div class="sb-proj-dot-inner"></div>
     </div>`;
@@ -5866,7 +5860,7 @@ function restoreStoryUI(){
       msgs.forEach(m => appendGlobalMsg(m.role === 'ai' ? 'ai' : 'user', m.content));
       setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
     }
-    // 追问结束后显示「生成策划案」按钮（仅当策划案尚未确认时）
+    // 追问结束后显示「生成策划案」按钮（仅策划案未确认时）
     const bibleBtn = document.getElementById('wb-gen-bible-btn');
     if(bibleBtn && !PROJECT.bible?.confirmed) bibleBtn.classList.add('show');
 
@@ -6007,8 +6001,18 @@ function loadSavedProj(name){
     }
   }
 
-  // 剧本页内容重建
+  // 剧本页内容重建 — 先从 actScripts 同步 allData（确保手动编辑不丢失）
   if(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0){
+    Object.keys(scriptState.actScripts).forEach(aIdx => {
+      const as = scriptState.actScripts[aIdx];
+      if (as?.eps) {
+        Object.keys(as.eps).forEach(epIdx => {
+          if (!String(epIdx).endsWith('_modified')) {
+            PROJECT.script.allData[parseInt(epIdx)] = as.eps[epIdx];
+          }
+        });
+      }
+    });
     setTimeout(() => { buildScriptUI(); updateScriptStats(); }, 100);
   }
 
@@ -6272,7 +6276,7 @@ function renderActTabs() {
 
   // Fallback: no bdState acts
   if (bdState.acts.length === 0) {
-    html = `<div class="act-tab active" id="act-tab-0">全部剧本</div>`;
+    html = `<div class="act-tab act-tab-pending" style="cursor:default;opacity:.55;font-size:11px;padding:0 12px">请先完成分集细纲</div>`;
   }
 
   tabs.innerHTML = html;
@@ -6555,6 +6559,11 @@ function appendActToBody(actIdx, animate) {
     epWrap.dataset.act = actIdx;
     epWrap.innerHTML = html;
     epsContainer.appendChild(epWrap);
+    // 首次渲染时建立 cn hash 基准（确保 diff 正确）
+    if (!scriptState.cnHashByEp[epIdx]) {
+      const t = getEpTextForHash(epIdx);
+      if (t) scriptState.cnHashByEp[epIdx] = hashStr(t);
+    }
   }
   block.appendChild(epsContainer);
 
@@ -7563,6 +7572,12 @@ function newProject(){
         finalized: scriptState.finalized,
         actScripts: JSON.parse(JSON.stringify(scriptState.actScripts)),
         chatHistory: scriptState.chatHistory,
+        cnLastEditTs: scriptState.cnLastEditTs||0,
+        enTranslateTs: scriptState.enTranslateTs||0,
+        prodTranslateTs: scriptState.prodTranslateTs||0,
+        cnHashByEp: JSON.parse(JSON.stringify(scriptState.cnHashByEp||{})),
+        enHashByEp: JSON.parse(JSON.stringify(scriptState.enHashByEp||{})),
+        prodHashByEp: JSON.parse(JSON.stringify(scriptState.prodHashByEp||{})),
       },
       bdState: {
         acts: JSON.parse(JSON.stringify(bdState.acts)),
@@ -7591,6 +7606,9 @@ function newProject(){
   breakdownState.generatedBatches=0; breakdownState.currentBatch=0; breakdownState.allData=[];
   bdState.acts=[]; bdState.allEps=[]; bdState.generatedCount=0; bdState.confirmed=false; bdState.chatHistory=[];
   scriptState.total=40; scriptState.finalized=false; scriptState.actScripts={}; scriptState.chatHistory=[];
+  scriptState.cnLastEditTs=0; scriptState.enTranslateTs=0; scriptState.prodTranslateTs=0;
+  scriptState.cnHashByEp={}; scriptState.enHashByEp={}; scriptState.prodHashByEp={};
+  globalChatHistory.length=0; inquiryMode=false; _confirmDockStage=null; _revisionContext=null;
   schemeHistory=[];
   localStorage.removeItem('dramamind_scheme_history');
   inquiryHistory.length=0; inquiryMsgCount=0;
@@ -8474,10 +8492,19 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
   // ── 收集需要翻译的集 epWraps ──
   let epWraps = [];
   if(forceEpIdxs){
-    // diff 翻译：只处理指定集
+    // diff 翻译：只处理指定集（DOM 不在时用存储 HTML 创建 synthetic 元素）
     forceEpIdxs.forEach(idx => {
-      const wrap = document.getElementById(`script-ep-wrap-${idx}`);
-      if(wrap) epWraps.push(wrap);
+      const domWrap = document.getElementById(`script-ep-wrap-${idx}`);
+      if (domWrap) { epWraps.push(domWrap); return; }
+      // DOM not available (user on prod/en view)
+      const aIdx = bdState.acts.findIndex(a => idx >= a.from-1 && idx < a.to);
+      const storedHtml = aIdx >= 0 ? scriptState.actScripts[aIdx]?.eps?.[idx] : null;
+      if (storedHtml) {
+        const syn = document.createElement('div');
+        syn.id = `script-ep-wrap-${idx}`; syn.dataset.ep = idx; syn.dataset.act = aIdx;
+        syn.innerHTML = storedHtml;
+        epWraps.push(syn); // detached — safe for text extraction
+      }
     });
     if(!epWraps.length){ showToast('指定集的剧本内容不存在'); return; }
   } else if (isCurrentAct) {
@@ -8522,10 +8549,21 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
     const wrap = epWraps[i];
     const epIdx = parseInt(wrap.dataset.ep);
 
-    // 从原始 DOM 提取源文本（中文原文）
-    const elements = dialogueOnly
+    // 从 DOM 或存储 HTML 提取中文原文
+    let elements = dialogueOnly
       ? [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
       : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
+    if (!elements.length) {
+      // DOM wrap is detached or empty — parse stored HTML
+      const aIdx2 = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
+      const stored = aIdx2 >= 0 ? scriptState.actScripts[aIdx2]?.eps?.[epIdx] : null;
+      if (stored) {
+        const tmp = document.createElement('div'); tmp.innerHTML = stored;
+        elements = dialogueOnly
+          ? [...tmp.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
+          : [...tmp.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
+      }
+    }
     if (!elements.length) continue;
 
     const lines = elements.map(el => {
@@ -9282,6 +9320,7 @@ function viewAssetInMain(key) {
 
 // ══ 确认推进操作卡 ══
 let _confirmDockStage = null; // 'scheme' | 'bible' | 'breakdown'
+let _confirmDockActIdx = -1; // actIdx stored when showConfirmDock bd_act is called
 
 function showConfirmDock(stage, opts){
   _confirmDockStage = stage;
@@ -9290,6 +9329,7 @@ function showConfirmDock(stage, opts){
 
   // opts 用于 bd_act / script_act 动态内容
   const actIdx = opts?.actIdx ?? -1;
+  _confirmDockActIdx = actIdx; // store for handleConfirmDockPrimary
   const actName = actIdx >= 0 ? (bdState.acts[actIdx]?.name || `第${actIdx+1}幕`) : '';
   const nextActIdx = actIdx + 1;
   const nextActName = nextActIdx < bdState.acts.length ? (bdState.acts[nextActIdx]?.name || `第${nextActIdx+1}幕`) : '';
@@ -9365,9 +9405,11 @@ function handleConfirmDockPrimary(){
   else if(stage === 'bible' || stage === 'bible_first') confirmBibleAndNext();
   else if(stage === 'breakdown') confirmBreakdownAndNext();
   else if(stage === 'bd_act'){
-    // 找到当前已完成的最后一幕，推进下一幕
-    const lastDoneIdx = bdState.acts.reduce((last, a, i) => a.status === 'done' ? i : last, -1);
-    if(lastDoneIdx >= 0) confirmActAndGenerateNext(lastDoneIdx);
+    // 使用 showConfirmDock 传入的 actIdx（存储在 _confirmDockActIdx）
+    const targetIdx = (typeof _confirmDockActIdx === 'number' && _confirmDockActIdx >= 0)
+      ? _confirmDockActIdx
+      : bdState.acts.reduce((last, a, i) => a.status === 'done' ? i : last, -1);
+    if(targetIdx >= 0) confirmActAndGenerateNext(targetIdx, null);
   }
   else if(stage === 'script_act'){
     // 找到当前已完成的最后一幕，推进下一幕
@@ -9875,6 +9917,19 @@ function initWorkbench(){
   document.querySelectorAll('input[name="dramamind-mode"]').forEach(r => {
     r.addEventListener('change', () => _updateModeHighlight(r.value));
   });
+
+  // 刷新/关闭前保存
+  window.addEventListener('beforeunload', () => {
+    try {
+      const ae = document.activeElement;
+      if (ae && ae.isContentEditable) ae.blur();
+      if (typeof _scriptEditTimers === 'object') {
+        Object.keys(_scriptEditTimers).forEach(k => { clearTimeout(_scriptEditTimers[k]); delete _scriptEditTimers[k]; });
+      }
+      if (typeof serializeCurrentScript === 'function') serializeCurrentScript();
+      if (typeof saveProject === 'function') saveProject();
+    } catch(_e) {}
+  });
 }
 
 function initWbDividers(){
@@ -9884,15 +9939,14 @@ function initWbDividers(){
       const dx = e.clientX - startX;
       const nw = side === 'left' ? startW + dx : startW - dx;
       const wrap = document.getElementById('workbench-wrap');
-      const totalW = wrap ? wrap.offsetWidth : window.innerWidth;
+      const total = wrap ? wrap.offsetWidth : window.innerWidth;
       const minW = side === 'left' ? 160 : 220;
-      const maxW = totalW - 400;
+      const maxW = total - 400;
       const clamped = Math.max(minW, Math.min(maxW, nw));
-      const target = getTarget();
-      target.style.width = clamped + 'px';
-      target.style.minWidth = clamped + 'px';
-      target.style.maxWidth = clamped + 'px';
-      target.style.flex = '0 0 ' + clamped + 'px';
+      const t = getTarget();
+      t.style.flex = '0 0 ' + clamped + 'px';
+      t.style.minWidth = clamped + 'px';
+      t.style.maxWidth = clamped + 'px';
     };
     const onUp = () => {
       divider.classList.remove('dragging');
@@ -9903,8 +9957,7 @@ function initWbDividers(){
     };
     divider.addEventListener('mousedown', e => {
       e.preventDefault();
-      startX = e.clientX;
-      startW = getTarget().offsetWidth;
+      startX = e.clientX; startW = getTarget().offsetWidth;
       divider.classList.add('dragging');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
