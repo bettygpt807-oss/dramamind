@@ -4,95 +4,118 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DramaMind · AI短剧创作工作台</title>
+<!-- icons via Unicode/emoji - no external dependency -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@300;400;600&family=Noto+Sans+SC:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap');
 :root{
-  --gd:#0A1F12;--gk:#0F2D1A;--gm:#1E5C3A;--gi:#2A7A50;--gl:#4A9A6A;
+  /* Deep forest greens — darkened gd for stronger sidebar contrast */
+  --gd:#081A0E;--gk:#0F2D1A;--gm:#1E5C3A;--gi:#2A7A50;--gl:#4A9A6A;
   --gp:#E4F0E8;--gg:#F0F6F2;
-  --au:#B8944A;--al:#D4B06A;
+  /* Gold — lifted from #B8944A to #C9A85C for better visibility */
+  --au:#C9A85C;--al:#DFC07A;
+  /* Text */
   --ink:#0F1A14;--i2:#2A3A2F;--i3:#5A7060;--i4:#8A9E90;
-  --bd:#D0DDD4;--bl:#E4EDE7;
-  --wh:#FFFFFF;--bg:#F8FAF9;
-  --sw:220px;--hh:56px;--r:10px;--rs:6px;
+  /* Borders */
+  --bd:#D0DDD4;--bl:#E8EEE9;
+  /* Surfaces */
+  --wh:#FFFFFF;--bg:#F7FAF8;
+  /* Layout */
+  --sw:220px;--hh:52px;--r:10px;--rs:6px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
 /* TOPBAR */
-.topbar{height:var(--hh);background:var(--gk);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.08)}
-.logo{font-family:'Playfair Display','Noto Serif SC',serif;font-size:18px;color:#fff;letter-spacing:.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.topbar{height:var(--hh);background:var(--gk);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07)}
+.logo{font-family:'Playfair Display','Noto Serif SC',serif;font-size:17px;color:#fff;letter-spacing:.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .logo em{color:var(--al);font-style:normal}
-.logo-dot{width:6px;height:6px;background:var(--au);border-radius:50%;flex-shrink:0}
+.logo-dot{width:5px;height:5px;background:var(--au);border-radius:50%;flex-shrink:0}
 .topbar-mid{flex:1}
-.proj-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:4px 12px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer}
-.proj-badge b{color:rgba(255,255,255,.95);font-weight:500}
-.topbar-r{display:flex;align-items:center;gap:8px}
-.btn-icon{width:32px;height:32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:rgba(255,255,255,.75);transition:all .15s}
-.btn-icon:hover{background:rgba(255,255,255,.15);color:#fff}
+.proj-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);border-radius:20px;padding:4px 12px;font-size:12px;color:rgba(255,255,255,.65);cursor:pointer;transition:all .15s}
+.proj-badge:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.18)}
+.proj-badge b{color:rgba(255,255,255,.92);font-weight:500}
+.topbar-r{display:flex;align-items:center;gap:6px}
+.btn-icon{height:28px;padding:0 10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);border-radius:var(--rs);display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-family:'Noto Sans SC',sans-serif;color:rgba(255,255,255,.65);transition:all .15s;white-space:nowrap;letter-spacing:.02em}
+.btn-icon:hover{background:rgba(255,255,255,.13);color:rgba(255,255,255,.95);border-color:rgba(255,255,255,.18)}
 
-/* LAYOUT — sidebar pushes content, no overlap */
+/* LAYOUT — fixed icon rail always visible */
 .body-wrap{flex:1;overflow:hidden;display:flex;transition:none}
-.sidebar-wrap{position:relative;flex-shrink:0;width:16px;transition:width .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
-.sidebar-wrap.open{width:var(--sw)}
-.sidebar-trigger{position:absolute;right:0;top:0;bottom:0;width:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
-.sidebar-trigger::after{content:'';display:block;width:3px;height:36px;background:rgba(30,92,58,.25);border-radius:2px;transition:all .2s}
-.sidebar-wrap.open .sidebar-trigger::after,.sidebar-wrap:hover .sidebar-trigger::after{background:rgba(30,92,58,.5);height:48px}
-/* SIDEBAR scrollable body */
-.sidebar{width:var(--sw);height:100%;background:var(--gd);display:flex;flex-direction:column;overflow:hidden;
-  transform:translateX(calc(-1 * var(--sw)));transition:transform .28s cubic-bezier(.4,0,.2,1);
-  box-shadow:2px 0 16px rgba(0,0,0,.18);flex-shrink:0}
-.sidebar-wrap.open .sidebar{transform:translateX(0)}
-.sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
-.sb-scroll::-webkit-scrollbar{width:3px}
-.sb-scroll::-webkit-scrollbar-track{background:transparent}
-.sb-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
+/* Icon rail: always 48px, no slide */
+.sidebar-wrap{position:relative;flex-shrink:0;width:48px;overflow:visible}
+/* remove old trigger */
+.sidebar-trigger{display:none}
+/* SIDEBAR — always visible, 48px wide */
+.sidebar{
+  width:48px;height:100%;background:var(--gd);
+  display:flex;flex-direction:column;
+  flex-shrink:0;overflow:visible;
+}
+.sb-scroll{flex:1;overflow-y:auto;overflow-x:visible}
+.sb-scroll::-webkit-scrollbar{width:0}
 
-/* Unified sidebar section + item system */
-.sb-sec{padding:14px 12px 6px}
-.sb-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.28);padding:0 8px;margin-bottom:5px;font-weight:500}
-.sb-div{height:1px;background:rgba(255,255,255,.06);margin:4px 12px}
+/* ── Icon rail item ── */
+.sb-icon-btn{
+  position:relative;
+  width:40px;height:40px;margin:0 auto 2px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:var(--rs);cursor:pointer;
+  color:rgba(255,255,255,.65);font-size:16px;
+  transition:all .15s;border:1px solid transparent;
+}
+.sb-icon-btn:hover{background:rgba(255,255,255,.10);color:rgba(255,255,255,.95)}
+.sb-icon-btn.active{background:rgba(46,122,80,.45);color:var(--al);border-color:rgba(46,122,80,.35)}
+.sb-icon-btn.tool-btn{opacity:.6}
+.sb-icon-btn.tool-btn:hover{opacity:1}
 
-/* All sidebar items use ONE shared row style */
-.sb-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;
-  transition:all .15s;margin-bottom:2px;border:1px solid transparent;color:rgba(255,255,255,.55);font-size:13px}
-.sb-row:hover:not(.locked){background:rgba(255,255,255,.07);color:rgba(255,255,255,.88)}
-.sb-row.active{background:rgba(46,122,80,.35);color:#fff;font-weight:500;border-color:transparent}
-.sb-row.active .sb-icon{color:var(--al)}
-.sb-row.active .sb-badge-num{background:var(--gm);color:#fff}
-.sb-row.done .sb-badge-num{background:rgba(46,122,80,.35);color:var(--al)}
-.sb-row.sel{background:rgba(46,122,80,.22);border-color:rgba(46,122,80,.45);color:rgba(255,255,255,.9)}
-.sb-row.locked{opacity:.38;cursor:not-allowed}
-.sb-row.tool{opacity:.65}
-.sb-row.tool:hover{opacity:1}
+/* Tooltip on hover */
+.sb-icon-btn::after{
+  content:attr(data-tip);
+  position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+  background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);
+  font-family:'Noto Sans SC',sans-serif;font-size:11px;font-weight:400;
+  padding:5px 10px;border-radius:5px;white-space:nowrap;
+  pointer-events:none;opacity:0;transition:opacity .15s;
+  z-index:999;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.sb-icon-btn:hover::after{opacity:1}
 
-/* Icon slot — consistent 20px width for all item types */
-.sb-icon{width:20px;flex-shrink:0;text-align:center;font-size:14px;color:rgba(255,255,255,.4)}
-.sb-row.active .sb-icon,.sb-row.sel .sb-icon{color:var(--al)}
+/* CSS grid icon for nav-pm */
+.icon-grid{
+  width:14px;height:14px;
+  display:grid;grid-template-columns:1fr 1fr;gap:2.5px;
+}
+.icon-grid span{
+  background:currentColor;border-radius:1.5px;
+  display:block;
+}
+.sb-rail-div{height:1px;background:rgba(255,255,255,.07);margin:4px 10px}
 
-/* Text column */
-.sb-txt{flex:1;min-width:0}
-.sb-title{font-size:12px;font-weight:500;color:inherit;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-desc{font-size:10px;color:rgba(255,255,255,.32);line-height:1.4;margin-top:1px}
-.sb-lock-tag{font-size:9px;color:rgba(255,255,255,.22);margin-top:2px;letter-spacing:.03em}
-
-/* Badge number (for workflow steps) */
-.sb-badge-num{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,.38);
-  flex-shrink:0;font-family:'DM Mono',monospace}
-
-/* Right-side meta badge */
-.sb-meta{font-size:9px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.3);
-  padding:1px 6px;border-radius:10px;white-space:nowrap;margin-left:auto}
-
-/* Recent project items */
-.pi{padding:8px 10px;border-radius:var(--rs);cursor:pointer;margin-bottom:2px;transition:background .15s}
-.pi:hover{background:rgba(255,255,255,.06)}
-.pi.active{background:rgba(46,122,80,.2)}
-.pi-name{font-size:12px;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pi-meta{font-size:10px;color:rgba(255,255,255,.28);margin-top:2px}
-
-/* Sidebar bottom pinned area */
-.sb-bottom{flex-shrink:0;border-top:1px solid rgba(255,255,255,.06);padding:10px 12px}
+/* Project list items in rail — mini dot indicators */
+.sb-proj-dot{
+  width:32px;height:32px;margin:0 auto 2px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:var(--rs);cursor:pointer;
+  transition:all .15s;position:relative;
+}
+.sb-proj-dot:hover{background:rgba(255,255,255,.07)}
+.sb-proj-dot.active{background:rgba(46,122,80,.3)}
+.sb-proj-dot-inner{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,.25);transition:all .15s;
+}
+.sb-proj-dot:hover .sb-proj-dot-inner{background:rgba(255,255,255,.6)}
+.sb-proj-dot.active .sb-proj-dot-inner{background:var(--al)}
+.sb-proj-dot::after{
+  content:attr(data-tip);
+  position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+  background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);
+  font-family:'Noto Sans SC',sans-serif;font-size:11px;
+  padding:5px 10px;border-radius:5px;white-space:nowrap;
+  pointer-events:none;opacity:0;transition:opacity .15s;z-index:999;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);max-width:160px;overflow:hidden;text-overflow:ellipsis;
+}
+.sb-proj-dot:hover::after{opacity:1}
 
 /* MAIN */
 .main-content{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column}
@@ -102,10 +125,52 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .wb-mid>.page.active{flex:1;min-height:0;height:auto}
 
 /* HOME */
-.home-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:36px 24px 60px;min-height:0}
-.home-hero{text-align:center;margin-bottom:36px;animation:fu .5s ease both}
-.home-hero h1{font-family:'Playfair Display','Noto Serif SC',serif;font-size:32px;color:var(--gk);letter-spacing:-.01em;margin-bottom:8px}
+.home-wrap{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 24px 60px;
+  padding-top:clamp(32px, 8vh, 80px);
+  min-height:0;
+}
+.home-hero{
+  text-align:center;
+  margin-bottom:36px;
+  animation:fu .5s ease both;
+}
+/* Eyebrow — small label above headline */
+.home-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--i4);margin-bottom:16px;
+  font-family:'DM Mono',monospace;
+}
+.home-eyebrow::before,.home-eyebrow::after{
+  content:'';display:block;width:24px;height:1px;background:var(--bd);
+}
+/* Main headline */
+.home-hero h1{
+  font-family:'Playfair Display','Noto Serif SC',serif;
+  font-size:40px;color:var(--gk);
+  letter-spacing:-.02em;line-height:1.1;
+  margin-bottom:14px;
+}
 .home-hero h1 em{color:var(--gm);font-style:italic}
+/* Descriptor row */
+.home-descriptor{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;flex-wrap:wrap;
+  margin-top:4px;
+}
+.home-descriptor-item{
+  font-size:11.5px;color:var(--i3);
+  padding:0 12px;
+  position:relative;
+  letter-spacing:.04em;
+}
+.home-descriptor-item+.home-descriptor-item::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:1px;height:10px;background:var(--bd);
+}
 .home-hero p{font-size:14px;color:var(--i3);line-height:1.7}
 @keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
@@ -132,8 +197,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .im-sel select:focus{outline:none;border-color:var(--gm);background-color:var(--wh)}
 .im-sel select:hover{border-color:var(--bd);background-color:var(--wh)}
 
-.intake-box{width:100%;max-width:720px;background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.04);animation:fu .5s .1s ease both;transition:border-color .18s,box-shadow .18s}
-.intake-box:focus-within{border-color:var(--gm);box-shadow:0 2px 20px rgba(30,92,58,.1)}
+.intake-box{width:100%;max-width:720px;background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);animation:fu .5s .1s ease both;transition:border-color .18s,box-shadow .18s}
+.intake-box:focus-within{border-color:var(--gm);box-shadow:0 4px 28px rgba(30,92,58,.12),0 1px 4px rgba(0,0,0,.04)}
 .intake-ta{width:100%;min-height:120px;padding:16px 18px;border:none;outline:none;font-family:'Noto Sans SC',sans-serif;font-size:14px;line-height:1.7;color:var(--ink);resize:none;background:transparent}
 .intake-ta::placeholder{color:var(--i4)}
 .intake-tb{display:flex;align-items:center;gap:6px;padding:10px 14px;border-top:1px solid var(--bl);background:var(--bg)}
@@ -156,13 +221,13 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .intake-hint{font-size:11px;color:var(--i4);text-align:center;margin-top:12px;animation:fu .5s .25s ease both}
 
 /* PAGE HEADER */
-.ph{padding:14px 28px;border-bottom:1px solid var(--bd);background:var(--wh);flex-shrink:0;display:flex;align-items:center;gap:12px}
+.ph{padding:10px 20px;border-bottom:1px solid var(--bd);background:var(--wh);flex-shrink:0;display:flex;align-items:center;gap:12px;min-height:44px}
 .ph h2{font-size:15px;font-weight:600;color:var(--ink)}
 .ph-sub{font-size:12px;color:var(--i3)}
 
 /* STORY PAGE — bottom floating chat */
 .story-layout{display:flex;flex:1;overflow:hidden;flex-direction:column;position:relative}
-.story-main{flex:1;overflow-y:auto;padding:24px 28px 100px}
+.story-main{flex:1;overflow-y:auto;padding:18px 20px 100px}
 
 /* Bottom chat bar */
 .story-chat-bar{
@@ -220,11 +285,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap;
 }
 .chat-hist-toggle:hover{border-color:var(--bd);color:var(--i2)}
-.cs-btn{width:34px;height:34px;background:var(--gm);color:#fff;border:none;
-  border-radius:var(--rs);cursor:pointer;font-size:15px;display:flex;
-  align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
-.cs-btn:hover{background:var(--gi)}
-.cs-btn:disabled{background:var(--bd);cursor:not-allowed}
+/* cs-btn / wb-send defined in BUTTON SYSTEM above */
 
 
 /* STEP PILLS */
@@ -372,11 +433,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .tb-sel{height:28px;border:1px solid var(--bl);border-radius:var(--rs);font-size:12px;padding:0 8px;background:var(--bg);color:var(--ink);font-family:'Noto Sans SC',sans-serif;cursor:pointer}
 .tb-sel:focus{outline:none;border-color:var(--gm)}
 .script-tb-actions{display:flex;align-items:center;gap:4px;padding:0 12px;margin-left:auto}
-.stb-action-btn{height:28px;padding:0 11px;border:1px solid var(--bl);border-radius:var(--rs);background:transparent;font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap}
-.stb-action-btn:hover{border-color:var(--gm);color:var(--gm);background:var(--gg)}
-.stb-action-btn.primary{background:var(--gm);color:#fff;border-color:var(--gm);font-weight:500}
-.stb-action-btn.primary:hover{background:var(--gi)}
-.stb-sep{width:1px;height:20px;background:var(--bl);margin:0 2px;flex-shrink:0}
+/* stb-action-btn defined in BUTTON SYSTEM above */
+.stb-sep{width:1px;height:18px;background:var(--bl);margin:0 3px;flex-shrink:0}
 .script-stat{font-size:11px;color:var(--i3);font-family:'DM Mono',monospace;white-space:nowrap}
 .script-stat-sep{font-size:11px;color:var(--bd);margin:0 2px}
 .stb-translate-wrap{position:relative}
@@ -402,16 +460,86 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .ep-tab{display:none}.ep-tab-act-divider{display:none}
 .ep-tab-gen{display:none}
 
-/* BUTTONS */
-.gen-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;background:var(--gm);color:#fff;border:none;border-radius:var(--rs);font-family:'Noto Sans SC',sans-serif;font-size:13px;cursor:pointer;transition:background .15s}
-.gen-btn:hover{background:var(--gi)}
-.btn-ol{display:flex;align-items:center;gap:5px;padding:7px 14px;background:transparent;color:var(--gm);border:1px solid var(--gm);border-radius:var(--rs);font-family:'Noto Sans SC',sans-serif;font-size:12px;cursor:pointer;transition:all .15s}
-.btn-ol:hover{background:var(--gg)}
-.btn-next{display:flex;align-items:center;gap:6px;padding:10px 22px;background:var(--gk);color:#fff;border:none;border-radius:var(--rs);font-family:'Noto Sans SC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s;margin-top:20px}
+/* ══ UNIFIED BUTTON SYSTEM (3 variants only) ══
+   Primary   : solid green  — main actions (生成、确认、发送)
+   Secondary : outline green — alt actions (导出、重新生成)
+   Ghost     : text only    — low-priority (取消、工具栏)
+   ══════════════════════════════════════════════ */
+
+/* Primary */
+.btn-primary,.gen-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:34px;padding:0 16px;
+  background:var(--gm);color:#fff;border:none;
+  border-radius:var(--rs);
+  font-family:'Noto Sans SC',sans-serif;font-size:12px;font-weight:500;
+  cursor:pointer;transition:background .15s;white-space:nowrap;
+}
+.btn-primary:hover,.gen-btn:hover{background:var(--gi)}
+.btn-primary:disabled,.gen-btn:disabled{background:var(--bd);color:var(--i4);cursor:not-allowed}
+
+/* Secondary */
+.btn-secondary,.btn-ol{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  height:34px;padding:0 14px;
+  background:transparent;color:var(--gm);
+  border:1px solid var(--gm);border-radius:var(--rs);
+  font-family:'Noto Sans SC',sans-serif;font-size:12px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-secondary:hover,.btn-ol:hover{background:var(--gg)}
+
+/* Ghost */
+.btn-ghost,.stb-action-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  height:28px;padding:0 10px;
+  background:transparent;color:var(--i2);
+  border:1px solid var(--bl);border-radius:var(--rs);
+  font-family:'Noto Sans SC',sans-serif;font-size:12px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-ghost:hover,.stb-action-btn:hover{border-color:var(--gm);color:var(--gm);background:var(--gg)}
+.stb-action-btn.primary{background:var(--gm);color:#fff;border-color:var(--gm)}
+.stb-action-btn.primary:hover{background:var(--gi)}
+
+/* Aliases kept for compatibility */
+.btn-next{display:inline-flex;align-items:center;gap:6px;padding:0 20px;height:36px;background:var(--gk);color:#fff;border:none;border-radius:var(--rs);font-family:'Noto Sans SC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:background .15s;margin-top:16px}
 .btn-next:hover{background:var(--gm)}
-.btn-finalize{height:28px;padding:0 14px;background:var(--gm);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-family:'Noto Sans SC',sans-serif;cursor:pointer;font-weight:500;transition:all .15s}
+.btn-finalize{height:28px;padding:0 12px;background:var(--gm);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-family:'Noto Sans SC',sans-serif;cursor:pointer;font-weight:500;transition:all .15s}
 .btn-finalize:hover{background:var(--gi)}
 .btn-finalize.done{background:var(--gl);cursor:default}
+
+/* Export button — same as ghost */
+.stb-export-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  height:28px;padding:0 10px;
+  background:transparent;color:var(--i2);
+  border:1px solid var(--bl);border-radius:var(--rs);
+  font-family:'Noto Sans SC',sans-serif;font-size:12px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.stb-export-btn:hover{border-color:var(--gm);color:var(--gm);background:var(--gg)}
+
+/* Immersive */
+.immersive-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  height:28px;padding:0 10px;
+  background:transparent;color:var(--i2);
+  border:1px solid var(--bl);border-radius:var(--rs);
+  font-family:'Noto Sans SC',sans-serif;font-size:12px;
+  cursor:pointer;transition:all .15s;
+}
+.immersive-btn:hover{border-color:var(--gm);color:var(--gm)}
+
+/* Send button */
+.cs-btn,.wb-send{
+  width:32px;height:32px;background:var(--gm);color:#fff;border:none;
+  border-radius:var(--rs);cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .15s;
+}
+.cs-btn:hover,.wb-send:hover{background:var(--gi)}
+.cs-btn:disabled{background:var(--bd);cursor:not-allowed}
 .prod-gate-overlay{position:absolute;inset:0;background:rgba(248,250,249,.92);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;backdrop-filter:blur(2px)}
 .prod-gate-icon{font-size:32px;opacity:.5}
 .prod-gate-title{font-size:15px;font-weight:500;color:var(--i2)}
@@ -837,7 +965,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .ic-meta{font-size:10px;color:var(--i4);margin-top:3px}
 
 /* PRODUCTION */
-.prod-layout{flex:1;overflow-y:auto;padding:0 28px 40px}
+.prod-layout{flex:1;overflow-y:auto;padding:0 20px 40px}
 .prod-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--bd);padding:16px 0 0;position:sticky;top:0;background:var(--bg);z-index:5}
 .pt{padding:8px 16px;font-size:13px;cursor:pointer;color:var(--i3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
 .pt:hover{color:var(--ink)}
@@ -1104,6 +1232,81 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px}
 .badge-g{background:var(--gp);color:var(--gm)}
 /* WORKFLOW NAV — horizontal tab bar shown on story/script/prod pages */
+/* ── 原始文档阅读视图 ── */
+.ss0-doc-body{
+  font-size:13.5px;color:var(--i2);line-height:1.95;
+  padding:4px 0 40px;
+  counter-reset:section;
+}
+/* 一级标题：一、二、三… */
+.ss0-doc-body .doc-h1{
+  font-size:15px;font-weight:600;color:var(--ink);
+  margin:28px 0 10px;padding-bottom:7px;
+  border-bottom:2px solid var(--gp);
+  display:flex;align-items:center;gap:8px;
+}
+.ss0-doc-body .doc-h1::before{
+  content:'';display:inline-block;
+  width:4px;height:16px;background:var(--gm);border-radius:2px;flex-shrink:0;
+}
+/* 二级标题：■ 开头 */
+.ss0-doc-body .doc-h2{
+  font-size:13px;font-weight:600;color:var(--gm);
+  margin:18px 0 6px;letter-spacing:.02em;
+}
+/* 三级标题：数字序号开头 */
+.ss0-doc-body .doc-h3{
+  font-size:12.5px;font-weight:600;color:var(--ink);
+  margin:14px 0 4px;
+}
+/* 普通段落 */
+.ss0-doc-body .doc-p{
+  margin:0 0 6px;color:var(--i2);
+}
+/* 卡点/高亮行 */
+.ss0-doc-body .doc-hook{
+  color:var(--au);font-style:italic;
+  padding:2px 0;
+}
+/* 分隔线 --- */
+.ss0-doc-body .doc-divider{
+  border:none;border-top:1px solid var(--bl);
+  margin:20px 0;
+}
+/* 行内强调 */
+.ss0-doc-body b{color:var(--ink);font-weight:600}
+
+/* ── 导出按钮统一样式 ── */
+.stb-export-btn{
+  height:30px;padding:0 14px;
+  border:1px solid var(--bd);border-radius:var(--rs);
+  background:var(--wh);font-family:'Noto Sans SC',sans-serif;
+  font-size:12px;color:var(--i2);cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;
+  transition:all .15s;white-space:nowrap;
+}
+.stb-export-btn:hover{border-color:var(--gm);color:var(--gm)}
+
+/* ── 全屏沉浸模式 ── */
+.script-immersive .script-layout{position:fixed;inset:0;z-index:200;background:var(--bg)}
+.script-immersive .script-ea{border:none}
+.immersive-exit{
+  position:fixed;top:12px;right:12px;z-index:201;
+  height:32px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);
+  background:var(--wh);font-family:'Noto Sans SC',sans-serif;
+  font-size:12px;color:var(--i2);cursor:pointer;
+  display:none;align-items:center;gap:5px;transition:all .15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+.script-immersive .immersive-exit{display:inline-flex}
+.immersive-btn{
+  height:30px;padding:0 12px;border:1px solid var(--bd);border-radius:var(--rs);
+  background:var(--wh);font-family:'Noto Sans SC',sans-serif;
+  font-size:12px;color:var(--i2);cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;transition:all .15s;
+}
+.immersive-btn:hover{border-color:var(--gm);color:var(--gm)}
+
 /* workflow-nav removed — progress tracking now lives in left sidebar asset cards */
 .wf-tab.done .wf-num{background:rgba(46,122,80,.2);color:var(--gm);border-color:transparent}
 .wf-num{display:none}
@@ -1204,7 +1407,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-card.viewing{border-color:var(--gm)!important;background:var(--gg);box-shadow:0 0 0 2px rgba(30,92,58,.15)}
 .asset-card.viewing .asset-card-label{color:var(--gm);font-weight:600}
 .asset-card-head{display:flex;align-items:center;gap:8px;padding:8px 10px}
-.asset-card-icon{font-size:13px;flex-shrink:0}
+.asset-card-icon{font-size:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55)}
+.asset-card:hover .asset-card-icon,.asset-card.active .asset-card-icon{color:var(--al)}
 .asset-card-label{font-size:12px;color:rgba(255,255,255,.62);flex:1}
 .asset-card-status{font-size:10px;color:rgba(255,255,255,.28);white-space:nowrap}
 .asset-card.ready .asset-card-status{color:var(--gl)}
@@ -1237,14 +1441,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .wb-ci{flex:1;border:1px solid var(--bl);border-radius:var(--rs);padding:7px 10px;font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--ink);resize:none;background:var(--wh);outline:none;line-height:1.5;transition:border-color .15s}
 .wb-ci:focus{border-color:var(--gm)}
 .wb-ci::placeholder{color:var(--i4)}
-.wb-send{width:32px;height:32px;background:var(--gm);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
-.wb-send:hover{background:var(--gi)}
+/* wb-send defined in BUTTON SYSTEM above */
 
 /* Chat message bubbles */
-.gc-msg{padding:9px 12px;border-radius:var(--rs);font-size:13px;line-height:1.65;max-width:90%;white-space:pre-wrap}
-.gc-msg.ai{background:var(--gg);color:var(--i2);border:1px solid var(--gp);align-self:flex-start}
-.gc-msg.user{background:var(--gm);color:#fff;align-self:flex-end}
-.gc-stage-tag{font-size:10px;color:var(--i4);text-align:center;padding:4px 0;letter-spacing:.06em;align-self:center}
+.gc-msg{padding:9px 12px;border-radius:var(--rs);font-size:12.5px;line-height:1.7;max-width:90%}
+.gc-msg.ai{background:var(--gg);color:var(--i2);border:1px solid var(--gp);align-self:flex-start;white-space:normal}
+.gc-msg.ai strong{font-weight:600;color:var(--ink)}
+.gc-msg.ai ul{padding-left:4px}
+.gc-msg.ai pre{font-size:11px}
+.gc-msg.user{background:var(--gm);color:#fff;align-self:flex-end;white-space:pre-wrap}
+.gc-stage-tag{font-size:10px;color:var(--i4);text-align:center;padding:6px 0 2px;letter-spacing:.06em;align-self:center;opacity:.7}
 .inquiry-choices{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .inquiry-choice-btn{text-align:left;padding:7px 10px;border:1px solid var(--gp);border-radius:var(--rs);background:var(--wh);color:var(--i2);font-family:'Noto Sans SC',sans-serif;font-size:12px;line-height:1.5;cursor:pointer;transition:all .15s;white-space:normal}
 .inquiry-choice-btn:hover{background:var(--gg);border-color:var(--gm);color:var(--gm)}
@@ -1335,13 +1541,13 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
 <!-- TOPBAR -->
 <div class="topbar" role="banner">
-  <div class="logo" style="cursor:pointer" onclick="document.getElementById('sidebar-wrap').classList.toggle('open')" aria-label="切换侧边栏"><div class="logo-dot"></div>Drama<em>Mind</em></div>
+  <div class="logo" style="cursor:pointer" onclick="showPage('home')" aria-label="返回首页"><div class="logo-dot"></div>Drama<em>Mind</em></div>
   <div class="topbar-mid">
     <div class="proj-badge" aria-label="项目名称（点击编辑）">📁 <b id="proj-name" contenteditable="true" spellcheck="false" onclick="event.stopPropagation()" onblur="if(this.textContent.trim()&&S.proj){S.proj=this.textContent.trim();saveProject();renderRecentProjects();}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" style="outline:none;cursor:text;min-width:20px" title="点击可编辑项目名称">未选择项目</b> ▾</div>
   </div>
   <div class="topbar-r">
     <span id="save-indicator" style="font-size:11px;color:rgba(255,255,255,.35);margin-right:4px;display:none" aria-live="polite"></span>
-    <div class="btn-icon" id="btn-api-config" title="API配置" style="font-size:12px;padding:0 10px;width:auto" aria-label="API配置">API配置</div>
+    <div class="btn-icon" id="btn-api-config" title="API配置" aria-label="API配置">API配置</div>
   </div>
 </div>
 
@@ -1362,49 +1568,22 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 <div class="sidebar-wrap" id="sidebar-wrap">
   <nav class="sidebar" id="sidebar" aria-label="主导航">
 
-    <!-- TOP: fixed actions -->
-    <div class="sb-sec" style="padding-bottom:8px">
-      <div class="sb-row active" id="nav-home" onclick="newProject()">
-        <div class="sb-icon">＋</div>
-        <div class="sb-txt"><div class="sb-title">新建项目</div></div>
-      </div>
-      <div class="sb-row" id="nav-pm" onclick="openProjectManager()">
-        <div class="sb-icon" style="font-size:13px">▦</div>
-        <div class="sb-txt"><div class="sb-title">项目管理</div></div>
+    <!-- 顶部固定：新建 + 项目管理 -->
+    <div class="sb-rail-sec" style="padding-top:10px">
+      <div class="sb-icon-btn active" id="nav-home" onclick="newProject()" data-tip="新建项目">＋</div>
+      <div class="sb-icon-btn" id="nav-pm" onclick="openProjectManager()" data-tip="项目管理">
+        <div class="icon-grid"><span></span><span></span><span></span><span></span></div>
       </div>
     </div>
 
-    <div class="sb-div"></div>
+    <div class="sb-rail-div"></div>
 
-    <!-- SCROLLABLE BODY -->
-    <div class="sb-scroll">
+    <!-- 最近项目（dot 指示器） -->
+    <div class="sb-scroll" style="padding:6px 0" id="recent-projects-list">
+      <div style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.12);margin:6px auto"></div>
+    </div>
 
-      <!-- 创作工具 -->
-      <div class="sb-sec">
-        <div class="sb-lbl">创作工具</div>
-        <div class="sb-row tool" onclick="window.open('https://dramalens.vercel.app/','_blank')">
-          <div class="sb-icon">🎬</div>
-          <div class="sb-txt">
-            <div class="sb-title">DramaLens</div>
-            <div class="sb-desc">拉片拆解 · 爆款分析 · 改编方向</div>
-            <div class="sb-lock-tag">↗ 跳转至独立工具</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="sb-div"></div>
-
-      <!-- 最近项目 -->
-      <div class="sb-sec" style="padding-bottom:4px">
-        <div class="sb-lbl">最近项目</div>
-      </div>
-      <div style="padding:0 12px 16px" id="recent-projects-list">
-        <div style="font-size:11px;color:rgba(255,255,255,.28);padding:4px 10px 8px">暂无保存的项目</div>
-      </div>
-
-    </div><!-- end sb-scroll -->
   </nav>
-  <div class="sidebar-trigger" id="sb-trigger"></div>
 </div>
 
 <!-- MAIN -->
@@ -1414,8 +1593,15 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 <div class="page active" id="page-home">
   <div class="home-wrap">
     <div class="home-hero">
-      <h1>开启一个新的<em>改编项目</em></h1>
-      <p>描述创作需求 · 设定目标要素 · 上传参考资料</p>
+      <div class="home-eyebrow">AI 短剧创作工作台</div>
+      <h1>Drama<em>Mind</em></h1>
+      <div class="home-descriptor">
+        <span class="home-descriptor-item">拆解改编</span>
+        <span class="home-descriptor-item">策划追问</span>
+        <span class="home-descriptor-item">分集细纲</span>
+        <span class="home-descriptor-item">剧本生成</span>
+        <span class="home-descriptor-item">翻译制作</span>
+      </div>
     </div>
 
     <div class="intake-box">
@@ -1455,7 +1641,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
           </div>
         </div>
       </div>
-      <textarea class="intake-ta" id="intake-input" placeholder="（可选）粘贴改编方案或创作需求……系统将自动识别并生成方案卡片，无需手动填写每一项"></textarea>
+      <textarea class="intake-ta" id="intake-input" placeholder="上传 DramaLens 拆解文档，或在此描述你的改编方向、目标爆款类型……AI 将自动生成多个改编方案供你选择"></textarea>
       <div class="upload-area" id="upload-area" style="display:none">
         <input type="file" id="file-input" style="display:none" accept=".docx,.doc,.pdf" onchange="handleFile(this)">
       </div>
@@ -1470,7 +1656,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         </div>
         <div class="tb-sp"></div>
         <select class="tb-sel" id="sel-path" style="height:30px;margin-right:4px" aria-label="创作路径">
-          <option value="analyze">🔬 拆解改编</option>
+          <option value="analyze">📎 DramaLens 改编</option>
           <option value="novel" disabled>📖 网文改编（即将开放）</option>
           <option value="original" disabled>✨ 原创开发（即将开放）</option>
         </select>
@@ -1478,7 +1664,52 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
     </div>
 
-    <p class="intake-hint">系统将自动新建项目，本次创作的所有资产都将归属于该项目</p>
+    <p class="intake-hint">上传 DramaLens 拆解文档，或直接描述改编需求，开始创作</p>
+
+    <!-- 创作工具入口 -->
+    <div style="width:100%;max-width:720px;margin-top:24px;animation:fu .5s .3s ease both">
+      <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--i4);margin-bottom:10px;padding-left:2px;font-family:'DM Mono',monospace">创作工具</div>
+      <div style="display:flex;gap:10px">
+
+        <!-- DramaLens -->
+        <div onclick="window.open('https://dramalens.vercel.app/','_blank')"
+          style="flex:1;display:flex;align-items:center;gap:14px;padding:14px 16px;
+          background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);
+          cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)"
+          onmouseover="this.style.borderColor='var(--gm)';this.style.boxShadow='0 3px 14px rgba(30,92,58,.12)';this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.borderColor='var(--bd)';this.style.boxShadow='0 1px 4px rgba(0,0,0,.04)';this.style.transform='translateY(0)'">
+          <div style="width:38px;height:38px;background:linear-gradient(135deg,var(--gm),var(--gi));border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(30,92,58,.25)">
+            <span style="font-size:18px">🎬</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;display:flex;align-items:center;gap:7px">
+              DramaLens
+              <span style="font-size:9px;background:var(--gp);color:var(--gm);padding:2px 7px;border-radius:8px;font-weight:500;letter-spacing:.04em;font-family:'DM Mono',monospace">已上线</span>
+            </div>
+            <div style="font-size:11px;color:var(--i3)">拉片拆解 · 爆款分析 · 改编方向</div>
+          </div>
+          <span style="font-size:13px;color:var(--i4);flex-shrink:0">↗</span>
+        </div>
+
+        <!-- DramaShot 视频制作工具（占位） -->
+        <div style="flex:1;display:flex;align-items:center;gap:14px;padding:14px 16px;
+          background:var(--wh);border:1.5px solid var(--bl);border-radius:var(--r);
+          cursor:not-allowed;box-shadow:0 1px 4px rgba(0,0,0,.03)">
+          <div style="width:38px;height:38px;background:linear-gradient(135deg,#C9A85C,#DFC07A);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(201,168,92,.25)">
+            <span style="font-size:18px">🎞️</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--i3);margin-bottom:3px;display:flex;align-items:center;gap:7px">
+              DramaShot
+              <span style="font-size:9px;background:rgba(201,168,92,.12);color:var(--au);padding:2px 7px;border-radius:8px;font-weight:500;letter-spacing:.04em;font-family:'DM Mono',monospace">即将上线</span>
+            </div>
+            <div style="font-size:11px;color:var(--i4)">资产设计 · 分镜设计 · 素材制作</div>
+          </div>
+          <span style="font-size:12px;color:var(--bd);flex-shrink:0">🔒</span>
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1488,9 +1719,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   <div class="ph" style="padding:0 20px;height:48px;display:flex;align-items:center;gap:10px;flex-shrink:0;border-bottom:1px solid var(--bd);background:var(--wh)">
     <div class="ph-sub" id="story-lbl" style="font-size:13px;color:var(--i3)"></div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-      <button id="story-export-btn-doc" onclick="exportSingleAsset('doc')" style="display:none;height:30px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer;transition:all .15s;align-items:center;gap:5px" onmouseover="this.style.borderColor='var(--gm)';this.style.color='var(--gm)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--i2)'">↓ 导出文档</button>
-      <button id="story-export-btn-scheme" onclick="exportSingleAsset('scheme')" style="display:none;height:30px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer;transition:all .15s;align-items:center;gap:5px" onmouseover="this.style.borderColor='var(--gm)';this.style.color='var(--gm)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--i2)'">↓ 导出方案</button>
-      <button id="story-export-btn-bible" onclick="exportSingleAsset('bible')" style="display:none;height:30px;padding:0 14px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);cursor:pointer;transition:all .15s;align-items:center;gap:5px" onmouseover="this.style.borderColor='var(--gm)';this.style.color='var(--gm)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--i2)'">↓ 导出改编策划</button>
+      <button id="story-export-btn-doc" onclick="exportSingleAsset('doc')" class="stb-export-btn" style="display:none">↓ 导出</button>
+      <button id="story-export-btn-scheme" onclick="exportSingleAsset('scheme')" class="stb-export-btn" style="display:none">↓ 导出</button>
+      <button id="story-export-btn-bible" onclick="exportSingleAsset('bible')" class="stb-export-btn" style="display:none">↓ 导出</button>
     </div>
   </div>
   <div class="story-layout">
@@ -1498,7 +1729,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
       <!-- 原始文档展示（ss0） -->
       <div id="ss0" style="display:none">
-        <div id="ss0-content" style="font-size:13px;color:var(--i2);line-height:1.9;white-space:pre-wrap;padding:4px 0"></div>
+        <div id="ss0-content" class="ss0-doc-body"></div>
       </div>
 
       <!-- 改编方案 -->
@@ -1650,7 +1881,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <span id="bd-edit-indicator" style="display:none;font-size:11px;color:var(--au)">✎ 有字段已手动修改</span>
-        <button class="btn-ol" style="height:30px;padding:0 12px;font-size:11px" onclick="exportBreakdown()">↓ 导出细纲</button>
+        <button class="stb-export-btn" onclick="exportBreakdown()">↓ 导出</button>
         <!-- 确认按钮已移至右侧对话框，此处保留隐藏备用 -->
         <button class="gen-btn" id="bd-confirm-btn" style="display:none" onclick="confirmBreakdownAndNext()">
           确认全部细纲 → 进入剧本创作
@@ -1699,6 +1930,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
               </div>
             </div>
             <div class="stb-sep"></div>
+            <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
+            <div class="stb-sep"></div>
             <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
           </div>
         </div>
@@ -1724,12 +1957,20 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
       <!-- Continuous scroll: all acts append here sequentially -->
       <div class="script-scroll" id="script-scroll">
+        <!-- 空状态：剧本尚未生成 -->
+        <div id="script-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:60px 32px;text-align:center">
+          <div style="font-size:32px;margin-bottom:16px;opacity:.4">✍️</div>
+          <div style="font-size:14px;font-weight:500;color:var(--i3);margin-bottom:8px">中文剧本尚未生成</div>
+          <div style="font-size:12px;color:var(--i4);line-height:1.8;max-width:300px">请先完成改编策划和分集细纲<br>确认细纲后系统将逐幕生成剧本</div>
+        </div>
         <div id="script-body"></div>
       </div>
 
     </div>
 
   </div><!-- /script-layout -->
+  <!-- 全屏退出按钮 -->
+  <button class="immersive-exit" id="immersive-exit-btn" onclick="toggleImmersive()">✕ 退出全屏</button>
 </div><!-- /page-script -->
 
 <!-- Selection toolbar (appears on text selection in script) -->
@@ -1989,7 +2230,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   <!-- 左栏：项目资料库 -->
   <div class="wb-left" id="wb-left">
     <div class="wb-left-head">
-      <div class="wb-left-title">⬡ 节点导航</div>
+      <div class="wb-left-title" style="display:flex;align-items:center;gap:6px">节点导航</div>
     </div>
     <div class="wb-left-body" id="wb-asset-list">
 
@@ -2158,30 +2399,30 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     </div>
 
     <!-- Step 1: 勾选资料 -->
-    <div style="padding:14px 20px 0">
+    <div style="padding:14px 20px 0;flex:1;overflow-y:auto;min-height:0">
       <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);font-weight:500;margin-bottom:10px">选择要导出的资料</div>
       <div id="export-modal-items" style="display:flex;flex-direction:column;gap:6px"></div>
-    </div>
 
-    <!-- Step 2: 选择格式（勾选后展示） -->
-    <div id="export-format-section" style="padding:14px 20px 0;display:none">
-      <div style="height:1px;background:var(--bl);margin-bottom:14px"></div>
-      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);font-weight:500;margin-bottom:10px">选择导出格式</div>
-      <div style="display:flex;gap:8px">
-        <label id="export-fmt-zip" style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--gm);border-radius:var(--rs);cursor:pointer;background:var(--gg);transition:all .15s">
-          <input type="radio" name="export-fmt" value="zip" checked style="accent-color:var(--gm);width:14px;height:14px">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--ink)">ZIP 压缩包</div>
-            <div style="font-size:11px;color:var(--i3);margin-top:1px">每项独立文件</div>
-          </div>
-        </label>
-        <label id="export-fmt-single" style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--bl);border-radius:var(--rs);cursor:pointer;background:var(--bg);transition:all .15s">
-          <input type="radio" name="export-fmt" value="single" style="accent-color:var(--gm);width:14px;height:14px">
-          <div>
-            <div style="font-size:13px;font-weight:500;color:var(--ink)">合并 Word</div>
-            <div style="font-size:11px;color:var(--i3);margin-top:1px">单个文档</div>
-          </div>
-        </label>
+      <!-- Step 2: 选择格式 -->
+      <div id="export-format-section" style="padding:14px 0 0;display:none">
+        <div style="height:1px;background:var(--bl);margin-bottom:14px"></div>
+        <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);font-weight:500;margin-bottom:10px">选择导出格式</div>
+        <div style="display:flex;gap:8px;padding-bottom:4px">
+          <label id="export-fmt-zip" style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--gm);border-radius:var(--rs);cursor:pointer;background:var(--gg);transition:all .15s">
+            <input type="radio" name="export-fmt" value="zip" checked style="accent-color:var(--gm);width:14px;height:14px">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--ink)">ZIP 压缩包</div>
+              <div style="font-size:11px;color:var(--i3);margin-top:1px">每项独立文件</div>
+            </div>
+          </label>
+          <label id="export-fmt-single" style="flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--bl);border-radius:var(--rs);cursor:pointer;background:var(--bg);transition:all .15s">
+            <input type="radio" name="export-fmt" value="single" style="accent-color:var(--gm);width:14px;height:14px">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--ink)">合并 Word</div>
+              <div style="font-size:11px;color:var(--i3);margin-top:1px">单个文档</div>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -2208,7 +2449,7 @@ const S={page:'home',step:1,scheme:0};
 
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  ['nav-home','nav-pm'].forEach(id=>{
+  ['nav-home'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.classList.remove('active');
   });
@@ -2965,12 +3206,12 @@ function goStep(n){
     if(ss1) ss1.style.display='none';
     if(ss3) ss3.style.display='none';
     syncStoryExportBtns('doc');
-    // 填充文档内容
+    // 填充文档内容（富文本排版）
     const content = document.getElementById('ss0-content');
     if(content && ASSET_STORE.doc?.text){
-      content.textContent = ASSET_STORE.doc.text;
+      content.innerHTML = _renderDocText(ASSET_STORE.doc.text);
     } else if(content){
-      content.innerHTML = '<div style="color:var(--i4);text-align:center;padding:32px 0">文档内容将在生成方案后归档</div>';
+      content.innerHTML = '<div style="color:var(--i4);text-align:center;padding:60px 0;font-size:13px">文档内容将在生成方案后归档</div>';
     }
   } else if(n===1){
     if(ss0) ss0.style.display='none';
@@ -5411,10 +5652,10 @@ ${actEpsSummary}
     const revMatch = reply.match(/✦ 修改摘要：([\s\S]+?)---请确认后将自动重新生成本幕细纲---/);
     if (revMatch) {
       const mainReply = reply.replace(/✦ 修改摘要：[\s\S]+?---请确认后将自动重新生成本幕细纲---/, '').trim();
-      aEl.textContent = mainReply || reply;
+      aEl.innerHTML = _renderMarkdown(mainReply || reply);
       _showRevisionConfirmDock(revMatch[1].trim(), {type:'bd', actIdx});
     } else {
-      aEl.textContent = reply;
+      aEl.innerHTML = _renderMarkdown(reply);
     }
   } catch(e) { aEl.textContent='请求失败，请重试。'; }
   msgs.scrollTop=msgs.scrollHeight;
@@ -5602,16 +5843,14 @@ function renderRecentProjects(){
   if(!listWrap) return;
   const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   if(!projects.length){
-    listWrap.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.28);padding:4px 10px 8px">暂无保存的项目</div>';
+    listWrap.innerHTML = '<div style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.1);margin:6px auto"></div>';
     return;
   }
   listWrap.innerHTML = projects.slice(0,8).map(p => {
-    const d = new Date(p.savedAt);
-    const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    const meta = [p.PROJECT?.source?.genre?.split('（')[0], p.PROJECT?.source?.market].filter(Boolean).join(' · ');
-    return `<div class="pi" onclick="loadSavedProj('${p.name.replace(/'/g,"\\'")}')">
-      <div class="pi-name">${p.name}</div>
-      <div class="pi-meta">${meta || dateStr}</div>
+    const isActive = S.proj === p.name;
+    const tipText = p.name.length > 18 ? p.name.substring(0,18) + '…' : p.name;
+    return `<div class="sb-proj-dot${isActive?' active':''}" onclick="loadSavedProj('${p.name.replace(/'/g,"\\'")}');" data-tip="${tipText}">
+      <div class="sb-proj-dot-inner"></div>
     </div>`;
   }).join('');
 }
@@ -6376,8 +6615,8 @@ function appendActToBody(actIdx, animate) {
       </div>`;
   }
   block.appendChild(endPanel);
-
   body.appendChild(block);
+  updateScriptEmptyState();
 }
 
 function buildActChatHTML(actIdx) {
@@ -6477,10 +6716,10 @@ async function sendScriptActChatById(actIdx) {
     const revMatch = reply.match(/✦ 修改摘要：([\s\S]+?)---请确认后将自动重新生成本幕剧本---/);
     if (revMatch) {
       const mainReply = reply.replace(/✦ 修改摘要：[\s\S]+?---请确认后将自动重新生成本幕剧本---/, '').trim();
-      aEl.textContent = mainReply || reply;
+      aEl.innerHTML = _renderMarkdown(mainReply || reply);
       _showRevisionConfirmDock(revMatch[1].trim(), {type:'script', actIdx});
     } else {
-      aEl.textContent = reply;
+      aEl.innerHTML = _renderMarkdown(reply);
     }
   } catch(e) { aEl.textContent='请求失败，请重试。'; }
   msgs.scrollTop=msgs.scrollHeight;
@@ -7591,8 +7830,7 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 document.addEventListener('DOMContentLoaded', ()=>{
-
-  // Wire up key buttons via addEventListener (more reliable than inline onclick)
+  // Wire up key buttons via addEventListener
   const btnApi = document.getElementById('btn-api-config');
   if (btnApi) btnApi.addEventListener('click', openApiConfig);
 
@@ -7726,14 +7964,6 @@ document.addEventListener('click', function(e){
 });
 
 buildShots();
-
-// Sidebar — hover to expand, mouse-leave to collapse (with small delay)
-(function(){
-  const wrap=document.getElementById('sidebar-wrap');
-  let t=null;
-  wrap.addEventListener('mouseenter',()=>{clearTimeout(t);wrap.classList.add('open');});
-  wrap.addEventListener('mouseleave',()=>{t=setTimeout(()=>wrap.classList.remove('open'),220);});
-})();
 
 // ══ SCHEME HISTORY ══
 let schemeHistory = (()=>{ try{return JSON.parse(localStorage.getItem('dramamind_scheme_history')||'[]');}catch(e){return [];} })();
@@ -8057,16 +8287,36 @@ function openApiConfig() {
   document.querySelectorAll('input[name="dramamind-mode"]').forEach(r => { r.checked = r.value === mode; });
   _updateModeHighlight(mode);
   document.getElementById('doubao-model-input').value = mode;
-  // Claude 翻译配置
+  // Claude 配置
   document.getElementById('claude-key-input').value = cfg.claudeKey || '';
   document.getElementById('claude-base-input').value = cfg.claudeBase || '';
+  // If Claude key exists, expand the Claude section
+  if(cfg.claudeKey){
+    const body = document.getElementById('claude-config-body');
+    const chevron = document.querySelector('.claude-chevron');
+    if(body) body.style.display = 'flex';
+    if(chevron) chevron.style.transform = 'rotate(180deg)';
+  }
   document.getElementById('api-config-modal').style.display = 'flex';
+  // Wire mode radio change
+  document.querySelectorAll('input[name="dramamind-mode"]').forEach(r => {
+    r.onchange = () => _updateModeHighlight(r.value);
+  });
 }
 
 function _updateModeHighlight(mode){
   ['balanced','lite'].forEach(m => {
     const el = document.getElementById('mode-opt-' + m);
-    if(el) el.style.borderColor = m === mode ? 'var(--gm)' : 'var(--bd)';
+    if(el){
+      // Pill active state
+      el.style.background = m === mode ? 'var(--wh)' : 'transparent';
+      el.style.boxShadow = m === mode ? '0 1px 4px rgba(0,0,0,.10)' : 'none';
+      const label = el.querySelector('span:first-child');
+      if(label) label.style.color = m === mode ? 'var(--gm)' : 'var(--i3)';
+    }
+    // Show/hide desc
+    const desc = document.getElementById('mode-desc-' + m);
+    if(desc) desc.style.display = m === mode ? 'block' : 'none';
   });
   const hidden = document.getElementById('doubao-model-input');
   if(hidden) hidden.value = mode;
@@ -9342,6 +9592,73 @@ function deletePMProject(idx) {
 }
 
 // ── 修改梳理确认卡 ──
+// ── 原始文档富文本渲染 ──
+function _renderDocText(raw) {
+  if (!raw) return '';
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const lines = raw.split('\n');
+  let html = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) { html += ''; continue; }
+    // 一级标题：一、二、三… 或 ## 开头
+    if (/^(一|二|三|四|五|六|七|八|九|十)[、．.]\s/.test(trimmed) || /^##\s/.test(trimmed)) {
+      html += `<div class="doc-h1">${esc(trimmed.replace(/^##\s*/,''))}</div>`;
+    }
+    // 二级标题：■ 或 ▌ 或 【】包裹
+    else if (/^[■▌▶►]/.test(trimmed) || /^【.+】$/.test(trimmed)) {
+      html += `<div class="doc-h2">${esc(trimmed)}</div>`;
+    }
+    // 数字序号标题：01. 1. 1、等开头
+    else if (/^(\d{1,2}[.、．]|\(\d+\))\s/.test(trimmed)) {
+      // 检查是否是卡点行（含「卡点」「钩子」「hook」等关键词）
+      if (/卡点|钩子|hook|悬念/i.test(trimmed)) {
+        html += `<div class="doc-hook">${esc(trimmed)}</div>`;
+      } else {
+        html += `<div class="doc-h3">${esc(trimmed)}</div>`;
+      }
+    }
+    // 分隔线
+    else if (/^[-─—]{3,}$/.test(trimmed)) {
+      html += `<hr class="doc-divider">`;
+    }
+    // 普通段落：加粗处理 **text**
+    else {
+      const para = esc(trimmed).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+      html += `<div class="doc-p">${para}</div>`;
+    }
+  }
+  return html;
+}
+
+// ── 全屏沉浸模式 ──
+function toggleImmersive() {
+  const page = document.getElementById('page-script');
+  if (!page) return;
+  const isOn = page.classList.toggle('script-immersive');
+  const btn = document.getElementById('btn-immersive');
+  if (btn) { btn.title = isOn ? '退出全屏' : '全屏沉浸模式'; btn.textContent = isOn ? '✕' : '⛶'; }
+  if (isOn) {
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        page.classList.remove('script-immersive');
+        if (btn) { btn.title = '全屏沉浸模式'; btn.textContent = '⛶'; }
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+  }
+}
+
+// ── 中文剧本空状态控制 ──
+function updateScriptEmptyState() {
+  const empty = document.getElementById('script-empty-state');
+  const body = document.getElementById('script-body');
+  if (!empty || !body) return;
+  empty.style.display = body.children.length > 0 ? 'none' : 'flex';
+}
+
 let _lastStage = '';
 let _revisionContext = null; // {type:'bible'|'bd'|'script', actIdx?}
 
@@ -9515,15 +9832,40 @@ ${ctx}
     if(revisionMatch && S.page === 'story' && PROJECT.bible?.logline && !PROJECT.bible?.confirmed){
       // 分两段显示：正常回复 + 修改摘要操作卡
       const mainReply = reply.replace(/✦ 修改摘要：[\s\S]+?---请确认后将自动更新改编策划---/, '').trim();
-      loadEl.textContent = mainReply || reply;
+      loadEl.innerHTML = _renderMarkdown(mainReply || reply);
       const summaryText = revisionMatch[1].trim();
       _showRevisionConfirmDock(summaryText, {type:'bible'});
     } else {
-      loadEl.textContent = reply;
+      loadEl.innerHTML = _renderMarkdown(reply);
     }
   }).catch(e=>{
     loadEl.textContent = '请求失败：' + e.message;
   });
+}
+
+// ── 轻量 Markdown 渲染 ──
+function _renderMarkdown(text) {
+  if (!text) return '';
+  let html = text
+    // 代码块
+    .replace(/```([^`]*?)```/gs, (_, c) => `<pre style="background:var(--bl);border-radius:4px;padding:8px 10px;font-size:11px;font-family:'DM Mono',monospace;overflow-x:auto;margin:6px 0;white-space:pre-wrap">${c.replace(/</g,'&lt;')}</pre>`)
+    // 行内代码
+    .replace(/`([^`]+)`/g, '<code style="background:var(--bl);border-radius:3px;padding:1px 5px;font-size:11px;font-family:\'DM Mono\',monospace">$1</code>')
+    // 加粗
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong style="font-weight:600;color:var(--ink)">$1</strong>')
+    // 斜体
+    .replace(/\*([^*\n]+)\*/g, '<em style="font-style:italic">$1</em>')
+    // 无序列表行
+    .replace(/^[\-\*]\s+(.+)$/gm, '<li style="margin:3px 0 3px 14px;list-style:disc outside">$1</li>')
+    // 有序列表行
+    .replace(/^\d+\.\s+(.+)$/gm, '<li style="margin:3px 0 3px 14px;list-style:decimal outside">$1</li>')
+    // 分隔线
+    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid var(--bl);margin:8px 0">')
+    // 换行
+    .replace(/\n/g, '<br>');
+  // 修正：连续 li 包一个 ul
+  html = html.replace(/(<li[^>]*>.*?<\/li>(?:<br>)?)+/gs, m => `<ul style="padding:0;margin:4px 0">${m.replace(/<br>/g,'')}</ul>`);
+  return html;
 }
 
 function appendGlobalMsg(role, text){
@@ -9531,7 +9873,11 @@ function appendGlobalMsg(role, text){
   if(!msgs) return null;
   const el = document.createElement('div');
   el.className = 'gc-msg ' + role;
-  el.textContent = text;
+  if (role === 'ai') {
+    el.innerHTML = _renderMarkdown(text);
+  } else {
+    el.textContent = text;
+  }
   msgs.appendChild(el);
   msgs.scrollTop = msgs.scrollHeight;
   return el;
@@ -9658,7 +10004,7 @@ async function sendChatReal(ctx) {
       sysPrompt = `你是一位专业的短剧故事开发顾问，正在协助创作者开发改编项目「${PROJECT.source.docTitle || PROJECT.source.userRequirements.substring(0,20) || ''}」。当前市场：${PROJECT.source.market}。当前阶段：方案选择。请根据用户问题提供专业简洁的建议，每次回复末尾给出一个具体的「下一步行动」。`;
     }
     const reply = await callFn(msg, sysPrompt);
-    loadEl.textContent = reply;
+    loadEl.innerHTML = _renderMarkdown(reply);
   } catch(e) {
     loadEl.textContent = e.message === 'no key' ? '请先配置 API Key' : `请求失败：${e.message}`;
   }
@@ -9720,70 +10066,102 @@ async function sendChatReal(ctx) {
 </div>
 
 <!-- API CONFIG MODAL -->
-<div id="api-config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center">
-  <div style="background:var(--wh);border-radius:var(--r);width:460px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bl)">
-      <span style="font-size:14px;font-weight:600;color:var(--ink)">API 配置 · 豆包</span>
-      <button onclick="closeApiConfig()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--i3);line-height:1">×</button>
+<div id="api-config-modal" style="display:none;position:fixed;inset:0;background:rgba(10,31,18,.45);backdrop-filter:blur(3px);z-index:300;align-items:center;justify-content:center">
+  <div style="background:var(--wh);border-radius:14px;width:420px;max-width:92vw;box-shadow:0 16px 48px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);overflow:hidden">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--bl)">
+      <div>
+        <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:15px;font-weight:600;color:var(--ink)">API 配置</div>
+        <div style="font-size:11px;color:var(--i4);margin-top:1px">Key 仅保存在本地浏览器，不上传任何服务器</div>
+      </div>
+      <button onclick="closeApiConfig()" style="background:none;border:none;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:var(--rs);color:var(--i3);font-size:18px;transition:all .15s" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='none'">×</button>
     </div>
-      <div id="api-config-notice" style="display:none;padding:10px 20px 0">
-      <div style="background:var(--gg);border:1px solid var(--gp);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--gm);line-height:1.6">
-        👋 首次使用前请配置豆包 API Key，配置一次后无需重复填写。
+
+    <div id="api-config-notice" style="display:none;padding:10px 20px 0">
+      <div style="background:var(--gg);border:1px solid var(--gp);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--gm)">
+        首次使用请先配置豆包 API Key，配置一次后无需重复填写。
       </div>
     </div>
-    <div style="padding:20px">
-      <div style="margin-bottom:16px;padding:10px 12px;background:var(--gg);border:1px solid var(--gp);border-radius:var(--rs);font-size:12px;color:var(--gm);line-height:1.65">
-        🔑 前往 <a href="https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey" target="_blank" rel="noopener" style="color:var(--gm);font-weight:600;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">console.volcengine.com</a> → 火山方舟 → API Key 管理 获取你自己的 Key
+
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:16px">
+
+      <!-- 豆包 Key -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4)">豆包 API Key</label>
+          <a href="https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey" target="_blank" rel="noopener"
+            style="font-size:11px;color:var(--gm);text-decoration:none;display:flex;align-items:center;gap:3px"
+            onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+            获取 Key ↗
+          </a>
+        </div>
+        <input type="password" id="doubao-key-input" placeholder="请输入豆包 API Key"
+          style="width:100%;height:36px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 12px;font-size:13px;font-family:'Noto Sans SC',sans-serif;outline:none;transition:border-color .15s;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
       </div>
-      <!-- Key 安全提示 -->
-      <div style="margin-bottom:16px;padding:9px 12px;background:#fffbf0;border:1px solid #f0e0a0;border-radius:var(--rs);font-size:11px;color:#7a5c00;line-height:1.65">
-        🔒 <b>安全说明：</b>每位使用者请填写自己的 API Key，Key 仅保存在你本人的浏览器本地，不会上传至任何服务器。请勿将他人的 Key 填入此处。
-      </div>
-      <div style="margin-bottom:16px">
-        <label style="display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);margin-bottom:6px">豆包 API Key</label>
-        <input type="password" id="doubao-key-input" placeholder="请输入你自己的豆包 API Key" style="width:100%;height:36px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 12px;font-size:13px;font-family:'Noto Sans SC',sans-serif;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
-      </div>
-      <div style="margin-bottom:20px">
+
+      <!-- 使用模式 — pill 切换 -->
+      <div>
         <label style="display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--i4);margin-bottom:8px">使用模式</label>
-        <div id="mode-selector" style="display:flex;flex-direction:column;gap:8px">
-          <label id="mode-opt-balanced" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;transition:border-color .15s">
-            <input type="radio" name="dramamind-mode" value="balanced" style="margin-top:3px;accent-color:var(--gm)">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--ink)">🏆 专业模式 <span style="font-size:11px;font-weight:400;color:var(--gm);margin-left:6px">推荐</span></div>
-              <div style="font-size:11px;color:var(--i4);margin-top:3px;line-height:1.6">
-                策划·追问·改编策划 → <b style="color:var(--gm)">Claude Sonnet</b><br>
-                细纲·剧本·翻译 → <b style="color:var(--gm)">doubao-seed-2-0-pro</b><br>
-                <span style="color:var(--i4);font-size:10px">未配置 Claude Key 时全程 fallback 豆包</span>
-              </div>
-            </div>
+        <div style="display:flex;gap:0;background:var(--bg);border:1px solid var(--bl);border-radius:var(--rs);padding:3px;position:relative">
+          <label id="mode-opt-balanced" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border-radius:4px;cursor:pointer;transition:all .15s;position:relative;z-index:1">
+            <input type="radio" name="dramamind-mode" value="balanced" style="display:none">
+            <span style="font-size:12px;font-weight:500">🏆 专业</span>
+            <span style="font-size:9px;color:var(--gm);background:var(--gp);padding:1px 5px;border-radius:6px">推荐</span>
           </label>
-          <label id="mode-opt-lite" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;transition:border-color .15s">
-            <input type="radio" name="dramamind-mode" value="lite" style="margin-top:3px;accent-color:var(--gm)">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--ink)">⚡ 经济模式</div>
-              <div style="font-size:11px;color:var(--i4);margin-top:3px;line-height:1.6">全程使用 doubao-seed-2-0-lite，速度最快，成本最低（约为专业模式的 30%）</div>
-            </div>
+          <label id="mode-opt-lite" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border-radius:4px;cursor:pointer;transition:all .15s;position:relative;z-index:1">
+            <input type="radio" name="dramamind-mode" value="lite" style="display:none">
+            <span style="font-size:12px;font-weight:500">⚡ 经济</span>
           </label>
+        </div>
+        <!-- 模式说明 -->
+        <div id="mode-desc-balanced" style="margin-top:8px;font-size:11px;color:var(--i3);line-height:1.65;padding:8px 10px;background:var(--gg);border-radius:var(--rs)">
+          策划·追问·改编策划 → <b style="color:var(--gm)">Claude Sonnet</b>　细纲·剧本·翻译 → <b style="color:var(--gm)">doubao-seed-2-0-pro</b>
+          <span style="display:block;font-size:10px;color:var(--i4);margin-top:3px">未配置 Claude Key 时全程 fallback 豆包</span>
+        </div>
+        <div id="mode-desc-lite" style="display:none;margin-top:8px;font-size:11px;color:var(--i3);line-height:1.65;padding:8px 10px;background:var(--gg);border-radius:var(--rs)">
+          全程使用 <b style="color:var(--gm)">doubao-seed-2-0-lite</b>，速度最快，成本约为专业模式的 30%
         </div>
         <input type="hidden" id="doubao-model-input" value="balanced">
       </div>
-      <!-- Claude 翻译配置（可选） -->
-      <div style="margin-bottom:16px;padding:12px 14px;background:#f8fafb;border:1px solid var(--bl);border-radius:var(--rs)">
-        <div style="font-size:11px;font-weight:700;color:var(--i3);letter-spacing:.05em;margin-bottom:10px">🌐 Claude 翻译配置（可选）</div>
-        <div style="font-size:11px;color:var(--i4);line-height:1.6;margin-bottom:10px">配置后，专业模式的策划阶段和翻译将使用 Claude Sonnet；未配置则 fallback doubao-seed-2-0-pro（策划+翻译）和 doubao-seed-2-0-lite（经济模式）。</div>
-        <div style="margin-bottom:10px">
-          <label style="display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--i4);margin-bottom:5px">Claude API Key</label>
-          <input type="password" id="claude-key-input" placeholder="sk-ant-..." style="width:100%;height:34px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:12px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
+
+      <!-- Claude 配置 — 折叠区 -->
+      <div style="border:1px solid var(--bl);border-radius:var(--rs);overflow:hidden">
+        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.claude-chevron').style.transform=this.nextElementSibling.style.display==='block'?'rotate(180deg)':'rotate(0deg)'"
+          style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer;user-select:none;background:var(--bg);transition:background .15s"
+          onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='var(--bg)'">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:500;color:var(--i2)">Claude 配置</span>
+            <span style="font-size:9px;background:var(--bl);color:var(--i4);padding:1px 6px;border-radius:6px;letter-spacing:.03em">可选</span>
+          </div>
+          <span class="claude-chevron" style="font-size:10px;color:var(--i4);transition:transform .2s">▾</span>
         </div>
-        <div>
-          <label style="display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--i4);margin-bottom:5px">中转站地址 <span style="font-weight:400;text-transform:none;color:var(--i4)">（国内必填，如 https://claude2.sssaicode.com/api）</span></label>
-          <input type="text" id="claude-base-input" placeholder="https://claude2.sssaicode.com/api" style="width:100%;height:34px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:12px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
+        <div style="display:none;padding:12px;border-top:1px solid var(--bl);display:flex;flex-direction:column;gap:10px" id="claude-config-body">
+          <div style="font-size:11px;color:var(--i4);line-height:1.6">配置后专业模式的策划与翻译将使用 Claude Sonnet；未配置则全程使用豆包。</div>
+          <div>
+            <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--i4);margin-bottom:5px">Claude API Key</label>
+            <input type="password" id="claude-key-input" placeholder="sk-ant-..."
+              style="width:100%;height:34px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:12px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box;transition:border-color .15s"
+              onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
+          </div>
+          <div>
+            <label style="display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--i4);margin-bottom:5px">
+              中转站地址 <span style="font-weight:400;text-transform:none;color:var(--i4);letter-spacing:0">（国内必填）</span>
+            </label>
+            <input type="text" id="claude-base-input" placeholder="https://claude2.sssaicode.com/api"
+              style="width:100%;height:34px;border:1px solid var(--bd);border-radius:var(--rs);padding:0 10px;font-size:12px;font-family:'DM Mono',monospace;outline:none;box-sizing:border-box;transition:border-color .15s"
+              onfocus="this.style.borderColor='var(--gm)'" onblur="this.style.borderColor='var(--bd)'">
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button onclick="closeApiConfig()" style="height:34px;padding:0 16px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:var(--i2);cursor:pointer">取消</button>
-        <button onclick="persistApiConfig()" id="btn-save-api" style="height:34px;padding:0 16px;border:none;border-radius:var(--rs);background:var(--gm);font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#fff;cursor:pointer;font-weight:500">保存配置</button>
+
+      <!-- Footer -->
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:2px">
+        <button onclick="closeApiConfig()" class="btn-secondary" style="height:34px;padding:0 16px">取消</button>
+        <button onclick="persistApiConfig()" id="btn-save-api" class="btn-primary" style="height:34px;padding:0 18px">保存配置</button>
       </div>
+
     </div>
   </div>
 </div>
