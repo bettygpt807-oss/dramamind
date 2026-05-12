@@ -2904,7 +2904,7 @@ const PROJECT = {
     modifiedFields: {},  // {fieldKey: true} — tracks user edits
   },
   // [4] Episodes
-  episodes: { allData: [], confirmedUpTo: 0 },
+  episodes: { allData: [], confirmedUpTo: 0, acts: [] },
   // [5] Script
   script: { generatedBatches: 0, allData: {} },
   // [6] User edits tracking (cross-cutting)
@@ -5230,6 +5230,8 @@ ${b.characters&&b.characters.length>0
 同一幕内各节拍的集数分配应有节奏变化，不能全部均等。
 ${buildBeatsContextForAct(act)}
 
+${src.docPlanningLogic ? `【原著核心爆款基因（分集细纲必须继承此逻辑，确保每集都有对应的情绪钩子和冲突结构）】\n${src.docPlanningLogic.substring(0,300)}` : ''}
+
 ${src.docHighlights ? `【原著高光爆点（分集细纲中必须有对应场景，不能遗漏）】\n${src.docHighlights}` : ''}
 
 ${src.docRhythmRules ? `【原著节奏规律（每集卡点设计必须遵守）】\n${src.docRhythmRules}` : ''}
@@ -5285,7 +5287,7 @@ ${buildLockedEditsContext()}
   act.status = 'done';
 
   // Sync to PROJECT episodes for downstream compat
-  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
+  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
 
   // Render the real cards (replace skeletons)
   renderActCards(actIdx);
@@ -5678,7 +5680,7 @@ function onEpFieldBlur(el) {
   const ep = bdState.allEps.find(e => e.num === epNum);
   if (ep) {
     ep[field] = el.textContent.trim();
-    PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
+    PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
     saveProject();
   }
 }
@@ -5692,7 +5694,7 @@ function onEpQuickEdit(el) {
   ep[field] = val;
   if (!ep.modifiedFields) ep.modifiedFields = {};
   ep.modifiedFields[field] = true;
-  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
+  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
   if (PROJECT.episodes.confirmedSnapshot) {
     const snapEp = PROJECT.episodes.confirmedSnapshot.find(e => e.num === epNum);
     if (snapEp) snapEp[field] = val;
@@ -5761,7 +5763,7 @@ function showBdChatBar() {
 
 function confirmBreakdownAndNext() {
   hideConfirmDock();
-  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
+  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
   PROJECT.episodes.confirmedUpTo = bdState.allEps.length;
   // Persist acts structure so buildScriptUI can reconstruct bdState if needed
   PROJECT.episodes.acts = JSON.parse(JSON.stringify(bdState.acts));
@@ -5828,7 +5830,7 @@ function sendChat(ctx){
 
 function renderRecentProjects(){
   const listWrap = document.getElementById('recent-projects-list');
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
 
   // Sidebar dots with tooltip
   if(listWrap) {
@@ -5838,7 +5840,7 @@ function renderRecentProjects(){
       listWrap.innerHTML = projects.slice(0,8).map(p => {
         const isActive = S.proj === p.name;
         const tipText = p.name.length > 24 ? p.name.substring(0,24) + '…' : p.name;
-        return `<div class="sb-proj-dot${isActive?' active':''}" onclick="loadSavedProj('${p.name.replace(/'/g,"\\'")}');" data-tip="${tipText}">
+        return `<div class="sb-proj-dot${isActive?' active':''}" data-proj="${escHtml(tipText)}" onclick="loadSavedProj(this.dataset.proj);" data-tip="${escHtml(tipText)}">
           <div class="sb-proj-dot-inner"></div>
         </div>`;
       }).join('');
@@ -5864,7 +5866,7 @@ function renderRecentProjects(){
     const stageColor = hasScript?'var(--au)':hasBreakdown?'var(--gi)':hasBible?'var(--gm)':'var(--i4)';
     const episodeInfo = p.PROJECT?.source?.episodeCount ? `${p.PROJECT.source.episodeCount}集` : '';
     const borderColor = isActive ? 'var(--gm)' : 'var(--bd)';
-    return `<div onclick="loadSavedProj('${name.replace(/'/g,"\\'")}');"
+    return `<div data-proj="${escHtml(name)}" onclick="loadSavedProj(this.dataset.proj);"
       style="padding:13px 14px;background:var(--wh);border:1.5px solid ${borderColor};border-radius:var(--r);cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04);min-height:80px;display:flex;flex-direction:column;justify-content:space-between"
       onmouseover="this.style.borderColor='var(--gm)';this.style.boxShadow='0 3px 12px rgba(30,92,58,.1)';this.style.transform='translateY(-1px)'"
       onmouseout="this.style.borderColor='${borderColor}';this.style.boxShadow='0 1px 4px rgba(0,0,0,.04)';this.style.transform='translateY(0)'">
@@ -6024,7 +6026,7 @@ function restoreStoryUI(){
 }
 
 function loadSavedProj(name){
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
   const snap = projects.find(p => p.name === name);
   if(!snap){ showToast('项目数据不存在'); return; }
 
@@ -6268,7 +6270,7 @@ function buildScriptUI() {
     }
     if (PROJECT.episodes.allData.length > 0 && bdState.allEps.length === 0) {
       bdState.allEps = PROJECT.episodes.allData.map((e, idx) => ({
-        num: e[0]||idx+1, title: e[1]||'', beat: e[2]||'', duration: e[3]||3, hook: e[4]||''
+        num: e[0]||idx+1, title: e[1]||'', beat: e[2]||'', duration: e[3]||3, hook: e[4]||'', vibes: e[5]||[]
       }));
       bdState.allEps.forEach(ep => {
         const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
@@ -6400,6 +6402,7 @@ async function generateScriptAct(actIdx) {
   const cfg = getApiConfig();
   const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'script');
   const epSlice = PROJECT.episodes.allData.slice(act.from - 1, act.to);
+  if (epSlice.length === 0) { showToast('幕数据异常，请重新确认细纲'); return; }
   const b = PROJECT.bible, sc = PROJECT.scheme, src = PROJECT.source;
   const transcript = PROJECT.inquiry.messages.length > 0
     ? PROJECT.inquiry.messages.map(m=>`${m.role==='ai'?'顾问':'创作者'}：${m.content}`).join('\n\n')
@@ -6484,6 +6487,8 @@ ${buildCharVoiceContext()}`;
 全剧高光情节（在对应集必须完整呈现，不能删减或弱化）：${(b.schemePoints&&b.schemePoints.highlights)||''}
 
 ${src.docHighlights ? `【原著爆点场景还原要求（这些场景的情绪逻辑必须在剧本中有明确对应）】\n${src.docHighlights}` : ''}
+
+${src.docPlanningLogic ? `【原著核心爆款基因（剧本必须继承此逻辑，每集都要有对应的情绪钩子和冲突结构）】\n${src.docPlanningLogic.substring(0,300)}` : ''}
 
 ${src.docRhythmRules ? `【原著节奏规律（剧本节奏设计必须遵守）】\n${src.docRhythmRules}` : ''}
 
@@ -7536,7 +7541,7 @@ function saveProject(){
     // Also keep dramamind_projects in sync so project manager shows fresh data
     if(S.proj) {
       try {
-        const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+        const projects = getProjects();
         const idx = projects.findIndex(p => p.name === S.proj);
         if(idx >= 0) { projects[idx] = snapshot; }
         else { projects.unshift(snapshot); }
@@ -7624,7 +7629,7 @@ function restoreFromSnap(snap) {
     if (PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
       bdState.allEps = PROJECT.episodes.allData.map((e, idx) => ({
         num: e[0] || idx + 1, title: e[1] || '', beat: e[2] || '',
-        duration: e[3] || 3, hook: e[4] || '',
+        duration: e[3] || 3, hook: e[4] || '', vibes: e[5] || [],
       }));
       bdState.allEps.forEach(ep => {
         const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
@@ -7641,6 +7646,7 @@ function restoreFromSnap(snap) {
       beat: e[2] || '',
       duration: e[3] || 3,
       hook: e[4] || '',
+      vibes: e[5] || [],
     }));
     bdState.allEps.forEach(ep => {
       const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
@@ -7666,7 +7672,7 @@ function newProject(){
   if(S.proj){
     // 自动保存当前项目
     saveProject();
-    const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+    const projects = getProjects();
     const idx = projects.findIndex(p => p.name === S.proj);
     const snap = {
       name: S.proj, savedAt: Date.now(),
@@ -7705,7 +7711,7 @@ function newProject(){
   PROJECT.inquiry={messages:[],completed:false};
   PROJECT.bible={confirmed:false,logline:'',visual:'',characters:[],beats:[],actStructure:[],schemePoints:{},modifiedFields:{}};
   PROJECT.outline={confirmed:false,characters:'',story:'',wordCount:0};
-  PROJECT.episodes={allData:[],confirmedUpTo:0};
+  PROJECT.episodes={allData:[],confirmedUpTo:0,acts:[]};
   PROJECT.script={generatedBatches:0,allData:{}};
   PROJECT.userEdits={};
   breakdownState.generatedBatches=0; breakdownState.currentBatch=0; breakdownState.allData=[];
@@ -8332,6 +8338,11 @@ function getApiConfig() {
   catch(e) { return {}; }
 }
 
+function getProjects() {
+  try { return JSON.parse(localStorage.getItem('dramamind_projects') || '[]'); }
+  catch(e) { console.warn('Projects data corrupted:', e); return []; }
+}
+
 // ── 模式说明 ──
 // 专业模式（balanced）：策划阶段+翻译 → Claude Sonnet（无Key时 fallback doubao-seed-2-0-pro）
 //                      细纲 → doubao-seed-2-0-pro；剧本 → doubao-seed-2-0-lite
@@ -8504,6 +8515,7 @@ async function callClaude(userMsg, systemPrompt, maxTokens) {
     throw new Error(e.error?.message || `Claude API 错误 ${res.status}`);
   }
   const data = await res.json();
+  if (!data.content || !data.content.length) throw new Error('Claude 返回内容为空，请重试');
   return data.content[0].text;
 }
 
@@ -8528,6 +8540,7 @@ async function callDoubao_multiTurn(messages, systemPrompt, maxTokens, stage='in
     });
     if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Claude API 错误 ${res.status}`); }
     const data = await res.json();
+    if (!data.content || !data.content.length) throw new Error('Claude 返回内容为空，请重试');
     return data.content[0].text;
   }
   // 经济模式或无 Claude Key：用豆包（专业模式无Key时 fallback Pro）
@@ -8544,6 +8557,7 @@ async function callDoubao_multiTurn(messages, systemPrompt, maxTokens, stage='in
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
   const data = await res.json();
+  if (!data.choices || !data.choices.length) throw new Error('豆包返回内容为空，请重试');
   return data.choices[0].message.content;
 }
 
@@ -8561,6 +8575,7 @@ async function callDoubao(userMsg, systemPrompt, maxTokens, stage='default') {
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
   const data = await res.json();
+  if (!data.choices || !data.choices.length) throw new Error('豆包返回内容为空，请重试');
   return data.choices[0].message.content;
 }
 
@@ -9557,7 +9572,7 @@ function closePM() {
 function renderPMList() {
   const list = document.getElementById('pm-list');
   const countEl = document.getElementById('pm-count');
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
 
   if(countEl) countEl.textContent = `共 ${projects.length} 个项目`;
 
@@ -9592,7 +9607,7 @@ function showPMDetail(idx) {
     el.style.borderColor = i === idx ? 'var(--gp)' : 'transparent';
   });
 
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
   const p = projects[idx];
   if(!p) return;
 
@@ -9654,7 +9669,7 @@ function showPMDetail(idx) {
 function pmPreviewAsset(btn) {
   const key = btn.dataset.key;
   const pmiIdx = parseInt(btn.dataset.pmi);
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
   const p = projects[pmiIdx];
   if(!p || !p.ASSET_STORE?.[key]?.text) { showToast('暂无内容'); return; }
   const store = p.ASSET_STORE[key];
@@ -9677,7 +9692,7 @@ let _pmPreviewStore = null;
 
 function renamePMProject(idx, newName) {
   if(!newName || newName.length < 1) return;
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
   if(!projects[idx]) return;
   const oldName = projects[idx].name;
   if(oldName === newName) return;
@@ -9695,7 +9710,7 @@ function renamePMProject(idx, newName) {
 }
 
 function deletePMProject(idx) {
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = getProjects();
   if(!projects[idx]) return;
   const name = projects[idx].name;
   if(!confirm(`确认删除项目「${name}」？此操作不可撤销。`)) return;
