@@ -128,7 +128,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .home-wrap{
   flex:1;overflow-y:auto;
   display:flex;flex-direction:column;align-items:center;
-  padding:0 24px 60px;
+  padding:0 32px 60px;
   padding-top:clamp(32px, 8vh, 80px);
   min-height:0;
 }
@@ -1422,7 +1422,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8)}
 
 /* Draggable dividers */
-.wb-divider{width:12px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10;margin:0 -3px}
+.wb-divider{width:16px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10}
 .wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.08)}
 .wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:48px;background:var(--bd);border-radius:2px;transition:background .15s}
 .wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm)}
@@ -1720,7 +1720,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--i4);font-family:'DM Mono',monospace">最近项目</div>
         <button onclick="openProjectManager()" style="font-size:11px;color:var(--i3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .15s" onmouseover="this.style.color='var(--gm)'" onmouseout="this.style.color='var(--i3)'">查看全部 →</button>
       </div>
-      <div id="home-recent-list" style="display:flex;gap:10px"></div>
+      <div id="home-recent-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
     </div>
 
   </div>
@@ -1735,6 +1735,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       <button id="story-export-btn-doc" onclick="exportSingleAsset('doc')" class="stb-export-btn" style="display:none">↓ 导出</button>
       <button id="story-export-btn-scheme" onclick="exportSingleAsset('scheme')" class="stb-export-btn" style="display:none">↓ 导出</button>
       <button id="story-export-btn-bible" onclick="exportSingleAsset('bible')" class="stb-export-btn" style="display:none">↓ 导出</button>
+      <!-- 确认策划按钮：与分集细纲页 bd-confirm-btn 位置逻辑一致 -->
+      <button class="gen-btn" id="bible-confirm-btn" style="display:none" onclick="confirmBibleAndNext()">
+        确认策划案，开始分集细纲 →
+      </button>
     </div>
   </div>
   <div class="story-layout">
@@ -1939,7 +1943,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <div class="stb-sep"></div>
             <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
             <div class="stb-sep"></div>
-            <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
+            <button class="stb-action-btn" id="script-export-btn" onclick="exportCurrentScript()">导出</button>
           </div>
         </div>
       </div>
@@ -2296,6 +2300,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
 
     </div><!-- wb-asset-list -->
+    <div style="flex:1;display:flex;align-items:flex-end;padding:0 12px 8px;pointer-events:none">
+      <div style="font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.06em;text-transform:uppercase;font-family:'DM Mono',monospace">节点导航</div>
+    </div>
     <div class="wb-left-footer">
       <button class="wb-export-btn" onclick="openExportModal()">↓ 导出全部资料</button>
     </div>
@@ -4717,7 +4724,7 @@ function _showTranslatedScriptInBody(key){
 
   // 替换工具栏翻译按钮区域为比对按钮，并将右侧导出按钮替换为对应版本导出
   const tbWrap = document.getElementById('stb-translate-wrap');
-  const exportBtn = document.querySelector('.script-tb-actions button[onclick="exportCurrentScript()"]');
+  const exportBtn = document.getElementById('script-export-btn');
   // 保存原始导出按钮 HTML，替换为翻译版本导出按钮
   if(exportBtn && !exportBtn.dataset.origLabel){
     exportBtn.dataset.origLabel = exportBtn.textContent;
@@ -4749,16 +4756,20 @@ function _showTranslatedScriptInBody(key){
     const isProd=key==='script-prod';
     body.innerHTML=`<div style="padding:48px 32px;text-align:center;max-width:520px;margin:0 auto">
       <div style="font-size:32px;margin-bottom:16px">${isProd?'🎬':'🌐'}</div>
-      <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:10px">${isProd?'制作剧本（中文场景 + 英文台词）':'英文剧本（好莱坞全英格式）'}</div>
-      <div style="font-size:13px;color:var(--i3);line-height:1.9;margin-bottom:16px">${isProd?'派生自中文剧本，保留原有中文场景行与动作行，仅将对白翻译为英文，用于演员对词、分镜标注等制作场景。':'派生自中文剧本，将全部场景标题、动作描述、对白完整翻译为英文，采用好莱坞标准格式，适合海外平台投递及国际合拍。'}</div>
-      <div style="font-size:12px;padding:12px 16px;background:var(--gg);border-radius:var(--rs);border:1px solid var(--gp);text-align:left;line-height:1.85">
-        <div style="font-size:11px;font-weight:600;color:var(--gm);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px">生成关系 & 操作步骤</div>
-        <div style="color:var(--i2);margin-bottom:4px">① 在「中文剧本」页完成并审阅全部幕剧本</div>
-        <div style="color:var(--i2);margin-bottom:4px">② 点击上方工具栏「翻译当前幕 ▾」按钮</div>
-        <div style="color:var(--i2);margin-bottom:4px">③ ${isProd?'选择「只翻台词 → 制作剧本」，系统保留中文场景、动作，仅翻译对白并在此处归档':'选择「全文翻译 → 英文剧本」，系统完整翻译整幕并在此处归档'}</div>
+      <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">${isProd?'制作剧本':'英文剧本'}</div>
+      <div style="font-size:12px;color:var(--i4);margin-bottom:16px">${isProd?'中文场景 + 英文台词':'好莱坞全英格式'}</div>
+      <div style="font-size:13px;color:var(--i3);line-height:1.9;margin-bottom:16px;padding:12px 16px;background:rgba(30,92,58,.04);border-radius:var(--rs);border-left:3px solid var(--gm);text-align:left">
+        <div style="font-weight:600;color:var(--ink);margin-bottom:6px">📌 此页面基于中文剧本生成</div>
+        <div>${isProd?'保留中文场景行与动作行，仅将对白翻译为英文，适合演员对词和分镜标注。':'将全部场景标题、动作描述、对白完整翻译为英文，适合海外平台投递及国际合拍。'}</div>
+      </div>
+      <div style="font-size:12px;padding:14px 16px;background:var(--gg);border-radius:var(--rs);border:1px solid var(--gp);text-align:left;line-height:2">
+        <div style="font-size:11px;font-weight:600;color:var(--gm);letter-spacing:.04em;margin-bottom:8px">操作步骤</div>
+        <div style="color:var(--i2)">① 前往左侧「中文剧本」页面，完成并审阅全部幕剧本</div>
+        <div style="color:var(--i2)">② 点击中文剧本页面右上角「翻译当前幕 ▾」按钮</div>
+        <div style="color:var(--gm);font-weight:500">③ 选择「${isProd?'只翻台词 → 制作剧本':'全文翻译 → 英文剧本'}」</div>
         <div style="color:var(--i2)">④ 逐幕翻译后，本页自动汇总全本内容并可导出</div>
       </div>
-      <div style="margin-top:16px;font-size:11px;color:var(--i4)">提示：${isProd?'制作剧本':'英文剧本'}由中文剧本派生生成，中文剧本有修改时可随时重新翻译对应幕</div>
+      <div style="margin-top:14px;font-size:11px;color:var(--i4)">中文剧本有修改时，可随时在中文剧本页重新翻译对应幕</div>
     </div>`;
     return;
   }
@@ -4795,8 +4806,7 @@ function _restoreCnScriptView(){
     delete tbWrap.dataset.origHtml;
   }
   // 恢复原始导出按钮
-  const exportBtn = document.querySelector('.script-tb-actions button[onclick^="exportAsset"],[onclick="exportCurrentScript()"]')
-    || document.querySelector('.script-tb-actions button[data-orig-label]');
+  const exportBtn = document.getElementById('script-export-btn');
   if(exportBtn){
     if(exportBtn.dataset.origLabel){
       exportBtn.textContent = exportBtn.dataset.origLabel;
@@ -5753,6 +5763,8 @@ function confirmBreakdownAndNext() {
   hideConfirmDock();
   PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
   PROJECT.episodes.confirmedUpTo = bdState.allEps.length;
+  // Persist acts structure so buildScriptUI can reconstruct bdState if needed
+  PROJECT.episodes.acts = JSON.parse(JSON.stringify(bdState.acts));
   PROJECT.outline.confirmed = true;
   breakdownState.totalEps = PROJECT.source.episodeCount;
   breakdownState.allData = PROJECT.episodes.allData;
@@ -5840,7 +5852,7 @@ function renderRecentProjects(){
   if (!projects.length) { if(homeWrap) homeWrap.style.display='none'; return; }
   if (homeWrap) homeWrap.style.display = 'block';
 
-  homeList.innerHTML = projects.slice(0,3).map(p => {
+  homeList.innerHTML = projects.slice(0,6).map(p => {
     const name = p.name || '未命名项目';
     const savedAt = p.savedAt ? new Date(p.savedAt).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
     const isActive = S.proj === name;
@@ -5851,16 +5863,19 @@ function renderRecentProjects(){
     const stage = hasScript?'剧本创作':hasBreakdown?'分集细纲':hasBible?'改编策划':'方案选择';
     const stageColor = hasScript?'var(--au)':hasBreakdown?'var(--gi)':hasBible?'var(--gm)':'var(--i4)';
     const episodeInfo = p.PROJECT?.source?.episodeCount ? `${p.PROJECT.source.episodeCount}集` : '';
+    const borderColor = isActive ? 'var(--gm)' : 'var(--bd)';
     return `<div onclick="loadSavedProj('${name.replace(/'/g,"\\'")}');"
-      style="flex:1;min-width:0;padding:13px 14px;background:var(--wh);border:1.5px solid ${isActive?'var(--gm)':'var(--bd)'};border-radius:var(--r);cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)"
+      style="padding:13px 14px;background:var(--wh);border:1.5px solid ${borderColor};border-radius:var(--r);cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04);min-height:80px;display:flex;flex-direction:column;justify-content:space-between"
       onmouseover="this.style.borderColor='var(--gm)';this.style.boxShadow='0 3px 12px rgba(30,92,58,.1)';this.style.transform='translateY(-1px)'"
-      onmouseout="this.style.borderColor='${isActive?'var(--gm)':'var(--bd)'}';this.style.boxShadow='0 1px 4px rgba(0,0,0,.04)';this.style.transform='translateY(0)'">
-      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(name)}">${escHtml(name)}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-        <span style="font-size:10px;color:#fff;background:${stageColor};padding:1px 7px;border-radius:8px;font-weight:500">${stage}</span>
-        ${episodeInfo?`<span style="font-size:10px;color:var(--i4)">${episodeInfo}</span>`:''}
+      onmouseout="this.style.borderColor='${borderColor}';this.style.boxShadow='0 1px 4px rgba(0,0,0,.04)';this.style.transform='translateY(0)'">
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(name)}">${escHtml(name)}</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:10px;color:#fff;background:${stageColor};padding:1px 7px;border-radius:8px;font-weight:500">${stage}</span>
+          ${episodeInfo?`<span style="font-size:10px;color:var(--i4)">${episodeInfo}</span>`:''}
+        </div>
+        <div style="font-size:10px;color:var(--i4)">${savedAt}</div>
       </div>
-      <div style="font-size:10px;color:var(--i4)">${savedAt}</div>
     </div>`;
   }).join('');
 }
@@ -6241,6 +6256,26 @@ let currentActIdx = 0;
 // ── Entry point ──
 function buildScriptUI() {
   scriptState.total = PROJECT.source.episodeCount || 40;
+
+  // Reconstruct bdState.acts if empty (e.g. after page state reset or project load)
+  if (bdState.acts.length === 0 && PROJECT.source.episodeCount > 0) {
+    if (PROJECT.episodes.acts && PROJECT.episodes.acts.length > 0) {
+      bdState.acts = JSON.parse(JSON.stringify(PROJECT.episodes.acts));
+    } else if (PROJECT.bible.actStructure && PROJECT.bible.actStructure.length > 0) {
+      bdState.acts = buildActsFromBibleStructure(PROJECT.bible.actStructure, PROJECT.source.episodeCount);
+    } else {
+      bdState.acts = planActs(PROJECT.source.episodeCount);
+    }
+    if (PROJECT.episodes.allData.length > 0 && bdState.allEps.length === 0) {
+      bdState.allEps = PROJECT.episodes.allData.map((e, idx) => ({
+        num: e[0]||idx+1, title: e[1]||'', beat: e[2]||'', duration: e[3]||3, hook: e[4]||''
+      }));
+      bdState.allEps.forEach(ep => {
+        const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
+        if (act) { if (!act.eps) act.eps = []; act.eps.push(ep); }
+      });
+    }
+  }
 
   // If restoring from save, re-render all completed acts then show next ungenerated
   const body = document.getElementById('script-body');
@@ -7577,6 +7612,25 @@ function restoreFromSnap(snap) {
     bdState.generatedCount = snap.bdState.generatedCount || 0;
     bdState.confirmed = snap.bdState.confirmed || false;
     bdState.chatHistory = snap.bdState.chatHistory || [];
+    // If acts is empty but PROJECT.episodes.acts has data, use it
+    if (bdState.acts.length === 0 && PROJECT.episodes?.acts?.length > 0) {
+      bdState.acts = JSON.parse(JSON.stringify(PROJECT.episodes.acts));
+    }
+  } else if (PROJECT.episodes?.acts?.length > 0) {
+    // Restore from persisted acts structure (saved by confirmBreakdownAndNext)
+    bdState.acts = JSON.parse(JSON.stringify(PROJECT.episodes.acts));
+    bdState.confirmed = (PROJECT.episodes.confirmedUpTo || 0) > 0;
+    bdState.generatedCount = PROJECT.episodes.allData?.length || 0;
+    if (PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
+      bdState.allEps = PROJECT.episodes.allData.map((e, idx) => ({
+        num: e[0] || idx + 1, title: e[1] || '', beat: e[2] || '',
+        duration: e[3] || 3, hook: e[4] || '',
+      }));
+      bdState.allEps.forEach(ep => {
+        const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
+        if (act) { if (!act.eps) act.eps = []; act.eps.push(ep); }
+      });
+    }
   } else if (PROJECT.episodes && PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
     // Migrate old format: reconstruct bdState from PROJECT.episodes.allData
     const total = PROJECT.source.episodeCount || PROJECT.episodes.allData.length;
@@ -9434,12 +9488,21 @@ function showConfirmDock(stage, opts){
 
   dock.classList.add('show');
   appendGlobalMsg('ai', `✅ ${cfg.title} — ${cfg.sub}`);
+
+  // 同步显示中间面板的确认按钮（与右侧 dock 保持一致）
+  const bibleConfirmBtn = document.getElementById('bible-confirm-btn');
+  if(bibleConfirmBtn){
+    bibleConfirmBtn.style.display = (stage === 'bible_first' || stage === 'bible') ? 'inline-flex' : 'none';
+  }
 }
 
 function hideConfirmDock(){
   const dock = document.getElementById('confirm-dock');
   if(dock) dock.classList.remove('show');
   _confirmDockStage = null;
+  // 同步隐藏中间面板的确认按钮
+  const bibleConfirmBtn = document.getElementById('bible-confirm-btn');
+  if(bibleConfirmBtn) bibleConfirmBtn.style.display = 'none';
 }
 
 function handleConfirmDockPrimary(){
