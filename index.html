@@ -1333,7 +1333,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .wb-left{width:220px;min-width:160px;max-width:400px;flex:0 0 220px;background:var(--gd);display:flex;flex-direction:column;overflow:hidden}
 .wb-left-head{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .wb-left-title{font-size:12px;font-weight:500;color:rgba(255,255,255,.65);letter-spacing:.02em}
-.wb-left-body{flex:1;overflow-y:auto;padding:8px 10px;scrollbar-width:thin}
+.wb-left-body{flex:1;overflow-y:auto;padding:8px 10px;scrollbar-width:thin;display:flex;flex-direction:column}
 .wb-left-body::-webkit-scrollbar{width:3px}
 .wb-left-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
 .wb-left-footer{flex-shrink:0;padding:10px 12px;border-top:1px solid rgba(255,255,255,.06)}
@@ -1403,7 +1403,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 }
 
 /* Asset cards (on dark background) */
-.asset-card{border:1px solid rgba(255,255,255,.08);border-radius:var(--rs);margin-bottom:6px;overflow:hidden;cursor:pointer;transition:all .15s}
+.asset-card{border:1px solid rgba(255,255,255,.08);border-radius:var(--rs);margin-bottom:6px;overflow:hidden;cursor:pointer;transition:all .15s;flex-shrink:0}
 .asset-card:hover{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.03)}
 .asset-card.ready{border-color:rgba(46,122,80,.45)}
 .asset-card.viewing{border-color:var(--gm)!important;background:var(--gg);box-shadow:0 0 0 2px rgba(30,92,58,.15)}
@@ -1422,10 +1422,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8)}
 
 /* Draggable dividers */
-.wb-divider{width:16px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10}
-.wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.08)}
-.wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:48px;background:var(--bd);border-radius:2px;transition:background .15s}
-.wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm)}
+.wb-divider{width:20px;flex-shrink:0;background:rgba(0,0,0,.03);cursor:col-resize;position:relative;transition:background .15s;z-index:20;touch-action:none}
+.wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.12)}
+.wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:60px;background:var(--bd);border-radius:3px;transition:background .15s}
+.wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm);width:4px}
 
 /* Middle column */
 .wb-mid{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
@@ -2299,10 +2299,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         <div class="asset-card-body" id="ac-script-en-body">—</div>
       </div>
 
+      <div style="flex:1;display:flex;align-items:flex-end;padding:4px 2px 6px;pointer-events:none">
+        <div style="font-size:9px;color:rgba(255,255,255,.15);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace">节点导航</div>
+      </div>
     </div><!-- wb-asset-list -->
-    <div style="flex:1;display:flex;align-items:flex-end;padding:0 12px 8px;pointer-events:none">
-      <div style="font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.06em;text-transform:uppercase;font-family:'DM Mono',monospace">节点导航</div>
-    </div>
     <div class="wb-left-footer">
       <button class="wb-export-btn" onclick="openExportModal()">↓ 导出全部资料</button>
     </div>
