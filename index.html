@@ -566,35 +566,46 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
    Standard: 8.5"×11" page, 1" margins, Courier 12pt
    1 page ≈ 1 minute of screen time
    Line height: exactly 1 line = 1/6" = 12pt leading
+   At 96px/in: 8.5"=816px, 11"=1056px
    ══════════════════════════════════ */
-.script-scroll{flex:1;overflow-y:auto;background:#E8E4DF;padding:8px 0 60px}
+.script-scroll{flex:1;overflow-y:auto;background:#E8E4DF;padding:24px 0 80px}
 .script-page{
-  width:664px;          /* 8.5" at 78px/in ≈ 663px, rounded */
-  margin:0 auto 28px;
+  width:816px;          /* 8.5" at 96px/in — standard letter */
+  height:1056px;        /* 11" at 96px/in — FIXED, never grows */
+  min-height:1056px;
+  max-height:1056px;
+  margin:0 auto 24px;
   background:#FEFEFE;
   /* 1" top/bottom, 1.5" left, 1" right — standard spec */
-  padding:78px 78px 78px 117px;
+  padding:96px 96px 96px 144px;
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;       /* exactly 12pt */
-  line-height:1.0;      /* we handle spacing via margin-bottom per element */
+  line-height:1.5;
   color:#1A1A1A;
   box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07);
   position:relative;
-  /* no min-height — let content determine page height, episodes flow naturally */
+  overflow:hidden;      /* content that overflows goes to next page */
   box-sizing:border-box;
+}
+/* Paginated content area inside each fixed page */
+.script-page-content{
+  width:100%;
+  overflow:hidden;
 }
 /* Page number — top right, 0.5" from top */
 .sp-page-num{
-  position:absolute;top:39px;right:78px;
+  position:absolute;top:48px;right:96px;
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;color:#666;
 }
-/* Time estimate — bottom right corner */
+/* Time estimate — bottom right corner, shows page count info */
 .sp-time-est{
-  position:absolute;bottom:16px;right:16px;
-  font-size:10px;color:#AAA;
+  position:absolute;bottom:20px;right:20px;
+  font-size:10px;color:#BBB;
   font-family:'Noto Sans SC',sans-serif;letter-spacing:.04em;
 }
+/* Hidden episode content wrapper — paginator reads from here */
+.script-ep-content { display: block; }
 /* Episode title block */
 .sp-title{
   text-align:center;margin-bottom:24px;
@@ -618,7 +629,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;font-weight:bold;text-transform:uppercase;
   letter-spacing:.03em;
-  margin:24px 0 12px;    /* 2 blank lines before, 1 after */
+  margin:18px 0 6px;    /* 1 blank line before, half after */
   display:block;
   cursor:text;
 }
@@ -627,17 +638,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .sp-action{
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;line-height:1.5;
-  margin:0 0 12px;       /* 1 blank line after */
+  margin:0 0 8px;
   display:block;cursor:text;
 }
 /* ── Character Name ──
-   Centered at 3.7" from left edge of text area = 2.2" indent from text margin
-   On a 6" text area: 3.7" / 6" * 100% ≈ 2.2" = ~172px from left of text */
+   Centered at 3.7" from left edge of text area */
 .sp-char{
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;text-transform:uppercase;letter-spacing:.04em;
-  margin:12px 0 0;      /* 1 blank line before character name */
-  padding-left:172px;
+  margin:8px 0 0;
+  padding-left:200px;
   display:block;cursor:text;
 }
 /* ── Parenthetical ──
@@ -645,7 +655,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .sp-paren{
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;color:#333;
-  padding-left:120px;
+  padding-left:144px;
   margin:0;display:block;cursor:text;
 }
 /* ── Dialogue ──
@@ -653,7 +663,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .sp-dlg{
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;line-height:1.5;
-  padding:0 120px 12px 120px;   /* balanced left+right for centered dialogue block */
+  padding:0 144px 8px 144px;
   margin:0;display:block;cursor:text;
 }
 
@@ -6206,47 +6216,180 @@ function loadSavedProj(name){
   showToast(`已载入项目「${name.substring(0,20)}」`);
 }
 function updateScriptStats(){
-  const body=document.getElementById('script-body');
-  if(!body) return;
-  const text=body.innerText||'';
-  const words=text.replace(/\s+/g,'').length;
-  const pages=body.querySelectorAll('.script-page').length||1;
-
-  // Accurate duration: each episode targets 80-120s
-  // Count episodes that have actually been generated (have real content)
-  const epCount = body.querySelectorAll('.script-page').length;
-  // Estimate: each generated episode ≈ 100s (midpoint of 80-120s target)
-  // ~10 chars/second for drama pacing at 700-1000 chars/ep
-  const charsPerSec = 10;
-  const estSecs = Math.round(words / charsPerSec);
-  // Show both estimate and episode-based estimate
-  const epBasedSecs = epCount * 100;
-  // Use the larger of the two as a more realistic estimate
-  const totalSecs = Math.max(estSecs, epBasedSecs);
-  const totalMins = Math.round(totalSecs / 60);
-
-  document.getElementById('stat-words').textContent = words.toLocaleString() + '字';
-  document.getElementById('stat-pages').textContent = epCount + '集';
-  document.getElementById('stat-duration').textContent = totalMins + 'min（≈' + epCount + '×100s）';
-  updatePageTimeEsts();
+  // Trigger repagination which also updates stats
+  scheduleRepaginate();
 }
 
 // Update per-page time estimate in script body
 function updatePageTimeEsts(){
-  const body = document.getElementById('script-body');
-  if(!body) return;
-  body.querySelectorAll('.sp-time-est').forEach((el, i) => {
-    const page = el.closest('.script-page');
-    if(!page) return;
-    // Count dialogue + action lines in this page for per-page estimate
-    const dlgs = page.querySelectorAll('.sp-dlg').length;
-    const actions = page.querySelectorAll('.sp-action').length;
-    const chars = (page.innerText || '').replace(/\s+/g,'').length;
-    // ~10 chars/second, floor at 80s, ceiling at 120s per episode
-    const estSecs = Math.min(120, Math.max(80, Math.round(chars / 10)));
-    el.textContent = `≈ ${estSecs}s · 第 ${i+1} 集`;
-  });
+  // After repagination, this is handled inside repaginateScript()
+  repaginateScript();
 }
+
+// ── Hollywood Pagination Engine ──
+// Collects all screenplay elements from all episodes and reflows them
+// into fixed 8.5"×11" pages (1056px tall at 96dpi).
+// Each page gets a sequential page number top-right.
+// Episode title blocks are always kept together with their first scene.
+// Stats bar shows real page count + estimated runtime (1 page ≈ 1 min).
+
+const PAGE_HEIGHT_PX = 1056;  // 11" × 96px/in
+const PAGE_PAD_TOP   = 96;    // 1" top padding
+const PAGE_PAD_BOT   = 96;    // 1" bottom padding
+const PAGE_USABLE    = PAGE_HEIGHT_PX - PAGE_PAD_TOP - PAGE_PAD_BOT; // 864px usable
+
+let _repagTimer = null;
+
+function scheduleRepaginate() {
+  if (_repagTimer) clearTimeout(_repagTimer);
+  _repagTimer = setTimeout(repaginateScript, 120);
+}
+
+function repaginateScript() {
+  const scroll = document.getElementById('script-scroll');
+  if (!scroll) return;
+
+  // ── Step 1: Collect all content nodes from all episode bodies ──
+  // Each item: { node: Element, epIdx: number, type: 'title'|'body' }
+  const allItems = [];
+  const epWraps = scroll.querySelectorAll('[id^="script-ep-wrap-"]');
+  epWraps.forEach(wrap => {
+    const epIdx = parseInt(wrap.dataset.ep);
+    // Episode title div
+    const titleDiv = wrap.querySelector('.sp-title');
+    if (titleDiv) allItems.push({ node: titleDiv.cloneNode(true), epIdx, type: 'title' });
+    // Body children
+    const body = wrap.querySelector('.sp-body');
+    if (body) {
+      [...body.children].forEach(child => {
+        allItems.push({ node: child.cloneNode(true), epIdx, type: 'body' });
+      });
+    }
+  });
+
+  if (allItems.length === 0) return;
+
+  // ── Step 2: Measure heights of all nodes ──
+  // Use a hidden off-screen container at exact page width
+  const measureWrap = document.createElement('div');
+  measureWrap.style.cssText = `
+    position:fixed;left:-9999px;top:0;
+    width:${816 - 144 - 96}px;
+    font-family:'Courier Prime','Courier New',Courier,monospace;
+    font-size:12pt;line-height:1.5;
+    visibility:hidden;pointer-events:none;z-index:-1;
+  `;
+  document.body.appendChild(measureWrap);
+
+  const heights = allItems.map(item => {
+    measureWrap.innerHTML = '';
+    measureWrap.appendChild(item.node.cloneNode(true));
+    return measureWrap.scrollHeight + 2; // +2 for margin safety
+  });
+  document.body.removeChild(measureWrap);
+
+  // ── Step 3: Pack items into pages ──
+  const pages = []; // each page: array of items
+  let currentPage = [];
+  let currentHeight = 0;
+  const TITLE_RESERVE = 80; // reserve space before a title so it doesn't orphan
+  const MIN_ORPHAN = 40;    // minimum content height on a page before breaking
+
+  allItems.forEach((item, i) => {
+    const h = heights[i];
+    // Episode title: start new page if less than TITLE_RESERVE remaining
+    if (item.type === 'title' && currentPage.length > 0 && currentHeight + h + TITLE_RESERVE > PAGE_USABLE) {
+      pages.push(currentPage);
+      currentPage = [];
+      currentHeight = 0;
+    }
+    // Normal overflow: if doesn't fit, start new page
+    if (currentHeight + h > PAGE_USABLE && currentPage.length > 0) {
+      // Check we have enough content on current page (avoid tiny orphan pages)
+      if (currentHeight > MIN_ORPHAN) {
+        pages.push(currentPage);
+        currentPage = [];
+        currentHeight = 0;
+      }
+    }
+    currentPage.push(item);
+    currentHeight += h;
+  });
+  if (currentPage.length > 0) pages.push(currentPage);
+
+  // ── Step 4: Build physical page DOM ──
+  const body = document.getElementById('script-body');
+  if (!body) return;
+
+  // Remove old pagesContainer if present
+  const oldContainer = document.getElementById('sp-physical-pages');
+  if (oldContainer) oldContainer.remove();
+
+  const pagesContainer = document.createElement('div');
+  pagesContainer.id = 'sp-physical-pages';
+  pagesContainer.style.cssText = 'padding-top:8px;';
+
+  const totalPages = pages.length;
+
+  const epFirstPageMap = {}; // epIdx → pageNum (first page that episode appears on)
+
+  pages.forEach((pageItems, pageIdx) => {
+    const pageNum = pageIdx + 1;
+    const pageEl = document.createElement('div');
+    pageEl.className = 'script-page';
+    pageEl.dataset.pageNum = pageNum;
+
+    // Track which episodes appear on this page
+    pageItems.forEach(item => {
+      if (!(item.epIdx in epFirstPageMap)) epFirstPageMap[item.epIdx] = pageNum;
+      pageEl.dataset.ep = item.epIdx; // last ep on page (close enough for scroll)
+    });
+    pageEl.id = `sp-physical-page-${pageNum}`;
+
+    // Page number top-right
+    const numEl = document.createElement('div');
+    numEl.className = 'sp-page-num';
+    numEl.textContent = `${pageNum}.`;
+    pageEl.appendChild(numEl);
+
+    // Content area
+    const contentEl = document.createElement('div');
+    contentEl.className = 'script-page-content';
+
+    pageItems.forEach(item => {
+      contentEl.appendChild(item.node.cloneNode(true));
+    });
+    pageEl.appendChild(contentEl);
+
+    // Bottom info: last page shows totals, others show page/total
+    const timeEst = document.createElement('div');
+    timeEst.className = 'sp-time-est';
+    if (pageIdx === totalPages - 1) {
+      timeEst.textContent = `共 ${totalPages} 页 · 约 ${totalPages} 分钟`;
+    } else {
+      timeEst.textContent = `第 ${pageNum} / ${totalPages} 页`;
+    }
+    pageEl.appendChild(timeEst);
+
+    pagesContainer.appendChild(pageEl);
+  });
+
+  // Store ep→page map globally for scrollToAct
+  window._epFirstPageMap = epFirstPageMap;
+
+  // ── Step 5: Insert physical pages at the top of script-body ──
+  body.insertBefore(pagesContainer, body.firstChild);
+
+  // ── Step 6: Update stats ──
+  const totalWords = allItems.reduce((sum, item) => sum + (item.node.textContent || '').replace(/\s+/g,'').length, 0);
+  const statWords = document.getElementById('stat-words');
+  const statPages = document.getElementById('stat-pages');
+  const statDur   = document.getElementById('stat-duration');
+  if (statWords) statWords.textContent = totalWords.toLocaleString() + ' 字';
+  if (statPages) statPages.textContent = totalPages + ' 页';
+  if (statDur)   statDur.textContent   = `≈ ${totalPages} 分钟（1页≈1分钟）`;
+}
+
 
 // ── 5b Scene navigator ──
 function buildSceneNav(){
@@ -6478,10 +6621,19 @@ function renderActTabs() {
 function scrollToAct(aIdx) {
   currentActIdx = aIdx;
   renderActTabs();
-  const el = document.getElementById(`script-act-block-${aIdx}`);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Try to scroll to the first physical page containing this act's episodes
+  const act = bdState.acts[aIdx];
+  if (act && window._epFirstPageMap) {
+    const firstEpIdx = act.from - 1;
+    const pageNum = window._epFirstPageMap[firstEpIdx];
+    if (pageNum) {
+      const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
+      if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    }
   }
+  // Fallback: scroll to act block (may be hidden but browser still scrolls)
+  const el = document.getElementById(`script-act-block-${aIdx}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── 上一幕衔接上下文：从已生成的剧本 DOM 中提取，感知用户手动修改 ──
@@ -6861,9 +7013,10 @@ function appendActToBody(actIdx, animate) {
     <span class="script-act-divider-range">第${act.from}–${act.to}集 · ${act.desc}</span>`;
   block.appendChild(divider);
 
-  // ② All episode scripts
+  // ② All episode scripts (hidden — content is paginated into physical pages)
   const epsContainer = document.createElement('div');
   epsContainer.id = `script-act-eps-${actIdx}`;
+  epsContainer.style.display = 'none'; // hidden: paginator reads from here
   for (let i = 0; i < act.count; i++) {
     const epIdx = act.from - 1 + i;
     const html = as.eps[epIdx] || buildMockScriptHTML(epIdx);
@@ -6898,6 +7051,8 @@ function appendActToBody(actIdx, animate) {
   block.appendChild(endPanel);
   body.appendChild(block);
   updateScriptEmptyState();
+  // Trigger repagination after DOM settles
+  setTimeout(scheduleRepaginate, 150);
 }
 
 function buildActChatHTML(actIdx) {
@@ -7117,12 +7272,10 @@ function buildScriptHTMLFromText(text, epIdx) {
     }
   });
   
-  return `<div class="script-page" id="sp-${epIdx}">
-    <div class="sp-page-num">${pageNum}.</div>
+  return `<div class="script-ep-content" id="sp-${epIdx}" data-ep-idx="${epIdx}">
     <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
     <div class="sp-body" contenteditable="true" spellcheck="false" data-ep="${epIdx}"
-      oninput="onScriptBodyEdit(this)" onblur="saveScriptBody(this)">${innerHtml}</div>
-    <div class="sp-time-est" data-ep-page="${pageNum}">≈ 80-120s · 第 ${pageNum} 集</div>
+      oninput="onScriptBodyEdit(this);scheduleRepaginate()" onblur="saveScriptBody(this)">${innerHtml}</div>
   </div>`;
 }
 
@@ -7133,12 +7286,10 @@ function buildMockScriptHTML(epIdx) {
   const beat = projEp ? projEp[2] : '';
   const hook = projEp ? projEp[4] : '';
   const pageNum = epIdx + 1;
-  return `<div class="script-page" id="sp-${epIdx}">
-    <div class="sp-page-num">${pageNum}.</div>
+  return `<div class="script-ep-content" id="sp-${epIdx}" data-ep-idx="${epIdx}">
     <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
     <div class="sp-body" contenteditable="true" spellcheck="false" data-ep="${epIdx}"
-      oninput="onScriptBodyEdit(this)" onblur="saveScriptBody(this)"><div class="sp-scene" data-ep="${epIdx}" data-type="scene">内景　主场景　日间</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(beat.substring(0,200))}</div><div class="sp-scene" data-ep="${epIdx}" data-type="scene">外景　场景　接续</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(hook)}</div></div>
-    <div class="sp-time-est" data-ep-page="${pageNum}">≈ 80-120s · 第 ${pageNum} 集</div>
+      oninput="onScriptBodyEdit(this);scheduleRepaginate()" onblur="saveScriptBody(this)"><div class="sp-scene" data-ep="${epIdx}" data-type="scene">内景　主场景　日间</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(beat.substring(0,200))}</div><div class="sp-scene" data-ep="${epIdx}" data-type="scene">外景　场景　接续</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(hook)}</div></div>
   </div>`;
 }
 
@@ -7233,11 +7384,18 @@ function initScriptScrollObserver() {
   });
 }
 
-// selEpTab kept for compat — now just scrolls to ep
+// selEpTab kept for compat — now scrolls to first physical page of that episode
 function selEpTab(el, i) {
   currentEp = i;
-  const wrap = document.getElementById(`script-ep-wrap-${i}`);
-  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Find the first physical page containing this episode
+  if (window._epFirstPageMap && window._epFirstPageMap[i]) {
+    const pageNum = window._epFirstPageMap[i];
+    const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
+    if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  } else {
+    const wrap = document.getElementById(`script-ep-wrap-${i}`);
+    if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   updateScriptSidebar(i);
 }
 
