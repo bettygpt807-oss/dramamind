@@ -4868,35 +4868,26 @@ function _showTranslatedScriptInBody(key){
     return;
   }
 
-  // ── 解析翻译文本，按集拆分，渲染成 script-page 纸张卡片 ──
+  // ── 解析翻译文本 → 扁平 item 列表（与中文剧本 repaginateScript 保持一致）──
   const rawText = store.text;
-
-  // 去掉 header 部分（【...】开头的几行元信息）
   const bodyStart = rawText.indexOf('\n=== ');
   const scriptBody = bodyStart >= 0 ? rawText.slice(bodyStart) : rawText;
-
-  // 按集分割
   const epChunks = scriptBody.split(/(?=\n=== )/).filter(c => c.trim());
 
-  let html = '';
-  epChunks.forEach((chunk, pageIdx) => {
+  const allItems = [];
+  epChunks.forEach(chunk => {
     const lines = chunk.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     if(!lines.length) return;
 
-    // 提取集标题行（=== 第N集 === 或 === Episode N ===）
-    let epTitleLine = '';
+    // 提取集标题
     let epTitleDisplay = '';
     let contentLines = lines;
-
     const titleMatch = lines[0].match(/=== (?:第(\d+)集|Episode (\d+)) ===/i);
     if(titleMatch) {
       const epNum = titleMatch[1] || titleMatch[2];
-      // 英文剧本显示全英，制作剧本显示双语
       epTitleDisplay = isEn
         ? `EPISODE ${String(epNum).padStart(2,'0')}`
         : `第 ${String(epNum).padStart(2,'0')} 集`;
-      epTitleLine = lines[0];
-      // 下一行可能是集标题（Episode 01: Title 或 第01集《...》）
       if(lines[1] && (lines[1].match(/^Episode \d+[:：]/i) || lines[1].match(/^第\d+集[《「]/))) {
         epTitleDisplay += `\n${lines[1]}`;
         contentLines = lines.slice(2);
@@ -4905,42 +4896,112 @@ function _showTranslatedScriptInBody(key){
       }
     }
 
-    const pageNum = pageIdx + 1;
-    let pageHtml = `<div class="script-page" id="sp-translated-${pageIdx}">
-      <div class="sp-page-num">${pageNum}.</div>
-      <div class="sp-title"><b>${escHtml(epTitleDisplay)}</b></div>\n`;
+    const titleEl = document.createElement('div');
+    titleEl.className = 'sp-title';
+    titleEl.innerHTML = `<b>${escHtml(epTitleDisplay)}</b>`;
+    allItems.push({ node: titleEl, type: 'title' });
 
     contentLines.forEach(line => {
-      // strip [sp-xxx] tags
       const tagMatch = line.match(/^\[(sp-[a-z]+)\](.*)$/);
       const tag = tagMatch ? tagMatch[1] : null;
       const content = tagMatch ? tagMatch[2].trim() : line;
       if(!content) return;
-
-      // Skip duplicate episode title line: e.g. "EPISODE 01 WOLF FIENDS RAID..."
-      // This happens when the translated sp-title content is output again as an action line
       if(isEn && /^EPISODE\s+\d+\b/i.test(content)) return;
 
-      if(tag === 'sp-scene' || (!tag && /^(INT\.|EXT\.)/i.test(content))){
-        pageHtml += `      <div class="sp-scene">${escHtml(content)}</div>\n`;
-      } else if(tag === 'sp-char' || (!tag && /^[A-Z][A-Z\s]{2,}$/.test(content) && content.length < 40)){
-        pageHtml += `      <div class="sp-char">${escHtml(content)}</div>\n`;
-      } else if(tag === 'sp-paren' || (!tag && (content.startsWith('(') || content.startsWith('（')))){
-        pageHtml += `      <div class="sp-paren">${escHtml(content)}</div>\n`;
-      } else if(tag === 'sp-dlg'){
-        pageHtml += `      <div class="sp-dlg">${escHtml(content)}</div>\n`;
-      } else if(tag === 'sp-transition' || (!tag && /^(CUT TO:|SMASH CUT|FADE)/i.test(content))){
-        pageHtml += `      <div class="sp-transition">${escHtml(content)}</div>\n`;
-      } else {
-        pageHtml += `      <div class="sp-action">${escHtml(content)}</div>\n`;
-      }
-    });
+      let cls = 'sp-action';
+      if(tag === 'sp-scene' || (!tag && /^(INT\.|EXT\.)/i.test(content))) cls = 'sp-scene';
+      else if(tag === 'sp-char' || (!tag && /^[A-Z][A-Z\s]{2,}$/.test(content) && content.length < 40)) cls = 'sp-char';
+      else if(tag === 'sp-paren' || (!tag && (content.startsWith('(') || content.startsWith('（')))) cls = 'sp-paren';
+      else if(tag === 'sp-dlg') cls = 'sp-dlg';
+      else if(tag === 'sp-transition' || (!tag && /^(CUT TO:|SMASH CUT|FADE)/i.test(content))) cls = 'sp-transition';
 
-    pageHtml += `    </div>`;
-    html += pageHtml;
+      const el = document.createElement('div');
+      el.className = cls;
+      el.textContent = content;
+      allItems.push({ node: el, type: 'body' });
+    });
   });
 
-  body.innerHTML = html || '<div style="padding:40px;text-align:center;color:var(--i4)">暂无内容</div>';
+  if(!allItems.length) {
+    body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--i4)">暂无内容</div>';
+    return;
+  }
+
+  // ── 测量每个节点高度（与 repaginateScript 相同方式）──
+  const PAGE_CONTENT_WIDTH = 816 - 144 - 96; // 576px
+  const measureWrap = document.createElement('div');
+  measureWrap.style.cssText = `position:fixed;left:-999px;top:0;width:${PAGE_CONTENT_WIDTH}px;font-family:'Courier Prime','Courier New',Courier,monospace;font-size:12pt;line-height:1.5;visibility:hidden;pointer-events:none;z-index:-1;`;
+  document.body.appendChild(measureWrap);
+  const heights = allItems.map(item => {
+    measureWrap.innerHTML = '';
+    measureWrap.appendChild(item.node.cloneNode(true));
+    return measureWrap.scrollHeight + 2;
+  });
+  document.body.removeChild(measureWrap);
+
+  // ── 分页装箱（与 repaginateScript 相同常量）──
+  const PAGE_USABLE = 864;
+  const TITLE_RESERVE = 80;
+  const MIN_ORPHAN = 40;
+  const pages = [];
+  let currentPage = [];
+  let currentHeight = 0;
+
+  allItems.forEach((item, i) => {
+    const h = heights[i];
+    if(item.type === 'title' && currentPage.length > 0 && currentHeight + h + TITLE_RESERVE > PAGE_USABLE) {
+      pages.push(currentPage); currentPage = []; currentHeight = 0;
+    }
+    if(currentHeight + h > PAGE_USABLE && currentPage.length > 0) {
+      if(currentHeight > MIN_ORPHAN) {
+        pages.push(currentPage); currentPage = []; currentHeight = 0;
+      }
+    }
+    currentPage.push(item);
+    currentHeight += h;
+  });
+  if(currentPage.length > 0) pages.push(currentPage);
+
+  // ── 构建物理页面 DOM ──
+  const totalPages = pages.length;
+  const fragment = document.createDocumentFragment();
+  pages.forEach((pageItems, pageIdx) => {
+    const pageNum = pageIdx + 1;
+    const pageEl = document.createElement('div');
+    pageEl.className = 'script-page';
+    pageEl.id = `sp-translated-${pageIdx}`;
+
+    const numEl = document.createElement('div');
+    numEl.className = 'sp-page-num';
+    numEl.textContent = `${pageNum}.`;
+    pageEl.appendChild(numEl);
+
+    const contentEl = document.createElement('div');
+    contentEl.className = 'script-page-content';
+    pageItems.forEach(item => contentEl.appendChild(item.node.cloneNode(true)));
+    pageEl.appendChild(contentEl);
+
+    const timeEst = document.createElement('div');
+    timeEst.className = 'sp-time-est';
+    timeEst.textContent = pageIdx === totalPages - 1
+      ? `共 ${totalPages} 页 · 约 ${totalPages} 分钟`
+      : `第 ${pageNum} / ${totalPages} 页`;
+    pageEl.appendChild(timeEst);
+
+    fragment.appendChild(pageEl);
+  });
+
+  body.innerHTML = '';
+  body.appendChild(fragment);
+
+  // ── 更新顶部统计栏 ──
+  const totalWords = allItems.reduce((sum, item) => sum + (item.node.textContent || '').replace(/\s+/g,'').length, 0);
+  const statWords = document.getElementById('stat-words');
+  const statPages = document.getElementById('stat-pages');
+  const statDur = document.getElementById('stat-duration');
+  if(statWords) statWords.textContent = totalWords.toLocaleString() + ' 字';
+  if(statPages) statPages.textContent = totalPages + ' 页';
+  if(statDur) statDur.textContent = `≈ ${totalPages} 分钟（1页≈1分钟）`;
 }
 
 // 返回中文剧本视图（恢复工具栏+重建中文剧本 DOM）
@@ -7327,7 +7388,7 @@ function onScriptBodyEdit(bodyEl) {
     scriptState.actScripts[actIdx].eps[`${epIdx}_modified`] = true;
     PROJECT.userEdits[`script_ep${epIdx}`] = { value: `第${epIdx+1}集剧本已手动修改`, modified: true };
   }
-  renderActTabs();
+  setTimeout(renderActTabs, 0);
 }
 
 function saveScriptBody(bodyEl) {
@@ -7796,6 +7857,18 @@ const SCRIPT_ELEMENT_AFTER_ENTER = {
 
 let _lastFocusedScriptEl = null;
 
+// Sync a class change on a physical-page element back to its hidden source counterpart
+function _syncClassToSource(physEl, pageContent, sourceBody, epIdx) {
+  const oldCls = [...physEl.classList].find(c => c.startsWith('sp-')) || physEl.className.split(' ')[0];
+  const allPhys = [...pageContent.querySelectorAll('.' + oldCls + '[data-phys-ep="' + epIdx + '"]')];
+  const allSrc  = [...sourceBody.querySelectorAll('.' + oldCls)];
+  const idx = allPhys.indexOf(physEl);
+  if (idx >= 0 && allSrc[idx]) {
+    allSrc[idx].className = physEl.className;
+    allSrc[idx].dataset.type = physEl.dataset.type;
+  }
+}
+
 // Initialize keyboard shortcuts for script editor
 function initScriptEditorKeys() {
   const scroll = document.getElementById('script-scroll');
@@ -7803,33 +7876,47 @@ function initScriptEditorKeys() {
   
   scroll.addEventListener('keydown', function(e) {
     const el = document.activeElement;
-    // Handle keys on sp-body or its children
     const body = el?.closest('.sp-body');
-    if (!body) return;
-    const epIdx = parseInt(body.dataset.ep);
-    
+    const pageContent = el?.closest('.script-page-content');
+    if (!body && !pageContent) return;
+
     // The "focused" script element is the one containing the cursor
     const sel = window.getSelection();
     const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition') || null;
     const currentType = focusEl ? [...focusEl.classList].find(c => SCRIPT_ELEMENT_CYCLE.includes(c)) : null;
 
-    // If char autocomplete is visible, let the AC keydown handler take over — don't process format shortcuts
+    // Resolve epIdx and sourceBody for both editing surfaces
+    let epIdx, sourceBody;
+    if (body) {
+      epIdx = parseInt(body.dataset.ep);
+      sourceBody = body;
+    } else {
+      epIdx = parseInt(focusEl?.dataset?.physEp);
+      if (isNaN(epIdx)) return;
+      const sourceWrap = document.getElementById('script-ep-wrap-' + epIdx);
+      sourceBody = sourceWrap?.querySelector('.sp-body');
+      if (!sourceBody) return;
+    }
+
+    // If char autocomplete is visible, let the AC keydown handler take over
     const acEl = document.getElementById('char-ac');
     const acVisible = acEl && acEl.style.display !== 'none';
     if (acVisible && (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Escape')) return;
-    
+
     // ⌘1-6: Change element type
     if ((e.metaKey || e.ctrlKey) && focusEl && currentType) {
       const typeMap = {'1':'sp-scene','2':'sp-action','3':'sp-char','4':'sp-paren','5':'sp-dlg','6':'sp-transition'};
       if (typeMap[e.key]) {
         e.preventDefault();
-        focusEl.className = typeMap[e.key];
-        focusEl.dataset.type = typeMap[e.key].replace('sp-','');
-        onScriptBodyEdit(body);
+        const newType = typeMap[e.key];
+        focusEl.className = newType;
+        focusEl.dataset.type = newType.replace('sp-','');
+        if (pageContent) _syncClassToSource(focusEl, pageContent, sourceBody, epIdx);
+        onScriptBodyEdit(sourceBody);
         return;
       }
     }
-    
+
     // Tab: cycle element type
     if (e.key === 'Tab' && focusEl && currentType) {
       e.preventDefault();
@@ -7840,25 +7927,51 @@ function initScriptEditorKeys() {
         focusEl.textContent = 'INT. ';
         placeCursorAtEnd(focusEl);
       }
-      onScriptBodyEdit(body);
+      if (pageContent) _syncClassToSource(focusEl, pageContent, sourceBody, epIdx);
+      onScriptBodyEdit(sourceBody);
       return;
     }
-    
+
     // Enter: create new element
     if (e.key === 'Enter' && !e.shiftKey && focusEl && currentType) {
       e.preventDefault();
       const nextType = SCRIPT_ELEMENT_AFTER_ENTER[currentType] || 'sp-action';
       const newEl = document.createElement('div');
       newEl.className = nextType;
-      newEl.dataset.ep = epIdx;
       newEl.dataset.type = nextType.replace('sp-','');
       if (nextType === 'sp-scene') newEl.textContent = 'INT. ';
       else if (nextType === 'sp-transition') newEl.textContent = 'CUT TO:';
       else newEl.textContent = '';
-      focusEl.parentNode.insertBefore(newEl, focusEl.nextSibling);
-      newEl.focus();
-      placeCursorAtEnd(newEl);
-      onScriptBodyEdit(body);
+
+      if (pageContent) {
+        // Physical page path: insert in page AND mirror into hidden source
+        newEl.dataset.physEp = epIdx;
+        focusEl.parentNode.insertBefore(newEl, focusEl.nextSibling);
+        newEl.focus();
+        placeCursorAtEnd(newEl);
+        // Mirror into source at matching position
+        const cls = focusEl.className.split(' ')[0];
+        const allPhys = [...pageContent.querySelectorAll('.' + cls + '[data-phys-ep="' + epIdx + '"]')];
+        const allSrc  = [...sourceBody.querySelectorAll('.' + cls)];
+        const idx = allPhys.indexOf(focusEl);
+        const srcNewEl = document.createElement('div');
+        srcNewEl.className = nextType;
+        srcNewEl.dataset.ep = epIdx;
+        srcNewEl.dataset.type = nextType.replace('sp-','');
+        srcNewEl.textContent = newEl.textContent;
+        if (idx >= 0 && allSrc[idx]) {
+          allSrc[idx].parentNode.insertBefore(srcNewEl, allSrc[idx].nextSibling);
+        } else {
+          sourceBody.appendChild(srcNewEl);
+        }
+      } else {
+        // Hidden sp-body path (original behaviour)
+        newEl.dataset.ep = epIdx;
+        focusEl.parentNode.insertBefore(newEl, focusEl.nextSibling);
+        newEl.focus();
+        placeCursorAtEnd(newEl);
+      }
+      onScriptBodyEdit(sourceBody);
       return;
     }
   }, true);
