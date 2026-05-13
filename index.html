@@ -580,7 +580,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   color:#1A1A1A;
   box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07);
   position:relative;
-  min-height:858px;     /* 11" at 78px/in */
+  /* no min-height — let content determine page height, episodes flow naturally */
   box-sizing:border-box;
 }
 /* Page number — top right, 0.5" from top */
@@ -4918,6 +4918,10 @@ function _showTranslatedScriptInBody(key){
       const content = tagMatch ? tagMatch[2].trim() : line;
       if(!content) return;
 
+      // Skip duplicate episode title line: e.g. "EPISODE 01 WOLF FIENDS RAID..."
+      // This happens when the translated sp-title content is output again as an action line
+      if(isEn && /^EPISODE\s+\d+\b/i.test(content)) return;
+
       if(tag === 'sp-scene' || (!tag && /^(INT\.|EXT\.)/i.test(content))){
         pageHtml += `      <div class="sp-scene">${escHtml(content)}</div>\n`;
       } else if(tag === 'sp-char' || (!tag && /^[A-Z][A-Z\s]{2,}$/.test(content) && content.length < 40)){
@@ -5223,7 +5227,7 @@ const ALL_EP_DATA = (function(){
       String(i+1).padStart(2,'0'),
       `第${i+1}集标题（待生成）`,
       `第${i+1}集情节节拍将由 AI 基于改编方案生成，请配置 API Key 后重新生成分集细纲。`,
-      '约70s',
+      '约100s',
       `第${i+1}集结尾卡点（待生成）`,
     ]);
   }
@@ -5312,7 +5316,7 @@ async function generateAct(actIdx) {
 
 【输出规则】
 - 严格按照JSON数组返回，不要任何额外文字、markdown代码块标记
-- 每集对象字段：num(两位数字符串)、title(集标题8字内)、beat(情节节拍200-300字散文)、duration(格式"约Xs" 60-80s范围)、hook(结尾卡点40-60字)、vibes(爽感标签数组，每个对象含type和label)
+- 每集对象字段：num(两位数字符串)、title(集标题8字内)、beat(情节节拍200-300字散文)、duration(格式"约Xs" 80-120s范围)、hook(结尾卡点40-60字)、vibes(爽感标签数组，每个对象含type和label)
 - vibes的type只能是：suppress(憋屈/压迫)、thrill(小爽/逆袭)、bigthrill(大爽)、emotion(情感破防/情感升温)、reveal(真相揭露)
 - 每集1-2个爽感标签，节奏标注要准确符合剧情
 
@@ -5393,7 +5397,7 @@ ${transcript || '（无追问记录）'}
 【用户手动修改的锁定内容（必须严格继承）】
 ${buildLockedEditsContext()}
 
-返回格式：[{"num":"01","title":"标题","beat":"节拍...","duration":"约70s","hook":"卡点...","vibes":[{"type":"suppress","label":"憋屈"}]}]`;
+返回格式：[{"num":"01","title":"标题","beat":"节拍...","duration":"约100s","hook":"卡点...","vibes":[{"type":"suppress","label":"憋屈"}]}]`;
 
   let rawData = null;
 
@@ -5449,7 +5453,7 @@ function enrichEp(raw, idx) {
     num: raw.num || String(idx+1).padStart(2,'0'),
     title: raw.title || `第${idx+1}集`,
     beat: raw.beat || '',
-    duration: raw.duration || '约70s',
+    duration: raw.duration || '约100s',
     hook: raw.hook || '',
     vibes: Array.isArray(raw.vibes) ? raw.vibes : [],
     modifiedFields: {},
@@ -5606,7 +5610,7 @@ function renderActCards(actIdx) {
 
 function buildEpCardHTML(ep) {
   var secs = parseInt((ep.duration||'100').replace(/[^0-9]/g,'')) || 100;
-  var durClass = secs < 90 ? 'short' : secs > 120 ? 'long' : 'ok';
+  var durClass = secs < 80 ? 'short' : secs > 120 ? 'long' : 'ok';
   var vibeHtml = (ep.vibes||[]).map(function(v) {
     return '<span class="vibe-tag type-'+v.type+'" onclick="removeVibe(this,\''+ep.num+'\',\''+v.type+'\',\''+v.label+'\')">'+v.label+' ×</span>';
   }).join('');
@@ -6137,7 +6141,7 @@ function restoreStoryUI(){
 }
 
 function loadSavedProj(name){
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = _getSavedProjects();
   const snap = projects.find(p => p.name === name);
   if(!snap){ showToast('项目数据不存在'); return; }
 
@@ -6208,7 +6212,7 @@ function updateScriptStats(){
   const words=text.replace(/\s+/g,'').length;
   const pages=body.querySelectorAll('.script-page').length||1;
 
-  // Accurate duration: each episode targets 60-80s
+  // Accurate duration: each episode targets 80-120s
   // Count episodes that have actually been generated (have real content)
   const epCount = body.querySelectorAll('.script-page').length;
   // Estimate: each generated episode ≈ 100s (midpoint of 80-120s target)
@@ -6276,12 +6280,12 @@ function insertDualDialogue(){
   dual.className='sp-dual';
   dual.innerHTML=`
     <div class="sp-dual-col">
-      <div class="sp-char" contenteditable="true" spellcheck="false">角色 A</div>
-      <div class="sp-dlg" contenteditable="true" spellcheck="false">对白……</div>
+      <div class="sp-char">角色 A</div>
+      <div class="sp-dlg">对白……</div>
     </div>
     <div class="sp-dual-col">
-      <div class="sp-char" contenteditable="true" spellcheck="false">角色 B</div>
-      <div class="sp-dlg" contenteditable="true" spellcheck="false">对白……</div>
+      <div class="sp-char">角色 B</div>
+      <div class="sp-dlg">对白……</div>
     </div>`;
   anchor.after(dual);
   dual.querySelector('.sp-char').focus();
@@ -6393,9 +6397,12 @@ function buildScriptUI() {
       if (as && as.status === 'done') appendActToBody(aIdx, false);
     });
     renderActTabs();
+    // 恢复时：只展示已完成的幕，不自动触发生成——用户需通过右侧对话框确认后才能继续
     const nextIdx = findNextUngeneratedAct();
-    if (nextIdx >= 0) appendActGeneratingPlaceholder(nextIdx);
-    else renderFinalizePrompt();
+    if (nextIdx < 0) {
+      renderFinalizePrompt();
+    }
+    // 不调 appendActGeneratingPlaceholder，避免误导用户以为正在自动生成
     return;
   }
 
@@ -6477,7 +6484,69 @@ function scrollToAct(aIdx) {
   }
 }
 
+// ── 上一幕衔接上下文：从已生成的剧本 DOM 中提取，感知用户手动修改 ──
+// 策略：取上一幕最后2集的实际剧本文字（含用户修改），确保本幕开篇和上文无缝衔接
+function buildPrevActContext(currentActIdx) {
+  if (currentActIdx === 0) return '这是全剧开篇';
+  const prevActIdx = currentActIdx - 1;
+  const prevAct = bdState.acts[prevActIdx];
+  if (!prevAct) return '这是全剧开篇';
+
+  const lastEpIdxs = [];
+  for (let i = Math.max(prevAct.from - 1, prevAct.to - 2); i < prevAct.to; i++) {
+    lastEpIdxs.push(i);
+  }
+  const epTexts = lastEpIdxs.map(epIdx => {
+    const wrap = document.getElementById(`script-ep-wrap-${epIdx}`);
+    if (!wrap) {
+      const as = scriptState.actScripts[prevActIdx];
+      const savedHtml = as?.eps?.[epIdx] || '';
+      if (savedHtml) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = savedHtml;
+        const text = [...tmp.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition')]
+          .map(el => el.textContent.trim()).filter(Boolean).join('\n');
+        return text ? `第${epIdx+1}集剧本：\n${text.substring(0, 600)}` : '';
+      }
+      return '';
+    }
+    const body = wrap.querySelector('.sp-body');
+    const els = body
+      ? [...body.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition')]
+      : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition')];
+    const text = els.map(el => el.textContent.trim()).filter(Boolean).join('\n');
+    const isModified = scriptState.actScripts[prevActIdx]?.eps?.[`${epIdx}_modified`];
+    const label = isModified ? `第${epIdx+1}集剧本（用户已修改）：` : `第${epIdx+1}集剧本：`;
+    return text ? `${label}\n${text.substring(0, 600)}` : '';
+  }).filter(Boolean);
+
+  if (!epTexts.length) {
+    const prevEpData = PROJECT.episodes.allData[prevAct.to - 1];
+    const hook = prevEpData ? (Array.isArray(prevEpData) ? prevEpData[4] : prevEpData.hook) : '';
+    return hook ? `上幕结尾（第${prevAct.to}集）卡点：${hook}` : '上一幕已生成';
+  }
+  return `【上一幕（${prevAct.name}·${prevAct.label}，第${prevAct.from}-${prevAct.to}集）末尾剧本内容——本幕必须与此自然衔接，人物状态、情绪落点、场景氛围须连贯】\n${epTexts.join('\n\n---\n\n')}`;
+}
+
 // ── Generate script for one act ──
+// 生成中的 beforeunload 防刷新警告
+let _scriptGenUnloadHandler = null;
+function _lockPageForScriptGen() {
+  if (_scriptGenUnloadHandler) return; // already locked
+  _scriptGenUnloadHandler = (e) => {
+    e.preventDefault();
+    e.returnValue = '剧本正在生成中，刷新页面将中断生成并丢失进度，确定要离开吗？';
+    return e.returnValue;
+  };
+  window.addEventListener('beforeunload', _scriptGenUnloadHandler);
+}
+function _unlockPageForScriptGen() {
+  if (_scriptGenUnloadHandler) {
+    window.removeEventListener('beforeunload', _scriptGenUnloadHandler);
+    _scriptGenUnloadHandler = null;
+  }
+}
+
 async function generateScriptAct(actIdx) {
   if (!PROJECT.outline?.confirmed && !PROJECT.bible?.confirmed) {
     showToast('请先完成创意策划案和分集细纲'); return;
@@ -6488,6 +6557,9 @@ async function generateScriptAct(actIdx) {
   currentActIdx = actIdx;
   scriptState.actScripts[actIdx] = { eps: {}, status: 'generating' };
   renderActTabs();
+
+  // 注册刷新警告，防止用户误刷新中断生成
+  _lockPageForScriptGen();
 
   // Append loading placeholder to body (don't replace existing content)
   appendActGeneratingPlaceholder(actIdx);
@@ -6566,14 +6638,10 @@ ${buildCharVoiceContext()}`;
     const epHook  = isObj ? e.hook  : e[4];
     const bdEp = bdState.allEps[act.from - 1 + i];
     const vibeStr = bdEp ? (bdEp.vibes||[]).map(v=>v.label).join('·') : '';
-    return `第${act.from+i}集《${epTitle||''}》${vibeStr ? ` [${vibeStr}]` : ''}\n情节节拍：${epBeat||''}\n预估时长：${epDur||'约70s'}\n结尾卡点：${epHook||''}`;
+    return `第${act.from+i}集《${epTitle||''}》${vibeStr ? ` [${vibeStr}]` : ''}\n情节节拍：${epBeat||''}\n预估时长：${epDur||'约100s'}\n结尾卡点：${epHook||''}`;
   }).join('\n\n');
 
-  // Get previous episode's hook - allData is [num,title,beat,duration,hook] array
-  const prevEpData = act.from > 1 ? PROJECT.episodes.allData[act.from-2] : null;
-  const prevHook = prevEpData
-    ? `上集（第${act.from-1}集）结尾卡点：${Array.isArray(prevEpData) ? prevEpData[4] : prevEpData.hook}`
-    : '这是全剧开篇';
+  const prevHook = buildPrevActContext(actIdx);
 
   const realDocTitle = src.docTitle || sc.title || (src.userRequirements||'').substring(0,30);
   const userMsg = `请为【${act.name}·${act.label}（第${act.from}-${act.to}集）】创作完整剧本。
@@ -6610,7 +6678,7 @@ ${b.characters&&b.characters.length>0
 【策划追问沟通结论（剧本必须落实用户在追问中确认的关键决策）】
 ${transcript || '（无追问记录）'}
 
-【上下文衔接】
+【上一幕衔接上下文（开篇必须与此自然衔接——人物所在位置、情绪状态、关系张力须连贯；若上一幕有用户手动修改，本幕须继承修改后的版本而非原始细纲）】
 ${prevHook}
 
 【本幕分集任务（每集700-1000字，时长80-120s）】
@@ -6698,6 +6766,7 @@ ${lockedEdits ? `【用户锁定修改——必须严格继承】\n${lockedEdits
       mockSections.push(`第${act.from+i}集《${title}》\n\n内景　主场景　日间\n\n${beat}\n\n内景　对峙场景　夜\n\n（画面定格）${hook}`);
     }
     doRender(mockSections.join('\n===第XX集完===\n'));
+    _unlockPageForScriptGen();
     return;
   }
 
@@ -6712,6 +6781,8 @@ ${lockedEdits ? `【用户锁定修改——必须严格继承】\n${lockedEdits
     document.getElementById('gen-mask').classList.remove('show');
     if (err.message !== 'no key') showToast('生成失败：' + err.message);
     doRender('');
+  } finally {
+    _unlockPageForScriptGen();
   }
 }
 
@@ -6956,7 +7027,7 @@ function updateScriptSidebar(i) {
   const bdEp = bdState.allEps[i];
   const sideTitle = sideEp ? sideEp[1] : `第${i+1}集`;
   const sideBeat  = sideEp ? sideEp[2] : '';
-  const sideTime  = sideEp ? sideEp[3] : '约70s';
+  const sideTime  = sideEp ? sideEp[3] : '约100s';
   const sideHook  = sideEp ? sideEp[4] : '';
   const vibes = bdEp ? (bdEp.vibes||[]).map(v=>`<span class="vibe-tag type-${v.type}" style="font-size:10px;padding:1px 6px">${v.label}</span>`).join('') : '';
   const chars = (PROJECT.bible.confirmed && PROJECT.bible.characters && PROJECT.bible.characters.length > 0)
@@ -7536,6 +7607,11 @@ function initScriptEditorKeys() {
     const sel = window.getSelection();
     const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition') || null;
     const currentType = focusEl ? [...focusEl.classList].find(c => SCRIPT_ELEMENT_CYCLE.includes(c)) : null;
+
+    // If char autocomplete is visible, let the AC keydown handler take over — don't process format shortcuts
+    const acEl = document.getElementById('char-ac');
+    const acVisible = acEl && acEl.style.display !== 'none';
+    if (acVisible && (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Escape')) return;
     
     // ⌘1-6: Change element type
     if ((e.metaKey || e.ctrlKey) && focusEl && currentType) {
@@ -7591,6 +7667,54 @@ function initScriptEditorKeys() {
       if (found) _lastFocusedScriptEl = found;
     }
   });
+
+  // Input event: trigger char autocomplete when typing in sp-char
+  scroll.addEventListener('input', function(e) {
+    const sel = window.getSelection();
+    const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
+    if (!focusEl) { document.getElementById('char-ac').style.display='none'; return; }
+    if (focusEl.classList.contains('sp-char')) {
+      showCharAC(focusEl);
+    } else {
+      document.getElementById('char-ac').style.display='none';
+    }
+  });
+
+  // Hide char-ac on click outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#char-ac') && !e.target.closest('.sp-char')) {
+      document.getElementById('char-ac').style.display='none';
+    }
+  });
+
+  // Arrow key navigation in char autocomplete
+  scroll.addEventListener('keydown', function(e) {
+    const ac = document.getElementById('char-ac');
+    if (ac.style.display === 'none') return;
+    const items = ac.querySelectorAll('.char-ac-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      acIndex = Math.min(acIndex + 1, items.length - 1);
+      items.forEach((it,i) => it.classList.toggle('active', i === acIndex));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      acIndex = Math.max(acIndex - 1, 0);
+      items.forEach((it,i) => it.classList.toggle('active', i === acIndex));
+    } else if ((e.key === 'Enter' || e.key === 'Tab') && acIndex >= 0) {
+      e.preventDefault();
+      const name = items[acIndex]?.dataset.name;
+      if (name) {
+        const sel2 = window.getSelection();
+        const charEl = sel2?.focusNode?.parentElement?.closest('.sp-char');
+        if (charEl) { charEl.textContent = name; placeCursorAtEnd(charEl); }
+        ac.style.display = 'none';
+        acIndex = -1;
+      }
+    } else if (e.key === 'Escape') {
+      ac.style.display = 'none'; acIndex = -1;
+    }
+  }, true);
 }
 
 function updateFormatBar(activeType) {
@@ -7622,11 +7746,7 @@ function insertAfterElement(el, newType, epIdx) {
   newEl.className = newType;
   newEl.dataset.ep = epIdx;
   newEl.dataset.type = newType.replace('sp-', '');
-  newEl.setAttribute('contenteditable', 'true');
-  newEl.setAttribute('spellcheck', 'false');
-  newEl.setAttribute('oninput', 'onScriptFieldEdit(this)');
-  newEl.setAttribute('onblur', 'saveScriptField(this)');
-  // Auto-prefix
+  // No contenteditable here — inherits from sp-body parent container
   if (newType === 'sp-scene') newEl.textContent = 'INT. ';
   else if (newType === 'sp-transition') newEl.textContent = 'CUT TO:';
   else newEl.textContent = '';
@@ -7698,6 +7818,14 @@ function showToast(msg){
 // ══ PERSISTENCE — localStorage ══
 
 const STORAGE_KEY = 'dramamind_v2';  // bumped to avoid stale v1 data
+
+// ── Safe localStorage helpers ──
+function _safeParseJSON(str, fallback) {
+  try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+function _getSavedProjects() {
+  return _safeParseJSON(localStorage.getItem('dramamind_projects'), []);
+}
 let _saveTimer = null;
 
 function saveProject(){
@@ -7750,7 +7878,7 @@ function saveProject(){
     // Also keep dramamind_projects in sync so project manager shows fresh data
     if(S.proj) {
       try {
-        const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+        const projects = _getSavedProjects();
         const idx = projects.findIndex(p => p.name === S.proj);
         if(idx >= 0) { projects[idx] = snapshot; }
         else { projects.unshift(snapshot); }
@@ -7871,7 +7999,7 @@ function newProject(){
   if(S.proj){
     // 自动保存当前项目
     saveProject();
-    const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+    const projects = _getSavedProjects();
     const idx = projects.findIndex(p => p.name === S.proj);
     const snap = {
       name: S.proj, savedAt: Date.now(),
@@ -7953,6 +8081,14 @@ function newProject(){
   S.navKey = '';
   const stageTagReset = document.getElementById('wb-stage-tag');
   if(stageTagReset) stageTagReset.textContent = '改编策划';
+  // Reset history arrays and in-flight state
+  bibleHistory.length = 0; _updateBibleHistoryBtn();
+  Object.keys(bdActHistory).forEach(k => delete bdActHistory[k]);
+  Object.keys(scriptActHistory).forEach(k => delete scriptActHistory[k]);
+  _changedBeatIdxs.clear();
+  _pendingTask = null;
+  _unlockPageForScriptGen(); // cancel any in-flight beforeunload guard
+  document.getElementById('char-ac').style.display = 'none';
   showPage('home');
 }
 
@@ -8848,9 +8984,10 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
     const epIdx = parseInt(wrap.dataset.ep);
 
     // 从原始 DOM 提取源文本（中文原文）
+    // 注意：sp-title（集标题行）不参与翻译，由渲染层根据集号自动生成，避免出现重复的 EPISODE XX 行
     const elements = dialogueOnly
       ? [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
-      : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
+      : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')];
     if (!elements.length) continue;
 
     const lines = elements.map(el => {
@@ -9729,7 +9866,7 @@ function syncStoryExportBtns(view){
 function deleteProject(name) {
   if(!confirm(`确定要删除项目「${name}」吗？此操作不可撤销。`)) return;
   try {
-    const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+    const projects = _getSavedProjects();
     const filtered = projects.filter(p => p.name !== name);
     localStorage.setItem('dramamind_projects', JSON.stringify(filtered));
     // If this is the current project, clear active project state
@@ -9784,7 +9921,7 @@ function closePM() {
 function renderPMList() {
   const list = document.getElementById('pm-list');
   const countEl = document.getElementById('pm-count');
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = _getSavedProjects();
 
   if(countEl) countEl.textContent = `共 ${projects.length} 个项目`;
 
@@ -9820,7 +9957,7 @@ function showPMDetail(idx) {
     el.style.borderColor = i === idx ? 'var(--gp)' : 'transparent';
   });
 
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = _getSavedProjects();
   const p = projects[idx];
   if(!p) return;
 
@@ -9882,7 +10019,7 @@ function showPMDetail(idx) {
 function pmPreviewAsset(btn) {
   const key = btn.dataset.key;
   const pmiIdx = parseInt(btn.dataset.pmi);
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = _getSavedProjects();
   const p = projects[pmiIdx];
   if(!p || !p.ASSET_STORE?.[key]?.text) { showToast('暂无内容'); return; }
   const store = p.ASSET_STORE[key];
@@ -9905,7 +10042,7 @@ let _pmPreviewStore = null;
 
 function renamePMProject(idx, newName) {
   if(!newName || newName.length < 1) return;
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = _getSavedProjects();
   if(!projects[idx]) return;
   const oldName = projects[idx].name;
   if(oldName === newName) return;
@@ -9923,7 +10060,7 @@ function renamePMProject(idx, newName) {
 }
 
 function deletePMProject(idx) {
-  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
+  const projects = _getSavedProjects();
   if(!projects[idx]) return;
   const name = projects[idx].name;
   if(!confirm(`确认删除项目「${name}」？此操作不可撤销。`)) return;
