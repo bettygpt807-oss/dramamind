@@ -604,6 +604,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   font-size:10px;color:#BBB;
   font-family:'Noto Sans SC',sans-serif;letter-spacing:.04em;
 }
+/* Hidden episode content wrapper — paginator reads from here */
+.script-ep-content { display: block; }
 /* Episode title block */
 .sp-title{
   text-align:center;margin-bottom:24px;
@@ -673,20 +675,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 }
 .sp-body:focus{
   background:transparent;
-}
-/* Style each episode content wrapper as a page-like card */
-.script-ep-content{
-  width:816px;
-  margin:0 auto 24px;
-  background:#FEFEFE;
-  padding:96px 96px 96px 144px;
-  font-family:'Courier Prime','Courier New',Courier,monospace;
-  font-size:12pt;
-  line-height:1.5;
-  color:#1A1A1A;
-  box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07);
-  box-sizing:border-box;
-  position:relative;
 }
 /* Keep visual formatting on child elements (not contenteditable individually) */
 .sp-body .sp-scene[data-type],
@@ -1977,6 +1965,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       <div class="act-tabs" id="act-tabs"></div>
 
 
+
       <!-- Continuous scroll: all acts append here sequentially -->
       <div class="script-scroll" id="script-scroll">
         <!-- 空状态：剧本尚未生成 -->
@@ -2041,7 +2030,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     <span class="ce-item-key"><span class="ce-key">⌘</span><span class="ce-key">5</span></span>
   </div>
   <div class="ce-divider"></div>
-  <div class="ce-item" onclick="insertDualDialogue()">
+  <div class="ce-item" onclick="insertDualDialogue();document.getElementById('ce-menu').classList.remove('show')" data-type="sp-dual">
     <span class="ce-item-icon">⇔</span><span class="ce-item-label">双人对白</span>
   </div>
 </div>
@@ -6352,13 +6341,45 @@ function repaginateScript() {
     numEl.textContent = `${pageNum}.`;
     pageEl.appendChild(numEl);
 
-    // Content area
+    // Content area — editable so user can type directly in the page view
     const contentEl = document.createElement('div');
     contentEl.className = 'script-page-content';
+    contentEl.setAttribute('contenteditable', 'true');
+    contentEl.setAttribute('spellcheck', 'false');
+    contentEl.style.outline = 'none';
+    contentEl.style.cursor = 'text';
 
     pageItems.forEach(item => {
-      contentEl.appendChild(item.node.cloneNode(true));
+      const node = item.node.cloneNode(true);
+      // Mark the node with ep/act info so we can propagate edits
+      node.dataset.physEp = item.epIdx;
+      contentEl.appendChild(node);
     });
+
+    // Sync edits from the physical (visible) page back to the hidden sp-body source
+    contentEl.addEventListener('input', function() {
+      // For each element in this content area, find the matching source element and update it
+      const edited = contentEl.querySelectorAll('[data-phys-ep]');
+      edited.forEach(editedEl => {
+        const epIdx = parseInt(editedEl.dataset.physEp);
+        const sourceWrap = document.getElementById('script-ep-wrap-' + epIdx);
+        if (!sourceWrap) return;
+        const sourceBody = sourceWrap.querySelector('.sp-body');
+        if (!sourceBody) return;
+        // Match by position: find all same-class elements in source and update the matching one
+        const cls = editedEl.className;
+        const allEdited = [...contentEl.querySelectorAll('.' + cls.split(' ')[0] + '[data-phys-ep="' + epIdx + '"]')];
+        const allSource = [...sourceBody.querySelectorAll('.' + cls.split(' ')[0])];
+        const idx = allEdited.indexOf(editedEl);
+        if (idx >= 0 && allSource[idx]) {
+          allSource[idx].textContent = editedEl.textContent;
+        }
+        // Trigger save
+        if (sourceBody) onScriptBodyEdit(sourceBody);
+      });
+    });
+
+    // Also allow selection toolbar to work on physical page elements
     pageEl.appendChild(contentEl);
 
     // Bottom info: last page shows totals, others show page/total
@@ -6380,9 +6401,6 @@ function repaginateScript() {
   // ── Step 5: Insert physical pages at the top of script-body ──
   body.insertBefore(pagesContainer, body.firstChild);
 
-  // ── Step 5: Insert physical pages at the top of script-body ──
-  body.insertBefore(pagesContainer, body.firstChild);
-
   // ── Step 6: Update stats ──
   const totalWords = allItems.reduce((sum, item) => sum + (item.node.textContent || '').replace(/\s+/g,'').length, 0);
   const statWords = document.getElementById('stat-words');
@@ -6391,16 +6409,6 @@ function repaginateScript() {
   if (statWords) statWords.textContent = totalWords.toLocaleString() + ' 字';
   if (statPages) statPages.textContent = totalPages + ' 页';
   if (statDur)   statDur.textContent   = `≈ ${totalPages} 分钟（1页≈1分钟）`;
-
-  // ── Step 7: Make all episode wrappers directly visible and editable ──
-  const epWraps = scroll.querySelectorAll('[id^="script-ep-wrap-"]');
-  epWraps.forEach(wrap => {
-    wrap.style.display = 'block';
-    const body2 = wrap.querySelector('.sp-body');
-    if (body2) {
-      body2.style.cssText = 'outline:none;cursor:text;min-height:60px;';
-    }
-  });
 }
 
 
@@ -6634,14 +6642,17 @@ function renderActTabs() {
 function scrollToAct(aIdx) {
   currentActIdx = aIdx;
   renderActTabs();
-  // Scroll directly to first episode wrapper of this act
+  // Try to scroll to the first physical page containing this act's episodes
   const act = bdState.acts[aIdx];
-  if (act) {
+  if (act && window._epFirstPageMap) {
     const firstEpIdx = act.from - 1;
-    const epWrap = document.getElementById(`script-ep-wrap-${firstEpIdx}`);
-    if (epWrap) { epWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const pageNum = window._epFirstPageMap[firstEpIdx];
+    if (pageNum) {
+      const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
+      if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    }
   }
-  // Fallback: scroll to act block
+  // Fallback: scroll to act block (may be hidden but browser still scrolls)
   const el = document.getElementById(`script-act-block-${aIdx}`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -7023,10 +7034,10 @@ function appendActToBody(actIdx, animate) {
     <span class="script-act-divider-range">第${act.from}–${act.to}集 · ${act.desc}</span>`;
   block.appendChild(divider);
 
-  // ② All episode scripts (visible — user edits directly in sp-body)
+  // ② All episode scripts (hidden — content is paginated into physical pages)
   const epsContainer = document.createElement('div');
   epsContainer.id = `script-act-eps-${actIdx}`;
-  epsContainer.style.display = 'block';
+  epsContainer.style.display = 'none'; // hidden: paginator reads from here
   for (let i = 0; i < act.count; i++) {
     const epIdx = act.from - 1 + i;
     const html = as.eps[epIdx] || buildMockScriptHTML(epIdx);
@@ -7054,8 +7065,7 @@ function appendActToBody(actIdx, animate) {
         <div class="script-act-end-check">✓</div>
         <div class="script-act-end-title">${act.name}·${act.label} 已生成（第${act.from}-${act.to}集）</div>
         <div class="script-act-end-meta">${act.count}集 · 可直接编辑</div>
-      </div>
-      `;
+      </div>`;
   }
   block.appendChild(endPanel);
   body.appendChild(block);
@@ -7396,9 +7406,15 @@ function initScriptScrollObserver() {
 // selEpTab kept for compat — now scrolls to first physical page of that episode
 function selEpTab(el, i) {
   currentEp = i;
-  // Scroll directly to episode wrapper
-  const wrap = document.getElementById(`script-ep-wrap-${i}`);
-  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Find the first physical page containing this episode
+  if (window._epFirstPageMap && window._epFirstPageMap[i]) {
+    const pageNum = window._epFirstPageMap[i];
+    const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
+    if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  } else {
+    const wrap = document.getElementById(`script-ep-wrap-${i}`);
+    if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   updateScriptSidebar(i);
 }
 
@@ -7610,10 +7626,12 @@ document.addEventListener('mouseup', (e) => {
     document.getElementById('sel-toolbar').classList.remove('show');
     return;
   }
-  // Look for sp-body (new) or legacy [data-ep] element
-  const target = sel.anchorNode?.parentElement?.closest('.sp-body,[data-ep]');
+  // Look for sp-body (new), physical page content, or legacy [data-ep] element
+  const target = sel.anchorNode?.parentElement?.closest('.sp-body,.script-page-content,[data-ep]');
   if(!target) { document.getElementById('sel-toolbar').classList.remove('show'); return; }
-  _selectedEl = target;
+  // If inside physical page, find the nearest script element for _selectedEl
+  const scriptEl = sel.anchorNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
+  _selectedEl = scriptEl || target;
   const range = sel.getRangeAt(0);
   const rect = range.getBoundingClientRect();
   const tb = document.getElementById('sel-toolbar');
@@ -7701,18 +7719,44 @@ function openCEMenu(e) {
 
 function changeElement(newType) {
   document.getElementById('ce-menu').classList.remove('show');
-  // Find the focused script element inside sp-body
+  // Find the focused script element inside sp-body or physical page
   const sel = window.getSelection();
   const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   const target = focusEl || _selectedEl?.closest?.('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   if(!target) return;
   const body = target.closest('.sp-body');
+
+  // Change the visible element's class
   target.className = newType;
   target.dataset.type = newType.replace('sp-','');
   if (newType === 'sp-scene' && !target.textContent.match(/^(INT\.|EXT\.)/i)) {
     target.textContent = 'INT. ';
     placeCursorAtEnd(target);
   }
+
+  // If this is a physical page element, sync back to hidden sp-body source
+  const physEp = target.dataset.physEp;
+  if (physEp !== undefined && !body) {
+    const epIdx = parseInt(physEp);
+    const sourceWrap = document.getElementById('script-ep-wrap-' + epIdx);
+    if (sourceWrap) {
+      const sourceBody = sourceWrap.querySelector('.sp-body');
+      if (sourceBody) {
+        // Find matching element in source by position
+        const pageContent = target.closest('.script-page-content');
+        const allSameEpPhys = pageContent ? [...pageContent.querySelectorAll('[data-phys-ep="' + physEp + '"]')] : [];
+        const allSource = [...sourceBody.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition')];
+        const idx = allSameEpPhys.indexOf(target);
+        if (idx >= 0 && allSource[idx]) {
+          allSource[idx].className = newType;
+          allSource[idx].dataset.type = newType.replace('sp-', '');
+          allSource[idx].textContent = target.textContent;
+        }
+        onScriptBodyEdit(sourceBody);
+      }
+    }
+  }
+
   if (body) onScriptBodyEdit(body);
   showToast('已转换为 ' + {
     'sp-scene':'场景标题','sp-action':'动作','sp-char':'人物名',
