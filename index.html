@@ -604,8 +604,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   font-size:10px;color:#BBB;
   font-family:'Noto Sans SC',sans-serif;letter-spacing:.04em;
 }
-/* Hidden episode content wrapper — paginator reads from here */
-.script-ep-content { display: block; }
 /* Episode title block */
 .sp-title{
   text-align:center;margin-bottom:24px;
@@ -675,6 +673,20 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 }
 .sp-body:focus{
   background:transparent;
+}
+/* Style each episode content wrapper as a page-like card */
+.script-ep-content{
+  width:816px;
+  margin:0 auto 24px;
+  background:#FEFEFE;
+  padding:96px 96px 96px 144px;
+  font-family:'Courier Prime','Courier New',Courier,monospace;
+  font-size:12pt;
+  line-height:1.5;
+  color:#1A1A1A;
+  box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07);
+  box-sizing:border-box;
+  position:relative;
 }
 /* Keep visual formatting on child elements (not contenteditable individually) */
 .sp-body .sp-scene[data-type],
@@ -1964,20 +1976,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       <!-- Act tabs (幕级导航) -->
       <div class="act-tabs" id="act-tabs"></div>
 
-      <!-- Hollywood Format Quick-Access Bar (Arc Studio style) -->
-      <div class="script-format-bar" id="script-format-bar">
-        <span class="sfb-label">格式快捷：</span>
-        <button class="sfb-btn" onclick="insertFormatElement('scene')" title="⌘1 场景标题 INT./EXT.">▬ 场景</button>
-        <button class="sfb-btn" onclick="insertFormatElement('action')" title="⌘2 动作描述">≡ 动作</button>
-        <button class="sfb-btn" onclick="insertFormatElement('character')" title="⌘3 人物名（全大写）">👤 人物名</button>
-        <button class="sfb-btn" onclick="insertFormatElement('parenthetical')" title="⌘4 括号说明">( ) 括号</button>
-        <button class="sfb-btn" onclick="insertFormatElement('dialogue')" title="⌘5 对白">💬 对白</button>
-        <button class="sfb-btn" onclick="insertFormatElement('transition')" title="⌘6 转场">→ 转场</button>
-        <div class="sfb-sep"></div>
-        <button class="sfb-btn" onclick="insertNewPage()" title="插入新集（新页）">+ 新集</button>
-        <div class="sfb-sep"></div>
-        <span class="sfb-label" style="font-size:9px;opacity:.7">Tab = 切换元素类型 · Enter = 新建同类行</span>
-      </div>
 
       <!-- Continuous scroll: all acts append here sequentially -->
       <div class="script-scroll" id="script-scroll">
@@ -2000,8 +1998,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 <!-- Selection toolbar (appears on text selection in script) -->
 <div class="selection-toolbar" id="sel-toolbar">
   <button class="sel-btn comment-btn" onclick="openAiEditInput(event)">✏ AI修改</button>
-  <div style="width:1px;height:16px;background:rgba(255,255,255,.15);margin:0 1px"></div>
-  <button class="sel-btn" onclick="insertDualDialogue()">⇔ 双人对白</button>
   <div style="width:1px;height:16px;background:rgba(255,255,255,.15);margin:0 1px"></div>
   <button class="sel-btn" onclick="openCEMenu(event)">⇄ 转换类型</button>
 </div>
@@ -2043,6 +2039,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   <div class="ce-item" onclick="changeElement('sp-dlg')" data-type="sp-dlg">
     <span class="ce-item-icon">💬</span><span class="ce-item-label">对白</span>
     <span class="ce-item-key"><span class="ce-key">⌘</span><span class="ce-key">5</span></span>
+  </div>
+  <div class="ce-divider"></div>
+  <div class="ce-item" onclick="insertDualDialogue()">
+    <span class="ce-item-icon">⇔</span><span class="ce-item-label">双人对白</span>
   </div>
 </div>
 
@@ -6380,6 +6380,9 @@ function repaginateScript() {
   // ── Step 5: Insert physical pages at the top of script-body ──
   body.insertBefore(pagesContainer, body.firstChild);
 
+  // ── Step 5: Insert physical pages at the top of script-body ──
+  body.insertBefore(pagesContainer, body.firstChild);
+
   // ── Step 6: Update stats ──
   const totalWords = allItems.reduce((sum, item) => sum + (item.node.textContent || '').replace(/\s+/g,'').length, 0);
   const statWords = document.getElementById('stat-words');
@@ -6388,6 +6391,16 @@ function repaginateScript() {
   if (statWords) statWords.textContent = totalWords.toLocaleString() + ' 字';
   if (statPages) statPages.textContent = totalPages + ' 页';
   if (statDur)   statDur.textContent   = `≈ ${totalPages} 分钟（1页≈1分钟）`;
+
+  // ── Step 7: Make all episode wrappers directly visible and editable ──
+  const epWraps = scroll.querySelectorAll('[id^="script-ep-wrap-"]');
+  epWraps.forEach(wrap => {
+    wrap.style.display = 'block';
+    const body2 = wrap.querySelector('.sp-body');
+    if (body2) {
+      body2.style.cssText = 'outline:none;cursor:text;min-height:60px;';
+    }
+  });
 }
 
 
@@ -6621,17 +6634,14 @@ function renderActTabs() {
 function scrollToAct(aIdx) {
   currentActIdx = aIdx;
   renderActTabs();
-  // Try to scroll to the first physical page containing this act's episodes
+  // Scroll directly to first episode wrapper of this act
   const act = bdState.acts[aIdx];
-  if (act && window._epFirstPageMap) {
+  if (act) {
     const firstEpIdx = act.from - 1;
-    const pageNum = window._epFirstPageMap[firstEpIdx];
-    if (pageNum) {
-      const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
-      if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-    }
+    const epWrap = document.getElementById(`script-ep-wrap-${firstEpIdx}`);
+    if (epWrap) { epWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   }
-  // Fallback: scroll to act block (may be hidden but browser still scrolls)
+  // Fallback: scroll to act block
   const el = document.getElementById(`script-act-block-${aIdx}`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -7013,10 +7023,10 @@ function appendActToBody(actIdx, animate) {
     <span class="script-act-divider-range">第${act.from}–${act.to}集 · ${act.desc}</span>`;
   block.appendChild(divider);
 
-  // ② All episode scripts (hidden — content is paginated into physical pages)
+  // ② All episode scripts (visible — user edits directly in sp-body)
   const epsContainer = document.createElement('div');
   epsContainer.id = `script-act-eps-${actIdx}`;
-  epsContainer.style.display = 'none'; // hidden: paginator reads from here
+  epsContainer.style.display = 'block';
   for (let i = 0; i < act.count; i++) {
     const epIdx = act.from - 1 + i;
     const html = as.eps[epIdx] || buildMockScriptHTML(epIdx);
@@ -7038,7 +7048,6 @@ function appendActToBody(actIdx, animate) {
         <div class="script-act-end-check">✓</div>
         <div class="script-act-end-title">全部幕剧本已生成</div>
       </div>
-      <div class="script-act-end-body">请检查所有幕内容，直接点击任意场景或对白可编辑，系统自动记录修改。如需 AI 协助修改，请在右侧对话框告诉 AI。翻译后系统自动归档中文剧本。</div>
       <div class="script-act-end-actions"></div>`;
   } else {
     endPanel.innerHTML = `<div class="script-act-end-head">
@@ -7046,7 +7055,7 @@ function appendActToBody(actIdx, animate) {
         <div class="script-act-end-title">${act.name}·${act.label} 已生成（第${act.from}-${act.to}集）</div>
         <div class="script-act-end-meta">${act.count}集 · 可直接编辑</div>
       </div>
-      <div class="script-act-end-body">如需修改，直接点击场景/对白编辑，或在右侧对话框告诉 AI。确认无误后，在右侧对话框点击确认按钮继续生成${nextAct ? `${nextAct.name}·${nextAct.label}` : '下一幕'}。</div>`;
+      `;
   }
   block.appendChild(endPanel);
   body.appendChild(block);
@@ -7387,15 +7396,9 @@ function initScriptScrollObserver() {
 // selEpTab kept for compat — now scrolls to first physical page of that episode
 function selEpTab(el, i) {
   currentEp = i;
-  // Find the first physical page containing this episode
-  if (window._epFirstPageMap && window._epFirstPageMap[i]) {
-    const pageNum = window._epFirstPageMap[i];
-    const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
-    if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  } else {
-    const wrap = document.getElementById(`script-ep-wrap-${i}`);
-    if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  // Scroll directly to episode wrapper
+  const wrap = document.getElementById(`script-ep-wrap-${i}`);
+  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   updateScriptSidebar(i);
 }
 
