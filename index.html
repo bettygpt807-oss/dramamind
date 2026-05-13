@@ -1712,7 +1712,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
       </div>
     </div>
-  </div>
 
     <div id="home-recent-wrap" style="width:100%;max-width:720px;margin-top:28px;animation:fu .5s .4s ease both;display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -2478,6 +2477,9 @@ function showPage(p){
   if(isWorkbench){
     // 显示三栏容器
     if(wbWrap) wbWrap.style.display = 'flex';
+    // 确保 page-home 完全脱离流，避免占据空间把三栏挤到右侧
+    const homeEl = document.getElementById('page-home');
+    if(homeEl) homeEl.style.display = 'none';
     // 把当前 page 移入中栏
     const wbMid = document.getElementById('wb-mid');
     if(wbMid && pageEl){
@@ -2500,6 +2502,9 @@ function showPage(p){
   } else {
     // 非工作台页面：隐藏三栏，把所有 page 移回 main-content
     if(wbWrap) wbWrap.style.display = 'none';
+    // 恢复 page-home 的正常流（若当前是首页则为 flex，否则 none 由 .page 控制）
+    const homeEl = document.getElementById('page-home');
+    if(homeEl) homeEl.style.display = '';
     const wbMid = document.getElementById('wb-mid');
     if(wbMid){
       [...wbMid.children].forEach(child => {
@@ -2842,7 +2847,7 @@ function rmFile(){
   if(btn)  btn.style.display  = 'flex';
   document.getElementById('file-input').value = '';
   uploadedDocText = '';
-  docReadyPromise = null;
+  docReadyPromise = Promise.resolve(); // reset to resolved so startProject doesn't await null
 }
 
 // ══════════════════════════════════════════════════
@@ -2900,6 +2905,8 @@ const PROJECT = {
   script: { generatedBatches: 0, allData: {} },
   // [6] User edits tracking (cross-cutting)
   userEdits: {},  // {key: {original: hash, current: value, modified: true}}
+  // [7] Outline — synced from bible on confirmation (downstream compat)
+  outline: { confirmed: false, characters: '', story: '', wordCount: 0 },
 };
 
 // Populate source from intake on project start
@@ -2928,10 +2935,13 @@ async function startProject(){
 
   // ── 等待文档异步解析完成（竞态保护）──
   // 只依赖 docReadyPromise，不依赖 files[0]（session 恢复后 files[0] 可能已丢失）
-  if(docReadyPromise && !uploadedDocText){
-    showToast('文档读取中，请稍候…');
-    document.getElementById('gen-txt').textContent = '正在读取文档…';
-    document.getElementById('gen-mask').classList.add('show');
+  if(docReadyPromise){
+    // Always await docReadyPromise if it exists — safe to await a resolved promise
+    if(!uploadedDocText){
+      showToast('文档读取中，请稍候…');
+      document.getElementById('gen-txt').textContent = '正在读取文档…';
+      document.getElementById('gen-mask').classList.add('show');
+    }
     await docReadyPromise;
     document.getElementById('gen-mask').classList.remove('show');
   }
@@ -2979,9 +2989,6 @@ async function startProject(){
   }
 
   const isIntl = PROJECT.source.market.includes('欧美') || PROJECT.source.market.includes('日韩');
-  // API key was already verified above; get callAny alias
-  const callAny = callDoubao;
-
   // ── 方案生成函数：将文档原文直接注入 prompt，单次调用完成提取+生成 ──
   const generateSchemes = () => {
     const src = PROJECT.source;
@@ -5373,9 +5380,9 @@ function buildBeatsContextForAct(act) {
   
   // Map act's episode range to beat range with slight overlap to avoid gaps
   // Ensure last act always gets at least the final beats
-  const beatFrom = Math.floor((act.from - 1) / totalEps * totalBeats);
+  const beatFrom = Math.max(0, Math.floor((act.from - 1) / totalEps * totalBeats));
   const isLastAct = act.to >= totalEps;
-  const beatTo = isLastAct ? totalBeats : Math.min(totalBeats, Math.ceil(act.to / totalEps * totalBeats) + 1);
+  const beatTo = isLastAct ? totalBeats : Math.min(totalBeats, Math.max(beatFrom + 1, Math.ceil(act.to / totalEps * totalBeats) + 1));
   const actBeats = beats.slice(beatFrom, beatTo);
   
   if (actBeats.length === 0) {
@@ -5774,6 +5781,7 @@ function confirmBreakdownAndNext() {
   hideConfirmDock();
   PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
   PROJECT.episodes.confirmedUpTo = bdState.allEps.length;
+  if (!PROJECT.outline) PROJECT.outline = { confirmed: false, characters: '', story: '', wordCount: 0 };
   PROJECT.outline.confirmed = true;
   breakdownState.totalEps = PROJECT.source.episodeCount;
   breakdownState.allData = PROJECT.episodes.allData;
@@ -6352,7 +6360,7 @@ function scrollToAct(aIdx) {
 
 // ── Generate script for one act ──
 async function generateScriptAct(actIdx) {
-  if (!PROJECT.outline.confirmed && !PROJECT.bible.confirmed) {
+  if (!PROJECT.outline?.confirmed && !PROJECT.bible?.confirmed) {
     showToast('请先完成创意策划案和分集细纲'); return;
   }
   const act = bdState.acts[actIdx];
@@ -7528,6 +7536,16 @@ function debouncedSave(){
 function restoreFromSnap(snap) {
   Object.assign(S, snap.S || {});
   Object.assign(PROJECT, snap.PROJECT);
+
+  // 确保 PROJECT.outline 始终存在（旧存档可能没有此字段）
+  if (!PROJECT.outline) {
+    PROJECT.outline = { confirmed: false, characters: '', story: '', wordCount: 0 };
+    if (PROJECT.bible && PROJECT.bible.confirmed) {
+      PROJECT.outline.confirmed = true;
+      PROJECT.outline.characters = (PROJECT.bible.characters||[]).map(c=>`${c.name}（${c.role}）：${c.personality||''}`).join('\n\n');
+      PROJECT.outline.story = (PROJECT.bible.schemePoints && PROJECT.bible.schemePoints.structure) || '';
+    }
+  }
 
   // 恢复追问历史（inquiryHistory 是独立数组，不在 PROJECT 里）
   inquiryHistory.length = 0;
