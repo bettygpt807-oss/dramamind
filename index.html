@@ -197,7 +197,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .im-sel select:focus{outline:none;border-color:var(--gm);background-color:var(--wh)}
 .im-sel select:hover{border-color:var(--bd);background-color:var(--wh)}
 
-.intake-box{width:100%;max-width:720px;background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);animation:fu .5s .1s ease both;transition:border-color .18s,box-shadow .18s}
+.intake-box{width:100%;max-width:720px;background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;flex-shrink:0;box-shadow:0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);animation:fu .5s .1s ease both;transition:border-color .18s,box-shadow .18s}
 .intake-box:focus-within{border-color:var(--gm);box-shadow:0 4px 28px rgba(30,92,58,.12),0 1px 4px rgba(0,0,0,.04)}
 .intake-ta{width:100%;min-height:120px;padding:16px 18px;border:none;outline:none;font-family:'Noto Sans SC',sans-serif;font-size:14px;line-height:1.7;color:var(--ink);resize:none;background:transparent}
 .intake-ta::placeholder{color:var(--i4)}
@@ -5793,11 +5793,13 @@ function confirmBreakdownAndNext() {
   showToast('细纲已确认！正在进入剧本创作……');
   setTimeout(function() {
     showPage('script');
-    var missingIdxs = bdState.acts.map(function(_,i){return i;}).filter(function(i){return !scriptState.actScripts[i]||scriptState.actScripts[i].status!=='done';});
-    buildScriptUI();
-    if (missingIdxs.length > 0) {
-      setTimeout(function(){ generateScriptAct(missingIdxs[0]); }, 600);
-    }
+    setTimeout(function() {
+      buildScriptUI();
+      var missingIdxs = bdState.acts.map(function(_,i){return i;}).filter(function(i){return !scriptState.actScripts[i]||scriptState.actScripts[i].status!=='done';});
+      if (missingIdxs.length > 0) {
+        setTimeout(function(){ generateScriptAct(missingIdxs[0]); }, 400);
+      }
+    }, 100);
   }, 600);
 }
 
