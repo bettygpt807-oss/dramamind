@@ -569,11 +569,42 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
    At 96px/in: 8.5"=816px, 11"=1056px
    ══════════════════════════════════ */
 .script-scroll{flex:1;overflow-y:auto;background:#E8E4DF;padding:24px 0 80px}
-.script-page{
+/* Episode card collapse toggle */
+.script-page.ep-collapsed .sp-body,
+.script-page.ep-collapsed .script-ep-content > :not(.ep-card-header) {
+  display: none;
+}
+.script-page.ep-collapsed {
+  min-height: unset;
+  padding-bottom: 18px;
+}
+.ep-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  cursor: default;
+}
+.ep-collapse-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: var(--i4);
+  cursor: pointer;
+  font-family: 'Noto Sans SC', sans-serif;
+  transition: all .15s;
+  letter-spacing: .04em;
+  user-select: none;
+}
+.ep-collapse-btn:hover { border-color: var(--gm); color: var(--gm); background: var(--gg); }
+
+/* Script page CSS (existing block follows) */
   width:816px;          /* 8.5" at 96px/in — standard letter */
-  height:1056px;        /* 11" at 96px/in — FIXED, never grows */
-  min-height:1056px;
-  max-height:1056px;
+  min-height:1056px;    /* at least 11" tall, but grows with content */
+  height:auto;          /* allow natural growth — editing surface, not print preview */
   margin:0 auto 24px;
   background:#FEFEFE;
   /* 1" top/bottom, 1.5" left, 1" right — standard spec */
@@ -584,7 +615,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   color:#1A1A1A;
   box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07);
   position:relative;
-  overflow:hidden;      /* content that overflows goes to next page */
+  overflow:visible;     /* content grows naturally — no overflow clip */
   box-sizing:border-box;
 }
 /* Paginated content area inside each fixed page */
@@ -604,6 +635,11 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   font-size:10px;color:#BBB;
   font-family:'Noto Sans SC',sans-serif;letter-spacing:.04em;
 }
+/* Script episodes container — direct edit mode */
+.script-eps-container {
+  padding-top: 8px;
+}
+
 /* Hidden episode content wrapper — paginator reads from here */
 .script-ep-content { display: block; }
 /* Episode title block */
@@ -671,10 +707,19 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .sp-body{
   outline:none;
   cursor:text;
-  min-height:60px;
+  min-height:200px;
+  display:block;
+  width:100%;
 }
 .sp-body:focus{
   background:transparent;
+}
+.sp-body:focus-within{
+  background:transparent;
+}
+/* Subtle focus ring on the card when editing */
+.script-page:focus-within{
+  box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07),0 0 0 2px rgba(42,122,80,.18);
 }
 /* Keep visual formatting on child elements (not contenteditable individually) */
 .sp-body .sp-scene[data-type],
@@ -1568,6 +1613,12 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   </div>
   <div class="topbar-r">
     <span id="save-indicator" style="font-size:11px;color:rgba(255,255,255,.35);margin-right:4px;display:none" aria-live="polite"></span>
+    <span id="storage-bar-wrap" title="本地存储用量" style="display:none;align-items:center;gap:5px;margin-right:6px">
+      <span style="font-size:10px;color:rgba(255,255,255,.35)" id="storage-bar-label">0.0MB</span>
+      <span style="display:inline-block;width:44px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden">
+        <span id="storage-bar-fill" style="display:block;height:100%;width:0%;background:rgba(74,154,106,.7);border-radius:2px;transition:width .4s,background .4s"></span>
+      </span>
+    </span>
     <div class="btn-icon" id="btn-api-config" title="API配置" aria-label="API配置">API配置</div>
   </div>
 </div>
@@ -1957,6 +2008,9 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
             <div class="stb-sep"></div>
             <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
+            <div class="stb-sep"></div>
+            <button class="stb-action-btn" onclick="collapseAllEps()" title="收起全部集">收起全部</button>
+            <button class="stb-action-btn" onclick="expandAllEps()" title="展开全部集">展开全部</button>
           </div>
         </div>
       </div>
@@ -5995,18 +6049,19 @@ function exportBreakdown() {
 // Kept for script page compat
 
 
-// Serialize current script DOM to PROJECT.script.allData
+// Serialize all visible script ep-wraps to PROJECT.script.allData
 function serializeCurrentScript(){
-  // 只序列化单集的 ep-wrap，而非整个 body（整个 body 会导致存储体积翻倍）
-  if(currentEp === undefined || currentEp === null) return;
-  const epWrap = document.getElementById(`script-ep-wrap-${currentEp}`);
-  if(epWrap){
-    PROJECT.script.allData[currentEp] = epWrap.innerHTML;
-    const actIdx = bdState.acts.findIndex(a => currentEp >= a.from-1 && currentEp < a.to);
+  // Serialize every rendered episode wrap (direct-edit mode — all are visible)
+  const allWraps = document.querySelectorAll('[id^="script-ep-wrap-"]');
+  allWraps.forEach(epWrap => {
+    const epIdx = parseInt(epWrap.dataset.ep);
+    if(isNaN(epIdx)) return;
+    PROJECT.script.allData[epIdx] = epWrap.innerHTML;
+    const actIdx = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
     if(actIdx >= 0 && scriptState.actScripts[actIdx]){
-      scriptState.actScripts[actIdx].eps[currentEp] = epWrap.innerHTML;
+      scriptState.actScripts[actIdx].eps[epIdx] = epWrap.innerHTML;
     }
-  }
+  });
 }
 
 function toggleTranslateMenu(e){
@@ -6200,16 +6255,25 @@ function restoreStoryUI(){
   }
 }
 
-function loadSavedProj(name){
-  const projects = _getSavedProjects();
-  const snap = projects.find(p => p.name === name);
-  if(!snap){ showToast('项目数据不存在'); return; }
-
+async function loadSavedProj(name){
   // 切换前自动保存当前项目（如有）
   if(S.proj && S.proj !== name){
     saveProject();
     showToast(`已自动保存「${S.proj.substring(0,16)}」，正在切换…`);
   }
+
+  let snap = null;
+  // 1. 优先云端
+  try {
+    snap = await _cloudGet(`dm:proj:${name}`);
+    _cloudAvailable = true;
+  } catch(e) {}
+  // 2. localStorage fallback
+  if(!snap) {
+    const projects = _getSavedProjects();
+    snap = projects.find(p => p.name === name);
+  }
+  if(!snap){ showToast('项目数据不存在'); return; }
 
   restoreFromSnap(snap);
 
@@ -6265,8 +6329,30 @@ function loadSavedProj(name){
 
   showToast(`已载入项目「${name.substring(0,20)}」`);
 }
+// ── Real-time stats update (lightweight — no repaginate, just word count) ──
+let _statsLiveTimer = null;
+function _updateScriptStatsLive() {
+  if (_statsLiveTimer) clearTimeout(_statsLiveTimer);
+  _statsLiveTimer = setTimeout(() => {
+    const scroll = document.getElementById('script-scroll');
+    if(!scroll) return;
+    let total = 0;
+    scroll.querySelectorAll('[id^="script-ep-wrap-"] .sp-body').forEach(b => {
+      total += (b.textContent || '').replace(/\s+/g,'').length;
+    });
+    const estPages = Math.max(1, Math.round(total / 800));
+    const statWords = document.getElementById('stat-words');
+    const statPages = document.getElementById('stat-pages');
+    const statDur   = document.getElementById('stat-duration');
+    if(statWords) statWords.textContent = total.toLocaleString() + ' 字';
+    if(statPages) statPages.textContent = estPages + ' 页（估）';
+    if(statDur)   statDur.textContent   = `≈ ${estPages} 分钟`;
+  }, 300);
+}
+
 function updateScriptStats(){
-  // Trigger repagination which also updates stats
+  // Don't run during active editing - will be triggered on focusout
+  if (_scriptEditing) return;
   scheduleRepaginate();
 }
 
@@ -6290,186 +6376,75 @@ const PAGE_USABLE    = PAGE_HEIGHT_PX - PAGE_PAD_TOP - PAGE_PAD_BOT; // 864px us
 
 let _repagTimer = null;
 
+// Track whether user is actively editing a script contenteditable
+let _scriptEditing = false;
+let _repagAfterEditTimer = null;
+
 function scheduleRepaginate() {
   if (_repagTimer) clearTimeout(_repagTimer);
+  // If user is actively editing, defer repagination until after they stop
+  if (_scriptEditing) return;
   _repagTimer = setTimeout(repaginateScript, 120);
 }
 
+// Called when any sp-body or script-page-content gains focus
+function _onScriptFocusIn() {
+  _scriptEditing = true;
+  if (_repagTimer) { clearTimeout(_repagTimer); _repagTimer = null; }
+  if (_repagAfterEditTimer) { clearTimeout(_repagAfterEditTimer); _repagAfterEditTimer = null; }
+}
+
+// Called when focus leaves all script editing areas (blur on the scroll container)
+function _onScriptFocusOut(e) {
+  // relatedTarget is the element receiving focus; if still inside script-scroll, still editing
+  const scroll = document.getElementById('script-scroll');
+  if (scroll && e.relatedTarget && scroll.contains(e.relatedTarget)) return;
+  _scriptEditing = false;
+  // Run stats update + scene nav refresh 400ms after user leaves the editor
+  if (_repagAfterEditTimer) clearTimeout(_repagAfterEditTimer);
+  _repagAfterEditTimer = setTimeout(() => {
+    repaginateScript();
+    buildSceneNav();
+  }, 400);
+}
+
 function repaginateScript() {
+  // Direct-edit mode: sp-body elements ARE the visible editing surface.
+  // No physical page DOM rebuild — that was causing focus/cursor loss on every keystroke.
+  // Just update the stats bar using live DOM content.
+
   const scroll = document.getElementById('script-scroll');
   if (!scroll) return;
 
-  // ── Step 1: Collect all content nodes from all episode bodies ──
-  // Each item: { node: Element, epIdx: number, type: 'title'|'body' }
-  const allItems = [];
+  // Collect all text for word count
+  let totalWords = 0;
   const epWraps = scroll.querySelectorAll('[id^="script-ep-wrap-"]');
   epWraps.forEach(wrap => {
-    const epIdx = parseInt(wrap.dataset.ep);
-    // Episode title div
-    const titleDiv = wrap.querySelector('.sp-title');
-    if (titleDiv) allItems.push({ node: titleDiv.cloneNode(true), epIdx, type: 'title' });
-    // Body children
     const body = wrap.querySelector('.sp-body');
-    if (body) {
-      [...body.children].forEach(child => {
-        allItems.push({ node: child.cloneNode(true), epIdx, type: 'body' });
-      });
-    }
+    if (body) totalWords += (body.textContent || '').replace(/\s+/g,'').length;
   });
 
-  if (allItems.length === 0) return;
+  // Estimate pages: ~800 Chinese chars per page (approx)
+  const estPages = Math.max(1, Math.round(totalWords / 800));
 
-  // ── Step 2: Measure heights of all nodes ──
-  // Use a hidden off-screen container at exact page width
-  const measureWrap = document.createElement('div');
-  measureWrap.style.cssText = `
-    position:fixed;left:-9999px;top:0;
-    width:${816 - 144 - 96}px;
-    font-family:'Courier Prime','Courier New',Courier,monospace;
-    font-size:12pt;line-height:1.5;
-    visibility:hidden;pointer-events:none;z-index:-1;
-  `;
-  document.body.appendChild(measureWrap);
-
-  const heights = allItems.map(item => {
-    measureWrap.innerHTML = '';
-    measureWrap.appendChild(item.node.cloneNode(true));
-    return measureWrap.scrollHeight + 2; // +2 for margin safety
-  });
-  document.body.removeChild(measureWrap);
-
-  // ── Step 3: Pack items into pages ──
-  const pages = []; // each page: array of items
-  let currentPage = [];
-  let currentHeight = 0;
-  const TITLE_RESERVE = 80; // reserve space before a title so it doesn't orphan
-  const MIN_ORPHAN = 40;    // minimum content height on a page before breaking
-
-  allItems.forEach((item, i) => {
-    const h = heights[i];
-    // Episode title: start new page if less than TITLE_RESERVE remaining
-    if (item.type === 'title' && currentPage.length > 0 && currentHeight + h + TITLE_RESERVE > PAGE_USABLE) {
-      pages.push(currentPage);
-      currentPage = [];
-      currentHeight = 0;
-    }
-    // Normal overflow: if doesn't fit, start new page
-    if (currentHeight + h > PAGE_USABLE && currentPage.length > 0) {
-      // Check we have enough content on current page (avoid tiny orphan pages)
-      if (currentHeight > MIN_ORPHAN) {
-        pages.push(currentPage);
-        currentPage = [];
-        currentHeight = 0;
-      }
-    }
-    currentPage.push(item);
-    currentHeight += h;
-  });
-  if (currentPage.length > 0) pages.push(currentPage);
-
-  // ── Step 4: Build physical page DOM ──
-  const body = document.getElementById('script-body');
-  if (!body) return;
-
-  // Remove old pagesContainer if present
-  const oldContainer = document.getElementById('sp-physical-pages');
-  if (oldContainer) oldContainer.remove();
-
-  const pagesContainer = document.createElement('div');
-  pagesContainer.id = 'sp-physical-pages';
-  pagesContainer.style.cssText = 'padding-top:8px;';
-
-  const totalPages = pages.length;
-
-  const epFirstPageMap = {}; // epIdx → pageNum (first page that episode appears on)
-
-  pages.forEach((pageItems, pageIdx) => {
-    const pageNum = pageIdx + 1;
-    const pageEl = document.createElement('div');
-    pageEl.className = 'script-page';
-    pageEl.dataset.pageNum = pageNum;
-
-    // Track which episodes appear on this page
-    pageItems.forEach(item => {
-      if (!(item.epIdx in epFirstPageMap)) epFirstPageMap[item.epIdx] = pageNum;
-      pageEl.dataset.ep = item.epIdx; // last ep on page (close enough for scroll)
-    });
-    pageEl.id = `sp-physical-page-${pageNum}`;
-
-    // Page number top-right
-    const numEl = document.createElement('div');
-    numEl.className = 'sp-page-num';
-    numEl.textContent = `${pageNum}.`;
-    pageEl.appendChild(numEl);
-
-    // Content area — editable so user can type directly in the page view
-    const contentEl = document.createElement('div');
-    contentEl.className = 'script-page-content';
-    contentEl.setAttribute('contenteditable', 'true');
-    contentEl.setAttribute('spellcheck', 'false');
-    contentEl.style.outline = 'none';
-    contentEl.style.cursor = 'text';
-
-    pageItems.forEach(item => {
-      const node = item.node.cloneNode(true);
-      // Mark the node with ep/act info so we can propagate edits
-      node.dataset.physEp = item.epIdx;
-      contentEl.appendChild(node);
-    });
-
-    // Sync edits from the physical (visible) page back to the hidden sp-body source
-    contentEl.addEventListener('input', function() {
-      // For each element in this content area, find the matching source element and update it
-      const edited = contentEl.querySelectorAll('[data-phys-ep]');
-      edited.forEach(editedEl => {
-        const epIdx = parseInt(editedEl.dataset.physEp);
-        const sourceWrap = document.getElementById('script-ep-wrap-' + epIdx);
-        if (!sourceWrap) return;
-        const sourceBody = sourceWrap.querySelector('.sp-body');
-        if (!sourceBody) return;
-        // Match by position: find all same-class elements in source and update the matching one
-        const cls = editedEl.className;
-        const allEdited = [...contentEl.querySelectorAll('.' + cls.split(' ')[0] + '[data-phys-ep="' + epIdx + '"]')];
-        const allSource = [...sourceBody.querySelectorAll('.' + cls.split(' ')[0])];
-        const idx = allEdited.indexOf(editedEl);
-        if (idx >= 0 && allSource[idx]) {
-          allSource[idx].textContent = editedEl.textContent;
-        }
-        // Trigger save
-        if (sourceBody) onScriptBodyEdit(sourceBody);
-      });
-    });
-
-    // Also allow selection toolbar to work on physical page elements
-    pageEl.appendChild(contentEl);
-
-    // Bottom info: last page shows totals, others show page/total
-    const timeEst = document.createElement('div');
-    timeEst.className = 'sp-time-est';
-    if (pageIdx === totalPages - 1) {
-      timeEst.textContent = `共 ${totalPages} 页 · 约 ${totalPages} 分钟`;
-    } else {
-      timeEst.textContent = `第 ${pageNum} / ${totalPages} 页`;
-    }
-    pageEl.appendChild(timeEst);
-
-    pagesContainer.appendChild(pageEl);
-  });
-
-  // Store ep→page map globally for scrollToAct
-  window._epFirstPageMap = epFirstPageMap;
-
-  // ── Step 5: Insert physical pages at the top of script-body ──
-  body.insertBefore(pagesContainer, body.firstChild);
-
-  // ── Step 6: Update stats ──
-  const totalWords = allItems.reduce((sum, item) => sum + (item.node.textContent || '').replace(/\s+/g,'').length, 0);
   const statWords = document.getElementById('stat-words');
   const statPages = document.getElementById('stat-pages');
   const statDur   = document.getElementById('stat-duration');
   if (statWords) statWords.textContent = totalWords.toLocaleString() + ' 字';
-  if (statPages) statPages.textContent = totalPages + ' 页';
-  if (statDur)   statDur.textContent   = `≈ ${totalPages} 分钟（1页≈1分钟）`;
+  if (statPages) statPages.textContent = estPages + ' 页（估）';
+  if (statDur)   statDur.textContent   = `≈ ${estPages} 分钟（1页≈1分钟）`;
+
+  // Build ep→page map for scrollToAct compatibility (approximate)
+  const epFirstPageMap = {};
+  let runningEp = 0;
+  epWraps.forEach(wrap => {
+    const epIdx = parseInt(wrap.dataset.ep);
+    if (!isNaN(epIdx)) {
+      epFirstPageMap[epIdx] = runningEp + 1;
+      runningEp++;
+    }
+  });
+  window._epFirstPageMap = epFirstPageMap;
 }
 
 
@@ -6703,17 +6678,14 @@ function renderActTabs() {
 function scrollToAct(aIdx) {
   currentActIdx = aIdx;
   renderActTabs();
-  // Try to scroll to the first physical page containing this act's episodes
+  // Scroll to the first episode wrap of this act (direct-edit mode)
   const act = bdState.acts[aIdx];
-  if (act && window._epFirstPageMap) {
+  if (act) {
     const firstEpIdx = act.from - 1;
-    const pageNum = window._epFirstPageMap[firstEpIdx];
-    if (pageNum) {
-      const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
-      if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-    }
+    const epWrap = document.getElementById(`script-ep-wrap-${firstEpIdx}`);
+    if (epWrap) { epWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   }
-  // Fallback: scroll to act block (may be hidden but browser still scrolls)
+  // Fallback: scroll to act block
   const el = document.getElementById(`script-act-block-${aIdx}`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -7095,10 +7067,11 @@ function appendActToBody(actIdx, animate) {
     <span class="script-act-divider-range">第${act.from}–${act.to}集 · ${act.desc}</span>`;
   block.appendChild(divider);
 
-  // ② All episode scripts (hidden — content is paginated into physical pages)
+  // ② All episode scripts — directly visible and editable
   const epsContainer = document.createElement('div');
   epsContainer.id = `script-act-eps-${actIdx}`;
-  epsContainer.style.display = 'none'; // hidden: paginator reads from here
+  epsContainer.className = 'script-eps-container';
+  // NOT hidden: sp-body elements are the editing surface directly
   for (let i = 0; i < act.count; i++) {
     const epIdx = act.from - 1 + i;
     const html = as.eps[epIdx] || buildMockScriptHTML(epIdx);
@@ -7106,6 +7079,7 @@ function appendActToBody(actIdx, animate) {
     epWrap.id = `script-ep-wrap-${epIdx}`;
     epWrap.dataset.ep = epIdx;
     epWrap.dataset.act = actIdx;
+    epWrap.className = 'script-page';
     epWrap.innerHTML = html;
     epsContainer.appendChild(epWrap);
   }
@@ -7353,9 +7327,12 @@ function buildScriptHTMLFromText(text, epIdx) {
   });
   
   return `<div class="script-ep-content" id="sp-${epIdx}" data-ep-idx="${epIdx}">
-    <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
+    <div class="ep-card-header">
+      <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
+      <button class="ep-collapse-btn" onclick="toggleEpCollapse(this)" title="折叠/展开本集">收起</button>
+    </div>
     <div class="sp-body" contenteditable="true" spellcheck="false" data-ep="${epIdx}"
-      oninput="onScriptBodyEdit(this);scheduleRepaginate()" onblur="saveScriptBody(this)">${innerHtml}</div>
+      oninput="onScriptBodyEdit(this)" onblur="saveScriptBody(this)">${innerHtml}</div>
   </div>`;
 }
 
@@ -7367,16 +7344,42 @@ function buildMockScriptHTML(epIdx) {
   const hook = projEp ? projEp[4] : '';
   const pageNum = epIdx + 1;
   return `<div class="script-ep-content" id="sp-${epIdx}" data-ep-idx="${epIdx}">
-    <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
+    <div class="ep-card-header">
+      <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
+      <button class="ep-collapse-btn" onclick="toggleEpCollapse(this)" title="折叠/展开本集">收起</button>
+    </div>
     <div class="sp-body" contenteditable="true" spellcheck="false" data-ep="${epIdx}"
-      oninput="onScriptBodyEdit(this);scheduleRepaginate()" onblur="saveScriptBody(this)"><div class="sp-scene" data-ep="${epIdx}" data-type="scene">内景　主场景　日间</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(beat.substring(0,200))}</div><div class="sp-scene" data-ep="${epIdx}" data-type="scene">外景　场景　接续</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(hook)}</div></div>
+      oninput="onScriptBodyEdit(this)" onblur="saveScriptBody(this)"><div class="sp-scene" data-ep="${epIdx}" data-type="scene">内景　主场景　日间</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(beat.substring(0,200))}</div><div class="sp-scene" data-ep="${epIdx}" data-type="scene">外景　场景　接续</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(hook)}</div></div>
   </div>`;
+}
+
+// ── Episode card collapse/expand ──
+function toggleEpCollapse(btn) {
+  const page = btn.closest('.script-page');
+  if(!page) return;
+  const collapsed = page.classList.toggle('ep-collapsed');
+  btn.textContent = collapsed ? '展开' : '收起';
+}
+function collapseAllEps() {
+  document.querySelectorAll('.script-page').forEach(p => {
+    p.classList.add('ep-collapsed');
+    const btn = p.querySelector('.ep-collapse-btn');
+    if(btn) btn.textContent = '展开';
+  });
+}
+function expandAllEps() {
+  document.querySelectorAll('.script-page').forEach(p => {
+    p.classList.remove('ep-collapsed');
+    const btn = p.querySelector('.ep-collapse-btn');
+    if(btn) btn.textContent = '收起';
+  });
 }
 
 // ── Script edit tracking — sp-body (single contenteditable wrapper per episode) ──
 let _scriptEditTimers = {};
 
 // Called when the sp-body contenteditable wrapper changes
+let _renderActTabsTimer = null;
 function onScriptBodyEdit(bodyEl) {
   const epIdx = parseInt(bodyEl.dataset.ep);
   if (isNaN(epIdx)) return;
@@ -7388,20 +7391,60 @@ function onScriptBodyEdit(bodyEl) {
     scriptState.actScripts[actIdx].eps[`${epIdx}_modified`] = true;
     PROJECT.userEdits[`script_ep${epIdx}`] = { value: `第${epIdx+1}集剧本已手动修改`, modified: true };
   }
-  setTimeout(renderActTabs, 0);
+  // Show per-episode "editing" badge
+  _setEpStatus(epIdx, 'editing');
+  // Debounce renderActTabs — no need to re-render on every keystroke
+  if (_renderActTabsTimer) clearTimeout(_renderActTabsTimer);
+  _renderActTabsTimer = setTimeout(renderActTabs, 1500);
+  // Live word-count update (lightweight — no repaginate)
+  _updateScriptStatsLive();
 }
 
 function saveScriptBody(bodyEl) {
   const epIdx = parseInt(bodyEl.dataset.ep);
   if (isNaN(epIdx)) return;
-  serializeCurrentScript();
+  // Serialize this specific episode's wrap (the visible script-page card)
+  const epWrap = document.getElementById(`script-ep-wrap-${epIdx}`);
+  if (epWrap) {
+    PROJECT.script.allData[epIdx] = epWrap.innerHTML;
+    const actIdx = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
+    if (actIdx >= 0 && scriptState.actScripts[actIdx]) {
+      scriptState.actScripts[actIdx].eps[epIdx] = epWrap.innerHTML;
+    }
+  }
   const text = getEpTextForHash(epIdx);
   if (text) scriptState.cnHashByEp[epIdx] = hashStr(text);
   scriptState.cnLastEditTs = Date.now();
+  _skipSerializeOnNextSave = true;
+  _setEpStatus(epIdx, 'saved');
   saveProject();
 }
 
 // Legacy field-level edit handler — kept for compatibility with keyboard shortcuts
+// ── Per-episode edit status badge ──
+const _epStatusTimers = {};
+function _setEpStatus(epIdx, state) {
+  const wrap = document.getElementById(`script-ep-wrap-${epIdx}`);
+  if(!wrap) return;
+  let badge = wrap.querySelector('.ep-edit-status');
+  if(!badge) {
+    badge = document.createElement('span');
+    badge.className = 'ep-edit-status';
+    badge.style.cssText = 'font-size:10px;font-family:"Noto Sans SC",sans-serif;letter-spacing:.04em;padding:1px 7px;border-radius:8px;margin-left:8px;vertical-align:middle;transition:all .25s;pointer-events:none';
+    const header = wrap.querySelector('.ep-card-header .sp-title b');
+    if(header) header.after(badge);
+  }
+  if(_epStatusTimers[epIdx]) clearTimeout(_epStatusTimers[epIdx]);
+  if(state === 'editing') {
+    badge.textContent = '编辑中…';
+    badge.style.cssText += ';background:rgba(201,168,92,.15);color:rgba(201,168,92,.9)';
+  } else {
+    badge.textContent = '已保存 ✓';
+    badge.style.cssText += ';background:rgba(42,122,80,.12);color:rgba(42,122,80,.85)';
+    _epStatusTimers[epIdx] = setTimeout(() => { badge.textContent = ''; badge.style.background=''; }, 2500);
+  }
+}
+
 function onScriptFieldEdit(el) {
   const bodyEl = el.closest('.sp-body');
   if (bodyEl) { onScriptBodyEdit(bodyEl); return; }
@@ -7464,18 +7507,11 @@ function initScriptScrollObserver() {
   });
 }
 
-// selEpTab kept for compat — now scrolls to first physical page of that episode
+// selEpTab — scrolls to the episode wrap in direct-edit mode
 function selEpTab(el, i) {
   currentEp = i;
-  // Find the first physical page containing this episode
-  if (window._epFirstPageMap && window._epFirstPageMap[i]) {
-    const pageNum = window._epFirstPageMap[i];
-    const pageEl = document.getElementById(`sp-physical-page-${pageNum}`);
-    if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-  } else {
-    const wrap = document.getElementById(`script-ep-wrap-${i}`);
-    if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  const wrap = document.getElementById(`script-ep-wrap-${i}`);
+  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   updateScriptSidebar(i);
 }
 
@@ -7488,43 +7524,65 @@ function gotoScript() {
 // Export current script page as .txt
 function exportCurrentScript() {
   const sc = PROJECT.scheme;
-  const page = S.page;
   const body = document.getElementById('script-body');
   if (!body || !body.innerText.trim()) { showToast('暂无剧本内容可导出'); return; }
 
-  // Collect structured script text in Hollywood format
-  const lines = [];
   const projTitle = S.proj || sc.title || '剧本';
-  lines.push(`${projTitle}`);
-  lines.push(`${'─'.repeat(40)}`);
-  lines.push('');
 
-  body.querySelectorAll('.script-page').forEach((page, i) => {
+  // ── Build rich OOXML paragraphs with Hollywood screenplay styles ──
+  // Indents in twips (1" = 1440 twips): dialogue=1080L/720R, char=2160L, paren=1440L/720R
+  const paras = [];
+
+  // Title page paragraph
+  const titleEsc = (projTitle + ' · 剧本').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  paras.push(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="2880" w:after="480"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/></w:rPr><w:t>${titleEsc}</w:t></w:r></w:p>`);
+
+  body.querySelectorAll('.script-page').forEach(page => {
+    // Episode title
     const titleEl = page.querySelector('.sp-title b');
-    if (titleEl) { lines.push(titleEl.textContent.trim()); lines.push(''); }
+    if(titleEl) {
+      const t = titleEl.textContent.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      paras.push(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="480" w:after="240"/><w:pageBreakBefore/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="28"/><w:rFonts w:ascii="Courier Prime" w:hAnsi="Courier Prime" w:eastAsia="Noto Serif SC"/></w:rPr><w:t>${t}</w:t></w:r></w:p>`);
+    }
+
     page.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition').forEach(el => {
-      const cls = [...el.classList].find(c => c.startsWith('sp-'));
-      const content = el.textContent.trim();
-      if (!content) return;
-      if (cls === 'sp-scene') {
-        lines.push(''); lines.push(content.toUpperCase()); lines.push('');
-      } else if (cls === 'sp-char') {
-        lines.push(''); lines.push(`\t\t\t${content.toUpperCase()}`);
-      } else if (cls === 'sp-paren') {
-        lines.push(`\t\t${content}`);
-      } else if (cls === 'sp-dlg') {
-        lines.push(`\t\t${content}`);
-      } else if (cls === 'sp-transition') {
-        lines.push(''); lines.push(`\t\t\t\t\t\t${content}`); lines.push('');
+      const cls = [...el.classList].find(c => c.startsWith('sp-')) || 'sp-action';
+      const raw = el.textContent.trim();
+      if(!raw) return;
+      const txt = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      let pPr = '<w:spacing w:before="0" w:after="0"/>';
+      let rPr = '<w:rFonts w:ascii="Courier Prime" w:hAnsi="Courier Prime" w:eastAsia="Noto Sans SC"/><w:sz w:val="24"/><w:szCs w:val="24"/>';
+      let content = txt;
+
+      if(cls === 'sp-scene') {
+        // Scene heading: ALL CAPS bold, 1 blank line before
+        pPr = '<w:spacing w:before="240" w:after="0"/>';
+        rPr += '<w:b/><w:caps/>';
+      } else if(cls === 'sp-char') {
+        // Character cue: centered at 2.2" from left, ALL CAPS
+        pPr = '<w:ind w:left="2160"/><w:spacing w:before="240" w:after="0"/>';
+        rPr += '<w:caps/>';
+      } else if(cls === 'sp-paren') {
+        // Parenthetical: 1.5" from left, 1" from right
+        pPr = '<w:ind w:left="1440" w:right="1440"/><w:spacing w:before="0" w:after="0"/>';
+      } else if(cls === 'sp-dlg') {
+        // Dialogue: 1.0" from left, 0.5" from right
+        pPr = '<w:ind w:left="1080" w:right="720"/><w:spacing w:before="0" w:after="0"/>';
+      } else if(cls === 'sp-transition') {
+        // Transition: flush right, bold
+        pPr = '<w:jc w:val="right"/><w:spacing w:before="240" w:after="0"/>';
+        rPr += '<w:b/><w:caps/>';
       } else {
-        lines.push(content);
+        // Action: flush left, 1 line spacing
+        pPr = '<w:spacing w:before="0" w:after="120"/>';
       }
+
+      paras.push(`<w:p><w:pPr>${pPr}</w:pPr><w:r><w:rPr>${rPr}</w:rPr><w:t xml:space="preserve">${content}</w:t></w:r></w:p>`);
     });
-    lines.push(''); lines.push(`${'─'.repeat(40)}`); lines.push('');
   });
 
-  const content = lines.join('\n');
-  _exportAsDocxRaw(projTitle + ' · 剧本', content, `${projTitle}_剧本`);
+  _exportAsDocxRaw(projTitle + ' · 剧本', paras, `${projTitle}_剧本`, true);
   showToast('剧本正在导出为 Word 文档');
 }
 
@@ -7687,10 +7745,9 @@ document.addEventListener('mouseup', (e) => {
     document.getElementById('sel-toolbar').classList.remove('show');
     return;
   }
-  // Look for sp-body (new), physical page content, or legacy [data-ep] element
-  const target = sel.anchorNode?.parentElement?.closest('.sp-body,.script-page-content,[data-ep]');
+  // Look for sp-body or any script element with data-ep
+  const target = sel.anchorNode?.parentElement?.closest('.sp-body,[data-ep]');
   if(!target) { document.getElementById('sel-toolbar').classList.remove('show'); return; }
-  // If inside physical page, find the nearest script element for _selectedEl
   const scriptEl = sel.anchorNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   _selectedEl = scriptEl || target;
   const range = sel.getRangeAt(0);
@@ -7780,42 +7837,19 @@ function openCEMenu(e) {
 
 function changeElement(newType) {
   document.getElementById('ce-menu').classList.remove('show');
-  // Find the focused script element inside sp-body or physical page
+  // Find the focused script element inside sp-body
   const sel = window.getSelection();
   const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   const target = focusEl || _selectedEl?.closest?.('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   if(!target) return;
   const body = target.closest('.sp-body');
 
-  // Change the visible element's class
+  // Change the element's class
   target.className = newType;
   target.dataset.type = newType.replace('sp-','');
   if (newType === 'sp-scene' && !target.textContent.match(/^(INT\.|EXT\.)/i)) {
     target.textContent = 'INT. ';
     placeCursorAtEnd(target);
-  }
-
-  // If this is a physical page element, sync back to hidden sp-body source
-  const physEp = target.dataset.physEp;
-  if (physEp !== undefined && !body) {
-    const epIdx = parseInt(physEp);
-    const sourceWrap = document.getElementById('script-ep-wrap-' + epIdx);
-    if (sourceWrap) {
-      const sourceBody = sourceWrap.querySelector('.sp-body');
-      if (sourceBody) {
-        // Find matching element in source by position
-        const pageContent = target.closest('.script-page-content');
-        const allSameEpPhys = pageContent ? [...pageContent.querySelectorAll('[data-phys-ep="' + physEp + '"]')] : [];
-        const allSource = [...sourceBody.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition')];
-        const idx = allSameEpPhys.indexOf(target);
-        if (idx >= 0 && allSource[idx]) {
-          allSource[idx].className = newType;
-          allSource[idx].dataset.type = newType.replace('sp-', '');
-          allSource[idx].textContent = target.textContent;
-        }
-        onScriptBodyEdit(sourceBody);
-      }
-    }
   }
 
   if (body) onScriptBodyEdit(body);
@@ -7847,27 +7881,15 @@ const SCRIPT_ELEMENT_LABELS = {
   'sp-transition': 'CUT TO:',
 };
 const SCRIPT_ELEMENT_AFTER_ENTER = {
-  'sp-scene': 'sp-action',     // After scene heading → action
-  'sp-action': 'sp-action',    // After action → action  
-  'sp-char': 'sp-dlg',         // After character → dialogue
-  'sp-paren': 'sp-dlg',        // After parenthetical → dialogue
-  'sp-dlg': 'sp-char',         // After dialogue → next character
-  'sp-transition': 'sp-scene', // After transition → new scene
+  'sp-scene':      'sp-action',  // Scene heading → action line
+  'sp-action':     'sp-action',  // Action → action
+  'sp-char':       'sp-dlg',     // Character cue → dialogue
+  'sp-paren':      'sp-dlg',     // Parenthetical → dialogue
+  'sp-dlg':        'sp-char',    // Dialogue → next character cue  ← key fix
+  'sp-transition': 'sp-scene',   // Transition → new scene
 };
 
 let _lastFocusedScriptEl = null;
-
-// Sync a class change on a physical-page element back to its hidden source counterpart
-function _syncClassToSource(physEl, pageContent, sourceBody, epIdx) {
-  const oldCls = [...physEl.classList].find(c => c.startsWith('sp-')) || physEl.className.split(' ')[0];
-  const allPhys = [...pageContent.querySelectorAll('.' + oldCls + '[data-phys-ep="' + epIdx + '"]')];
-  const allSrc  = [...sourceBody.querySelectorAll('.' + oldCls)];
-  const idx = allPhys.indexOf(physEl);
-  if (idx >= 0 && allSrc[idx]) {
-    allSrc[idx].className = physEl.className;
-    allSrc[idx].dataset.type = physEl.dataset.type;
-  }
-}
 
 // Initialize keyboard shortcuts for script editor
 function initScriptEditorKeys() {
@@ -7877,26 +7899,16 @@ function initScriptEditorKeys() {
   scroll.addEventListener('keydown', function(e) {
     const el = document.activeElement;
     const body = el?.closest('.sp-body');
-    const pageContent = el?.closest('.script-page-content');
-    if (!body && !pageContent) return;
+    if (!body) return;
 
     // The "focused" script element is the one containing the cursor
     const sel = window.getSelection();
     const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition') || null;
     const currentType = focusEl ? [...focusEl.classList].find(c => SCRIPT_ELEMENT_CYCLE.includes(c)) : null;
 
-    // Resolve epIdx and sourceBody for both editing surfaces
-    let epIdx, sourceBody;
-    if (body) {
-      epIdx = parseInt(body.dataset.ep);
-      sourceBody = body;
-    } else {
-      epIdx = parseInt(focusEl?.dataset?.physEp);
-      if (isNaN(epIdx)) return;
-      const sourceWrap = document.getElementById('script-ep-wrap-' + epIdx);
-      sourceBody = sourceWrap?.querySelector('.sp-body');
-      if (!sourceBody) return;
-    }
+    // Resolve epIdx and sourceBody — always sp-body (direct edit mode)
+    const epIdx = parseInt(body.dataset.ep);
+    const sourceBody = body;
 
     // If char autocomplete is visible, let the AC keydown handler take over
     const acEl = document.getElementById('char-ac');
@@ -7911,7 +7923,6 @@ function initScriptEditorKeys() {
         const newType = typeMap[e.key];
         focusEl.className = newType;
         focusEl.dataset.type = newType.replace('sp-','');
-        if (pageContent) _syncClassToSource(focusEl, pageContent, sourceBody, epIdx);
         onScriptBodyEdit(sourceBody);
         return;
       }
@@ -7927,7 +7938,6 @@ function initScriptEditorKeys() {
         focusEl.textContent = 'INT. ';
         placeCursorAtEnd(focusEl);
       }
-      if (pageContent) _syncClassToSource(focusEl, pageContent, sourceBody, epIdx);
       onScriptBodyEdit(sourceBody);
       return;
     }
@@ -7938,46 +7948,25 @@ function initScriptEditorKeys() {
       const nextType = SCRIPT_ELEMENT_AFTER_ENTER[currentType] || 'sp-action';
       const newEl = document.createElement('div');
       newEl.className = nextType;
+      newEl.dataset.ep = epIdx;
       newEl.dataset.type = nextType.replace('sp-','');
       if (nextType === 'sp-scene') newEl.textContent = 'INT. ';
       else if (nextType === 'sp-transition') newEl.textContent = 'CUT TO:';
       else newEl.textContent = '';
-
-      if (pageContent) {
-        // Physical page path: insert in page AND mirror into hidden source
-        newEl.dataset.physEp = epIdx;
-        focusEl.parentNode.insertBefore(newEl, focusEl.nextSibling);
-        newEl.focus();
-        placeCursorAtEnd(newEl);
-        // Mirror into source at matching position
-        const cls = focusEl.className.split(' ')[0];
-        const allPhys = [...pageContent.querySelectorAll('.' + cls + '[data-phys-ep="' + epIdx + '"]')];
-        const allSrc  = [...sourceBody.querySelectorAll('.' + cls)];
-        const idx = allPhys.indexOf(focusEl);
-        const srcNewEl = document.createElement('div');
-        srcNewEl.className = nextType;
-        srcNewEl.dataset.ep = epIdx;
-        srcNewEl.dataset.type = nextType.replace('sp-','');
-        srcNewEl.textContent = newEl.textContent;
-        if (idx >= 0 && allSrc[idx]) {
-          allSrc[idx].parentNode.insertBefore(srcNewEl, allSrc[idx].nextSibling);
-        } else {
-          sourceBody.appendChild(srcNewEl);
-        }
-      } else {
-        // Hidden sp-body path (original behaviour)
-        newEl.dataset.ep = epIdx;
-        focusEl.parentNode.insertBefore(newEl, focusEl.nextSibling);
-        newEl.focus();
-        placeCursorAtEnd(newEl);
-      }
+      focusEl.parentNode.insertBefore(newEl, focusEl.nextSibling);
+      newEl.focus();
+      placeCursorAtEnd(newEl);
       onScriptBodyEdit(sourceBody);
       return;
     }
   }, true);
   
   scroll.addEventListener('focusin', function(e) {
+    // Track editing state for repagination guard
     const el = e.target;
+    const inScript = el && el.closest('.sp-body');
+    if (inScript) _onScriptFocusIn();
+    // Track last focused script element
     if (el && el.classList.contains('sp-body')) {
       _lastFocusedScriptEl = el;
     } else if (el) {
@@ -7985,6 +7974,9 @@ function initScriptEditorKeys() {
       if (found) _lastFocusedScriptEl = found;
     }
   });
+
+  // Focusout: when user leaves script editor, run repagination
+  scroll.addEventListener('focusout', _onScriptFocusOut);
 
   // Input event: trigger char autocomplete when typing in sp-char
   scroll.addEventListener('input', function(e) {
@@ -8135,87 +8127,240 @@ function showToast(msg){
 
 // ══ PERSISTENCE — localStorage ══
 
-const STORAGE_KEY = 'dramamind_v2';  // bumped to avoid stale v1 data
+const STORAGE_KEY = 'dramamind_v2';  // localStorage fallback key
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Cloud KV Storage Layer (Upstash via /api/kv)  ────────────────────────────
+// 所有项目数据优先存云端；API 不可用时自动降级到 localStorage。
+// key 命名规则：
+//   dm:proj:{name}        — 单个项目完整快照
+//   dm:index              — 项目索引列表（name + savedAt + meta，不含正文）
+// ══════════════════════════════════════════════════════════════════════════════
+
+const KV_API = '/api/kv';
+let _cloudAvailable = null; // null=未知, true=可用, false=不可用
+
+async function _kvRequest(method, op, bodyOrParams = {}) {
+  try {
+    let url = `${KV_API}?op=${op}`;
+    let opts = { method, headers: {} };
+    if (method === 'GET') {
+      Object.entries(bodyOrParams).forEach(([k,v]) => url += `&${k}=${encodeURIComponent(v)}`);
+    } else {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(bodyOrParams);
+    }
+    const res = await fetch(url, opts);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch(e) {
+    _cloudAvailable = false;
+    throw e;
+  }
+}
+
+async function _cloudSet(key, value) {
+  const r = await _kvRequest('POST', 'set', { key, value: JSON.stringify(value) });
+  _cloudAvailable = true;
+  return r.ok;
+}
+async function _cloudGet(key) {
+  const r = await _kvRequest('GET', 'get', { key });
+  _cloudAvailable = true;
+  const raw = r.value;
+  if (raw === null || raw === undefined) return null;
+  try { return JSON.parse(raw); } catch(e) { return raw; }
+}
+async function _cloudDel(key) {
+  const r = await _kvRequest('POST', 'del', { key });
+  _cloudAvailable = true;
+  return r.ok;
+}
+
+// 项目索引：轻量摘要数组，存在 dm:index
+async function _getCloudIndex() {
+  try { return (await _cloudGet('dm:index')) || []; }
+  catch(e) { return []; }
+}
+async function _setCloudIndex(idx) {
+  try { await _cloudSet('dm:index', idx); } catch(e) {}
+}
 
 // ── Safe localStorage helpers ──
 function _safeParseJSON(str, fallback) {
   try { return JSON.parse(str); } catch(e) { return fallback; }
 }
 function _getSavedProjects() {
+  // 同步读取：返回 localStorage 里的项目列表（云端列表异步获取，见 _getCloudProjects）
   return _safeParseJSON(localStorage.getItem('dramamind_projects'), []);
 }
+async function _getCloudProjects() {
+  // 从云端索引拉完整项目列表（每个项目单独存储，这里拉索引+批量 get）
+  const index = await _getCloudIndex();
+  if (!index.length) return [];
+  const projects = await Promise.all(
+    index.map(async meta => {
+      try { return await _cloudGet(`dm:proj:${meta.name}`); }
+      catch(e) { return null; }
+    })
+  );
+  return projects.filter(Boolean);
+}
+
+// ── 构建项目快照（saveProject / newProject 共用） ──
+function _buildSnapshot() {
+  const projectToSave = JSON.parse(JSON.stringify(PROJECT));
+  delete projectToSave.source.rawDocText;
+  if(projectToSave.source.docBeatSequence && projectToSave.source.docBeatSequence.length > 12000){
+    projectToSave.source.docBeatSequence = projectToSave.source.docBeatSequence.substring(0, 12000) + '\n…[已截断，原始文档重新上传可恢复完整版]';
+  }
+  return {
+    name: S.proj || '未命名项目',
+    S: {...S},
+    PROJECT: projectToSave,
+    ASSET_STORE: JSON.parse(JSON.stringify(ASSET_STORE)),
+    inquiryHistory: inquiryHistory.map(m => ({role: m.role, content: m.content})),
+    globalChatHistory: globalChatHistory.map(m => ({role:m.role, content:m.content, stage:m.stage||''})),
+    breakdownState: JSON.parse(JSON.stringify(breakdownState)),
+    scriptState: {
+      total: scriptState.total,
+      finalized: scriptState.finalized,
+      actScripts: JSON.parse(JSON.stringify(scriptState.actScripts)),
+      chatHistory: scriptState.chatHistory,
+      cnLastEditTs: scriptState.cnLastEditTs || 0,
+      enTranslateTs: scriptState.enTranslateTs || 0,
+      prodTranslateTs: scriptState.prodTranslateTs || 0,
+      cnHashByEp: JSON.parse(JSON.stringify(scriptState.cnHashByEp || {})),
+      enHashByEp: JSON.parse(JSON.stringify(scriptState.enHashByEp || {})),
+      prodHashByEp: JSON.parse(JSON.stringify(scriptState.prodHashByEp || {})),
+    },
+    bdState: {
+      acts: JSON.parse(JSON.stringify(bdState.acts)),
+      allEps: JSON.parse(JSON.stringify(bdState.allEps)),
+      generatedCount: bdState.generatedCount,
+      confirmed: bdState.confirmed,
+      chatHistory: bdState.chatHistory,
+    },
+    savedAt: Date.now(),
+  };
+}
+
+// ── 更新项目索引（云端 dm:index） ──
+async function _updateCloudIndex(snapshot) {
+  const index = await _getCloudIndex();
+  const meta = {
+    name: snapshot.name,
+    savedAt: snapshot.savedAt,
+    market: snapshot.PROJECT?.source?.market || '',
+    genre: snapshot.PROJECT?.source?.genre || '',
+    episodeCount: snapshot.PROJECT?.source?.episodeCount || 0,
+    stage: snapshot.S?.page || 'home',
+  };
+  const i = index.findIndex(m => m.name === snapshot.name);
+  if(i >= 0) index[i] = meta; else index.unshift(meta);
+  await _setCloudIndex(index.slice(0, 50)); // 最多保留 50 个项目的索引
+}
+
 let _saveTimer = null;
+let _skipSerializeOnNextSave = false;
+let _saveInFlight = false;
 
 function saveProject(){
+  if (!_skipSerializeOnNextSave) serializeCurrentScript();
+  _skipSerializeOnNextSave = false;
+
+  let snapshot;
   try {
-    serializeCurrentScript();
-    const projectToSave = JSON.parse(JSON.stringify(PROJECT));
-    // rawDocText is large (up to 12000 chars) and can be re-uploaded — don't persist it
-    // But keep all extracted structured fields (docBeatSequence, docHighlights, etc.)
-    // Trim docBeatSequence if it's very long to stay within localStorage budget
-    delete projectToSave.source.rawDocText;
-    if(projectToSave.source.docBeatSequence && projectToSave.source.docBeatSequence.length > 12000){
-      projectToSave.source.docBeatSequence = projectToSave.source.docBeatSequence.substring(0, 12000) + '\n…[已截断，原始文档重新上传可恢复完整版]';
-    }
-    const snapshot = {
-      name: S.proj || '未命名项目',
-      S: {...S},
-      PROJECT: projectToSave,
-      ASSET_STORE: JSON.parse(JSON.stringify(ASSET_STORE)),
-      inquiryHistory: inquiryHistory.map(m => ({role: m.role, content: m.content})),
-      globalChatHistory: globalChatHistory.map(m => ({role:m.role, content:m.content, stage:m.stage||''})),
-      breakdownState: JSON.parse(JSON.stringify(breakdownState)),
-      scriptState: {
-        total: scriptState.total,
-        finalized: scriptState.finalized,
-        actScripts: JSON.parse(JSON.stringify(scriptState.actScripts)),
-        chatHistory: scriptState.chatHistory,
-        cnLastEditTs: scriptState.cnLastEditTs || 0,
-        enTranslateTs: scriptState.enTranslateTs || 0,
-        prodTranslateTs: scriptState.prodTranslateTs || 0,
-        cnHashByEp: JSON.parse(JSON.stringify(scriptState.cnHashByEp || {})),
-        enHashByEp: JSON.parse(JSON.stringify(scriptState.enHashByEp || {})),
-        prodHashByEp: JSON.parse(JSON.stringify(scriptState.prodHashByEp || {})),
-      },
-      bdState: {
-        acts: JSON.parse(JSON.stringify(bdState.acts)),
-        allEps: JSON.parse(JSON.stringify(bdState.allEps)),
-        generatedCount: bdState.generatedCount,
-        confirmed: bdState.confirmed,
-        chatHistory: bdState.chatHistory,
-      },
-      savedAt: Date.now(),
-    };
-    const serialized = JSON.stringify(snapshot);
-    // Warn if approaching 4MB (localStorage limit is ~5MB)
-    if(serialized.length > 4 * 1024 * 1024){
-      console.warn(`Save data is ${(serialized.length/1024/1024).toFixed(1)}MB — approaching localStorage limit`);
-      showToast('⚠ 项目数据较大，建议导出备份');
-    }
-    localStorage.setItem(STORAGE_KEY, serialized);
-    // Also keep dramamind_projects in sync so project manager shows fresh data
-    if(S.proj) {
-      try {
-        const projects = _getSavedProjects();
-        const idx = projects.findIndex(p => p.name === S.proj);
-        if(idx >= 0) { projects[idx] = snapshot; }
-        else { projects.unshift(snapshot); }
-        localStorage.setItem('dramamind_projects', JSON.stringify(projects.slice(0, 20)));
-      } catch(e2) { /* quota — don't block main save */ }
-    }
-    const ind = document.getElementById('save-indicator');
-    if(ind){ ind.style.display='inline'; ind.textContent='已保存'; setTimeout(()=>{ ind.textContent=''; }, 2000); }
+    snapshot = _buildSnapshot();
   } catch(e) {
-    console.warn('Save failed:', e);
-    if(e.name === 'QuotaExceededError'){
-      showToast('⚠ 本地存储已满，请导出项目后清理浏览器缓存');
-    }
+    console.warn('Build snapshot failed:', e);
+    return;
   }
+
+  const serialized = JSON.stringify(snapshot);
+  const sizeMB = serialized.length / (1024 * 1024);
+
+  // ── 1. 优先写云端（异步，不阻塞 UI） ──
+  if (!_saveInFlight) {
+    _saveInFlight = true;
+    (async () => {
+      try {
+        await _cloudSet(`dm:proj:${snapshot.name}`, snapshot);
+        await _updateCloudIndex(snapshot);
+        _cloudAvailable = true;
+        // 云端成功后，更新 localStorage 里的项目索引（供同步 UI 使用）
+        _syncIndexToLocal(snapshot);
+        _showSaveIndicator('☁ 已同步', 2000);
+      } catch(e) {
+        // 云端失败 → fallback 到 localStorage
+        console.warn('[cloud save failed, using localStorage]', e.message);
+        _localSaveFallback(snapshot, serialized);
+        _showSaveIndicator('已保存（本地）', 2000);
+      } finally {
+        _saveInFlight = false;
+      }
+    })();
+  }
+
+  // ── 2. 同时写 localStorage 作为即时备份（同步） ──
+  try {
+    localStorage.setItem(STORAGE_KEY, serialized);
+    _syncIndexToLocal(snapshot);
+  } catch(e) {
+    if(e.name === 'QuotaExceededError') showToast('⚠ 本地存储已满，数据已同步云端');
+  }
+
+  // ── 3. UI 反馈 ──
+  _showSaveIndicator('已保存', 2000);
+  _updateStorageBar(serialized.length, sizeMB);
+}
+
+function _syncIndexToLocal(snapshot) {
+  try {
+    const projects = _getSavedProjects();
+    const idx = projects.findIndex(p => p.name === snapshot.name);
+    if(idx >= 0) projects[idx] = snapshot; else projects.unshift(snapshot);
+    localStorage.setItem('dramamind_projects', JSON.stringify(projects.slice(0, 20)));
+  } catch(e) {}
+}
+
+function _localSaveFallback(snapshot, serialized) {
+  try {
+    localStorage.setItem(STORAGE_KEY, serialized);
+    _syncIndexToLocal(snapshot);
+  } catch(e) {
+    if(e.name === 'QuotaExceededError') showToast('⚠ 本地存储已满，请导出项目备份');
+  }
+}
+
+function _showSaveIndicator(msg, ms) {
+  const ind = document.getElementById('save-indicator');
+  if(!ind) return;
+  ind.style.display = 'inline';
+  ind.textContent = msg;
+  setTimeout(() => { ind.textContent = ''; }, ms);
 }
 
 function debouncedSave(){
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(saveProject, 500);
+}
+
+function _updateStorageBar(byteLen, mbOverride) {
+  const wrap  = document.getElementById('storage-bar-wrap');
+  const label = document.getElementById('storage-bar-label');
+  const fill  = document.getElementById('storage-bar-fill');
+  if(!wrap || !label || !fill) return;
+  const mb = mbOverride !== undefined ? mbOverride : byteLen / (1024 * 1024);
+  // Cloud mode: limit is effectively very large; show per-project size instead
+  const isCloud = _cloudAvailable === true;
+  const limitMB = isCloud ? 100 : 5;  // 100MB cloud, 5MB local
+  const pct = Math.min(100, (mb / limitMB) * 100);
+  label.textContent = isCloud ? `☁ ${mb.toFixed(1)}MB` : `${mb.toFixed(1)}MB`;
+  fill.style.width = pct + '%';
+  fill.style.background = pct < 55 ? 'rgba(74,154,106,.8)' : pct < 80 ? 'rgba(201,168,92,.9)' : 'rgba(220,80,80,.9)';
+  wrap.style.display = 'inline-flex';
+  label.style.color = pct >= 80 ? 'rgba(220,80,80,.85)' : pct >= 60 ? 'rgba(201,168,92,.85)' : 'rgba(255,255,255,.35)';
 }
 
 function restoreFromSnap(snap) {
@@ -8302,13 +8447,33 @@ function restoreFromSnap(snap) {
   }
 }
 
-function loadProject(){
+async function loadProject(){
+  // 1. 优先尝试从云端加载（有 S.proj 时按名字拉，否则拉最新）
+  if(S.proj) {
+    try {
+      const snap = await _cloudGet(`dm:proj:${S.proj}`);
+      if(snap && snap.PROJECT) {
+        restoreFromSnap(snap);
+        _cloudAvailable = true;
+        return true;
+      }
+    } catch(e) { /* fallthrough to localStorage */ }
+  }
+  // 2. localStorage fallback
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return false;
     const snap = JSON.parse(raw);
     if(!snap.PROJECT) return false;
     restoreFromSnap(snap);
+    // 有本地数据时后台尝试同步到云端
+    if(snap.name) {
+      setTimeout(() => {
+        _cloudSet(`dm:proj:${snap.name}`, snap)
+          .then(() => _updateCloudIndex(snap))
+          .catch(() => {});
+      }, 2000);
+    }
     return true;
   } catch(e) { return false; }
 }
@@ -8598,7 +8763,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if (btnSaveApi) btnSaveApi.addEventListener('click', persistApiConfig);
 
   renderRecentProjects();
-  if(loadProject()){
+  // loadProject is now async (cloud-first)
+  loadProject().then(loaded => {
+    if(!loaded) return;
     if(S.proj){
       document.getElementById('proj-name').textContent = S.proj;
       const lbl = document.getElementById('story-lbl');
@@ -8630,7 +8797,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
     const ind = document.getElementById('save-indicator');
     if(ind){ ind.style.display='inline'; ind.textContent='已恢复上次进度'; setTimeout(()=>{ ind.textContent=''; }, 3000); }
-  }
+  }); // end loadProject().then
   // Auto-resize textareas
   document.querySelectorAll('.c-edit,.bilingual-ta').forEach(el=>{
     autoResize(el);
@@ -8661,9 +8828,16 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   }, 30000);
 
-  // 2. Save on page/tab close/refresh
+  // 2. Save on page/tab close/refresh — force-serialize all visible episodes first
   window.addEventListener('beforeunload', (e) => {
-    try { saveProject(); } catch(ex){}
+    try {
+      // Force-flush any in-progress contenteditable edits
+      if(document.activeElement && document.activeElement.isContentEditable){
+        document.activeElement.blur();
+      }
+      serializeCurrentScript();
+      saveProject();
+    } catch(ex){}
     // Only show warning if there's active unsaved work
     if(S.page && S.page !== 'home' && S.proj) {
       e.preventDefault();
@@ -9490,15 +9664,21 @@ function exportAssetPdf(){
 }
 
 // ── DOCX export (pure JS, no server needed) ──
-function _exportAsDocxRaw(title, text, filename){
-  // Build minimal valid .docx (OOXML) in memory
-  // Uses the Open XML structure: word/document.xml inside a ZIP
-  const paragraphs = text.split('\n').map(line => {
-    const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const isBold = /^(第.+幕|第.+集|【.+】|={3,}|─{3,}|故事简介|核心创作逻辑|人物小传|剧情节拍|视觉风格|Logline|LOGLINE)/.test(line.trim());
-    const runProps = isBold ? '<w:rPr><w:b/></w:rPr>' : '';
-    return `<w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r>${runProps}<w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
-  });
+function _exportAsDocxRaw(title, textOrParas, filename, richMode){
+  // richMode=true: textOrParas is already an array of <w:p>…</w:p> XML strings
+  // richMode=false/undefined: textOrParas is a plain-text string (legacy path)
+  let paragraphs;
+  if(richMode && Array.isArray(textOrParas)){
+    paragraphs = textOrParas;
+  } else {
+    const text = textOrParas;
+    paragraphs = text.split('\n').map(line => {
+      const escaped = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const isBold = /^(第.+幕|第.+集|【.+】|={3,}|─{3,}|故事简介|核心创作逻辑|人物小传|剧情节拍|视觉风格|Logline|LOGLINE)/.test(line.trim());
+      const runProps = isBold ? '<w:rPr><w:b/></w:rPr>' : '';
+      return `<w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r>${runProps}<w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+    });
+  }
 
   const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
@@ -10181,22 +10361,25 @@ function syncStoryExportBtns(view){
 }
 // ══ PROJECT MANAGER ══
 
-function deleteProject(name) {
+async function deleteProject(name) {
   if(!confirm(`确定要删除项目「${name}」吗？此操作不可撤销。`)) return;
   try {
+    // 1. 云端删除（异步）
+    _cloudDel(`dm:proj:${name}`).then(async () => {
+      const idx = await _getCloudIndex();
+      await _setCloudIndex(idx.filter(m => m.name !== name));
+    }).catch(() => {});
+    // 2. localStorage
     const projects = _getSavedProjects();
     const filtered = projects.filter(p => p.name !== name);
     localStorage.setItem('dramamind_projects', JSON.stringify(filtered));
-    // If this is the current project, clear active project state
     if(S.proj === name) {
       localStorage.removeItem(STORAGE_KEY);
       S.proj = '';
-      // Reset to home page
       document.getElementById('proj-name').textContent = '未选择项目';
       showPage('home');
     }
     renderRecentProjects();
-    // Also update PM list if open
     const pmModal = document.getElementById('pm-modal');
     if(pmModal && pmModal.style.display !== 'none') renderPMList();
     showToast(`已删除项目「${name.substring(0,16)}」`);
@@ -10236,12 +10419,28 @@ function closePM() {
   document.getElementById('pm-modal').style.display = 'none';
 }
 
-function renderPMList() {
+async function renderPMList() {
   const list = document.getElementById('pm-list');
   const countEl = document.getElementById('pm-count');
-  const projects = _getSavedProjects();
 
-  if(countEl) countEl.textContent = `共 ${projects.length} 个项目`;
+  list.innerHTML = '<div style="font-size:12px;color:var(--i4);padding:16px 10px;text-align:center">加载中…</div>';
+
+  let projects = [];
+  try {
+    const index = await _getCloudIndex();
+    if(index.length > 0) {
+      projects = await _getCloudProjects();
+      _cloudAvailable = true;
+      try { localStorage.setItem('dramamind_projects', JSON.stringify(projects.slice(0,20))); } catch(e){}
+    } else {
+      projects = _getSavedProjects();
+    }
+  } catch(e) {
+    projects = _getSavedProjects();
+  }
+
+  window._pmProjects = projects;
+  if(countEl) countEl.textContent = `共 ${projects.length} 个项目${_cloudAvailable ? ' · ☁ 云端同步' : ' · 本地存储'}`;
 
   if(!projects.length) {
     list.innerHTML = '<div style="font-size:12px;color:var(--i4);padding:16px 10px;text-align:center">暂无保存的项目</div>';
@@ -10267,6 +10466,7 @@ function renderPMList() {
   }).join('');
 }
 
+
 function showPMDetail(idx) {
   // Highlight selected
   document.querySelectorAll('.pm-item').forEach((el, i) => {
@@ -10275,7 +10475,7 @@ function showPMDetail(idx) {
     el.style.borderColor = i === idx ? 'var(--gp)' : 'transparent';
   });
 
-  const projects = _getSavedProjects();
+  const projects = window._pmProjects || _getSavedProjects();
   const p = projects[idx];
   if(!p) return;
 
@@ -10358,15 +10558,29 @@ function pmPreviewAsset(btn) {
 }
 let _pmPreviewStore = null;
 
-function renamePMProject(idx, newName) {
+async function renamePMProject(idx, newName) {
   if(!newName || newName.length < 1) return;
-  const projects = _getSavedProjects();
+  const projects = window._pmProjects || _getSavedProjects();
   if(!projects[idx]) return;
   const oldName = projects[idx].name;
   if(oldName === newName) return;
   projects[idx].name = newName;
-  localStorage.setItem('dramamind_projects', JSON.stringify(projects));
-  // If this is the currently active project, update S.proj too
+  // 云端：复制旧key到新key，删除旧key
+  try {
+    const snap = await _cloudGet(`dm:proj:${oldName}`);
+    if(snap) {
+      snap.name = newName;
+      await _cloudSet(`dm:proj:${newName}`, snap);
+      await _cloudDel(`dm:proj:${oldName}`);
+      const idx2 = await _getCloudIndex();
+      const mi = idx2.findIndex(m => m.name === oldName);
+      if(mi >= 0) { idx2[mi].name = newName; await _setCloudIndex(idx2); }
+    }
+  } catch(e) {}
+  // localStorage
+  const lsProjects = _getSavedProjects();
+  const li = lsProjects.findIndex(p => p.name === oldName);
+  if(li >= 0) { lsProjects[li].name = newName; localStorage.setItem('dramamind_projects', JSON.stringify(lsProjects)); }
   if(S.proj === oldName){
     S.proj = newName;
     const projNameEl = document.getElementById('proj-name');
@@ -10377,13 +10591,20 @@ function renamePMProject(idx, newName) {
   showToast(`项目已重命名为「${newName}」`);
 }
 
-function deletePMProject(idx) {
-  const projects = _getSavedProjects();
+async function deletePMProject(idx) {
+  const projects = window._pmProjects || _getSavedProjects();
   if(!projects[idx]) return;
   const name = projects[idx].name;
   if(!confirm(`确认删除项目「${name}」？此操作不可撤销。`)) return;
-  projects.splice(idx, 1);
-  localStorage.setItem('dramamind_projects', JSON.stringify(projects));
+  // 云端删除
+  _cloudDel(`dm:proj:${name}`).then(async () => {
+    const ci = await _getCloudIndex();
+    await _setCloudIndex(ci.filter(m => m.name !== name));
+  }).catch(() => {});
+  // localStorage
+  const lsProjects = _getSavedProjects();
+  const fi = lsProjects.findIndex(p => p.name === name);
+  if(fi >= 0) { lsProjects.splice(fi, 1); localStorage.setItem('dramamind_projects', JSON.stringify(lsProjects)); }
   renderPMList();
   document.getElementById('pm-detail').innerHTML = '<div style="text-align:center;color:var(--i4);font-size:13px;padding-top:60px">项目已删除</div>';
   renderRecentProjects();
