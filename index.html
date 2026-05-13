@@ -111,7 +111,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
   background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);
   font-family:'Noto Sans SC',sans-serif;font-size:11px;
-  padding:5px 12px;border-radius:5px;white-space:nowrap;
+  padding:5px 10px;border-radius:5px;white-space:nowrap;
   pointer-events:none;opacity:0;transition:opacity .15s;z-index:1000;
   box-shadow:0 2px 8px rgba(0,0,0,.3);max-width:240px;
 }
@@ -128,7 +128,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .home-wrap{
   flex:1;overflow-y:auto;
   display:flex;flex-direction:column;align-items:center;
-  padding:0 32px 60px;
+  padding:0 24px 60px;
   padding-top:clamp(32px, 8vh, 80px);
   min-height:0;
 }
@@ -330,12 +330,12 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .ep-tbl td:nth-child(4){width:72px}
 .ep-tbl td:nth-child(5){width:200px}
 .ep-cell{width:100%;min-height:32px;height:auto;border:none;outline:none;font-family:'Noto Sans SC',sans-serif;font-size:12px;line-height:1.75;color:var(--i2);resize:none;background:transparent;padding:12px 10px;display:block;overflow:hidden}
-.ep-card-title-input{width:100%;border:none;outline:none;background:transparent;font-family:'Noto Sans SC',sans-serif;font-size:13px;font-weight:500;color:var(--ink);padding:0;cursor:text;transition:background .15s}
-.ep-card-title-input:hover,.ep-card-title-input:focus{background:rgba(30,92,58,.05);border-radius:3px;padding:1px 4px;margin:-1px -4px}
-.ep-hook-input{width:100%;border:none;border-bottom:1px dashed var(--bl);outline:none;background:transparent;font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);padding:2px 0;cursor:text;transition:border-color .15s}
-.ep-hook-input:hover,.ep-hook-input:focus{border-bottom-color:var(--gm);background:rgba(30,92,58,.03);border-radius:3px 3px 0 0;padding:2px 4px;margin:0 -4px}
 .ep-cell:focus{background:rgba(30,92,58,.03)}
 .ep-cell-title{font-weight:500;color:var(--ink)}
+.ep-card-title-input{width:100%;border:none;outline:none;background:transparent;font-family:'Noto Sans SC',sans-serif;font-size:13px;font-weight:500;color:var(--ink);padding:0;cursor:text}
+.ep-card-title-input:hover,.ep-card-title-input:focus{background:rgba(30,92,58,.05);border-radius:3px;padding:1px 4px;margin:-1px -4px}
+.ep-hook-input{width:100%;border:none;border-bottom:1px dashed var(--bl);outline:none;background:transparent;font-family:'Noto Sans SC',sans-serif;font-size:12px;color:var(--i2);padding:2px 0;cursor:text;transition:border-color .15s}
+.ep-hook-input:hover,.ep-hook-input:focus{border-bottom-color:var(--gm)}
 .ep-hook-cell{color:var(--au);font-style:italic;font-size:11.5px;line-height:1.65}
 
 /* Episode breakdown source reference card */
@@ -1333,7 +1333,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .wb-left{width:220px;min-width:160px;max-width:400px;flex:0 0 220px;background:var(--gd);display:flex;flex-direction:column;overflow:hidden}
 .wb-left-head{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .wb-left-title{font-size:12px;font-weight:500;color:rgba(255,255,255,.65);letter-spacing:.02em}
-.wb-left-body{flex:1;overflow-y:auto;padding:8px 10px;scrollbar-width:thin;display:flex;flex-direction:column}
+.wb-left-body{flex:1;overflow-y:auto;padding:8px 10px;scrollbar-width:thin}
 .wb-left-body::-webkit-scrollbar{width:3px}
 .wb-left-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
 .wb-left-footer{flex-shrink:0;padding:10px 12px;border-top:1px solid rgba(255,255,255,.06)}
@@ -1403,7 +1403,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 }
 
 /* Asset cards (on dark background) */
-.asset-card{border:1px solid rgba(255,255,255,.08);border-radius:var(--rs);margin-bottom:6px;overflow:hidden;cursor:pointer;transition:all .15s;flex-shrink:0}
+.asset-card{border:1px solid rgba(255,255,255,.08);border-radius:var(--rs);margin-bottom:6px;overflow:hidden;cursor:pointer;transition:all .15s}
 .asset-card:hover{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.03)}
 .asset-card.ready{border-color:rgba(46,122,80,.45)}
 .asset-card.viewing{border-color:var(--gm)!important;background:var(--gg);box-shadow:0 0 0 2px rgba(30,92,58,.15)}
@@ -1422,10 +1422,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8)}
 
 /* Draggable dividers */
-.wb-divider{width:20px;flex-shrink:0;background:rgba(0,0,0,.03);cursor:col-resize;position:relative;transition:background .15s;z-index:20;touch-action:none}
-.wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.12)}
-.wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:60px;background:var(--bd);border-radius:3px;transition:background .15s}
-.wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm);width:4px}
+.wb-divider{width:8px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10;margin:0 -2px}
+.wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.08)}
+.wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:48px;background:var(--bd);border-radius:2px;transition:background .15s}
+.wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm)}
 
 /* Middle column */
 .wb-mid{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
@@ -1714,13 +1714,12 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     </div>
   </div>
 
-    <!-- 最近项目 -->
     <div id="home-recent-wrap" style="width:100%;max-width:720px;margin-top:28px;animation:fu .5s .4s ease both;display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--i4);font-family:'DM Mono',monospace">最近项目</div>
-        <button onclick="openProjectManager()" style="font-size:11px;color:var(--i3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .15s" onmouseover="this.style.color='var(--gm)'" onmouseout="this.style.color='var(--i3)'">查看全部 →</button>
+        <button onclick="openProjectManager()" style="font-size:11px;color:var(--gm);background:none;border:none;cursor:pointer;padding:2px 6px">查看全部 →</button>
       </div>
-      <div id="home-recent-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+      <div id="home-recent-list" style="display:flex;gap:10px;flex-wrap:wrap"></div>
     </div>
 
   </div>
@@ -1735,10 +1734,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       <button id="story-export-btn-doc" onclick="exportSingleAsset('doc')" class="stb-export-btn" style="display:none">↓ 导出</button>
       <button id="story-export-btn-scheme" onclick="exportSingleAsset('scheme')" class="stb-export-btn" style="display:none">↓ 导出</button>
       <button id="story-export-btn-bible" onclick="exportSingleAsset('bible')" class="stb-export-btn" style="display:none">↓ 导出</button>
-      <!-- 确认策划按钮：与分集细纲页 bd-confirm-btn 位置逻辑一致 -->
-      <button class="gen-btn" id="bible-confirm-btn" style="display:none" onclick="confirmBibleAndNext()">
-        确认策划案，开始分集细纲 →
-      </button>
     </div>
   </div>
   <div class="story-layout">
@@ -1872,6 +1867,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <button class="cs-btn" onclick="sendChat('bible')" aria-label="发送">↑</button>
           </div>
         </div>
+        <div id="bible-confirm-bar" style="display:none;margin-top:16px;padding:16px 0 8px;border-top:1px solid var(--bl)">
+          <button class="gen-btn" onclick="confirmBibleAndNext()" style="width:100%;height:40px;font-size:14px">确认策划案，进入分集细纲创作 →</button>
+          <div style="font-size:11px;color:var(--i4);text-align:center;margin-top:6px">确认后将锁定当前版本作为分集细纲的参考基准</div>
+        </div>
         </div><!-- /ss3-content -->
       </div><!-- /ss3 -->
 
@@ -1888,7 +1887,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     <div class="bd-header">
       <div>
         <div class="bd-header-title">分集细纲</div>
-        <div class="bd-header-sub" id="bd-header-sub">基于创意策划案逐幕生成 · 每幕确认后生成下一幕 · 集标题/卡点可直接点击修改 · 情节节拍在右侧对话框告诉 AI</div>
+        <div class="bd-header-sub" id="bd-header-sub">基于创意策划案逐幕生成 · 每幕确认后生成下一幕 · 点击任意字段可直接编辑</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <span id="bd-edit-indicator" style="display:none;font-size:11px;color:var(--au)">✎ 有字段已手动修改</span>
@@ -1943,7 +1942,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <div class="stb-sep"></div>
             <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
             <div class="stb-sep"></div>
-            <button class="stb-action-btn" id="script-export-btn" onclick="exportCurrentScript()">导出</button>
+            <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
           </div>
         </div>
       </div>
@@ -2299,9 +2298,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         <div class="asset-card-body" id="ac-script-en-body">—</div>
       </div>
 
-      <div style="flex:1;display:flex;align-items:flex-end;padding:4px 2px 6px;pointer-events:none">
-        <div style="font-size:9px;color:rgba(255,255,255,.15);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace">节点导航</div>
-      </div>
     </div><!-- wb-asset-list -->
     <div class="wb-left-footer">
       <button class="wb-export-btn" onclick="openExportModal()">↓ 导出全部资料</button>
@@ -2462,12 +2458,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 const S={page:'home',step:1,scheme:0};
 
 function showPage(p){
-  try {
-    const ae=document.activeElement; if(ae&&ae.isContentEditable) ae.blur();
-    if(typeof _scriptEditTimers==='object') { Object.keys(_scriptEditTimers).forEach(k=>{clearTimeout(_scriptEditTimers[k]);delete _scriptEditTimers[k];}); }
-    if(typeof serializeCurrentScript==='function') serializeCurrentScript();
-    if(typeof saveProject==='function') saveProject();
-  } catch(_e){}
+  try{var ae=document.activeElement;if(ae&&ae.isContentEditable)ae.blur();if(typeof serializeCurrentScript==='function')serializeCurrentScript();if(typeof saveProject==='function')saveProject();}catch(_e){}
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   ['nav-home'].forEach(id=>{
     const el=document.getElementById(id);
@@ -2904,7 +2895,7 @@ const PROJECT = {
     modifiedFields: {},  // {fieldKey: true} — tracks user edits
   },
   // [4] Episodes
-  episodes: { allData: [], confirmedUpTo: 0, acts: [] },
+  episodes: { allData: [], confirmedUpTo: 0 },
   // [5] Script
   script: { generatedBatches: 0, allData: {} },
   // [6] User edits tracking (cross-cutting)
@@ -3243,6 +3234,7 @@ function goStep(n){
     if(ss3) ss3.style.display='block';
     if(ss1) ss1.style.display='none';
     syncStoryExportBtns('bible');
+    var _bcBar3=document.getElementById('bible-confirm-bar'); if(_bcBar3) _bcBar3.style.display=(PROJECT.bible&&PROJECT.bible.logline&&!PROJECT.bible.confirmed)?'block':'none';
     // 根据是否已生成策划案切换空状态
     const ss3Empty = document.getElementById('ss3-empty');
     const ss3Content = document.getElementById('ss3-content');
@@ -4109,6 +4101,7 @@ actStructure 字段必须参考原著文档的幕数和每幕划分方式——�
     // 策划案生成完成 → 首次生成用'bible_first'，修改重生成用'bible'
     const isFirstGen = bibleHistory.length === 0;
     setTimeout(() => showConfirmDock(isFirstGen ? 'bible_first' : 'bible'), 500);
+    var _bcBar=document.getElementById('bible-confirm-bar'); if(_bcBar&&!PROJECT.bible?.confirmed) _bcBar.style.display='block';
   };
 
   if(!cfg.doubaoKey){
@@ -4238,16 +4231,66 @@ function renderBible(data){
 
   // 1. Meta
   const src=PROJECT.source, sc=PROJECT.scheme;
-  const _metaVal = (v, fb='—') => (v ? escHtml(String(v)) : fb);
-  document.getElementById('bible-meta-grid').innerHTML = `
-    <div class="bible-meta-item"><div class="bible-meta-label">目标市场</div><div class="bible-meta-val">${_metaVal(src.market)}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">受众偏好</div><div class="bible-meta-val">${_metaVal(src.preference)}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">题材类型</div><div class="bible-meta-val">${_metaVal((src.genre||'').split('（')[0])}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">体量规划</div><div class="bible-meta-val">${src.episodeCount ? src.episodeCount+'集' : '—'}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">改编路径</div><div class="bible-meta-val">${_metaVal(src.path||'拆解改编')}</div></div>
-    <div class="bible-meta-item"><div class="bible-meta-label">原著/IP</div><div class="bible-meta-val">${_metaVal(src.docTitle || sc.title || (src.userRequirements||'').substring(0,30))}</div></div>
-    <div class="bible-meta-item" style="grid-column:1/-1"><div class="bible-meta-label">选定方案</div><div class="bible-meta-val">${_metaVal(sc.num)} · ${_metaVal(sc.title)}</div></div>
-  `;
+  const titleRecs = sc.titleRecs && sc.titleRecs.length > 0 ? sc.titleRecs : null;
+  
+  // Build title recommendation UI
+  let titleRecsHtml = '';
+  if (titleRecs && titleRecs.length > 0) {
+    const recsHtml = titleRecs.map((tr, idx) => `
+      <div class="title-rec-item ${idx===0?'selected':''}" data-idx="${idx}" onclick="selectTitleRec(${idx})" style="
+        display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--rs);
+        border:1.5px solid ${idx===0?'var(--gm)':'var(--bl)'};
+        background:${idx===0?'var(--gg)':'var(--wh)'};
+        cursor:pointer;transition:all .18s;margin-bottom:6px;
+      ">
+        <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${idx===0?'var(--gm)':'var(--bd)'};
+          background:${idx===0?'var(--gm)':'transparent'};flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;">
+          ${idx===0?'<div style="width:6px;height:6px;border-radius:50%;background:#fff"></div>':''}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:600;color:var(--ink);font-family:'Playfair Display','Noto Serif SC',serif">${escHtml(tr.zh)}</div>
+          <div style="font-size:12px;color:var(--i3);font-style:italic;margin-top:1px">${escHtml(tr.en)}</div>
+          ${tr.note?`<div style="font-size:11px;color:var(--i4);margin-top:3px">${escHtml(tr.note)}</div>`:''}
+        </div>
+        ${idx===0?'<span style="font-size:10px;background:var(--gm);color:#fff;padding:2px 7px;border-radius:10px;flex-shrink:0;align-self:center">首推</span>':''}
+      </div>`).join('');
+    
+    titleRecsHtml = `<div class="bible-block" style="margin-bottom:14px">
+      <div class="bible-block-head">
+        <span class="bible-block-icon">🎬</span>
+        <span class="bible-block-label">剧名推荐（点击选定，项目名称自动更新）</span>
+        <span class="bible-edit-hint" id="title-selected-badge" style="background:var(--gg);color:var(--gm);padding:2px 8px;border-radius:10px;font-size:11px">已选：${escHtml(titleRecs[0].zh)}</span>
+      </div>
+      <div class="bible-block-body">${recsHtml}</div>
+    </div>`;
+  }
+  
+  var _mv=function(v,fb){return v?escHtml(String(v)):(fb||'—');};
+  document.getElementById('bible-meta-grid').innerHTML=
+    '<div class="bible-meta-item"><div class="bible-meta-label">目标市场</div><div class="bible-meta-val">'+_mv(src.market)+'</div></div>'+
+    '<div class="bible-meta-item"><div class="bible-meta-label">受众偏好</div><div class="bible-meta-val">'+_mv(src.preference)+'</div></div>'+
+    '<div class="bible-meta-item"><div class="bible-meta-label">题材类型</div><div class="bible-meta-val">'+_mv((src.genre||'').split('（')[0])+'</div></div>'+
+    '<div class="bible-meta-item"><div class="bible-meta-label">体量规划</div><div class="bible-meta-val">'+(src.episodeCount?src.episodeCount+'集':'—')+'</div></div>'+
+    '<div class="bible-meta-item"><div class="bible-meta-label">改编路径</div><div class="bible-meta-val">'+_mv(src.path||'拆解改编')+'</div></div>'+
+    '<div class="bible-meta-item"><div class="bible-meta-label">原著/IP</div><div class="bible-meta-val">'+_mv(src.docTitle||sc.title||(src.userRequirements||'').substring(0,30))+'</div></div>'+
+    '<div class="bible-meta-item" style="grid-column:1/-1"><div class="bible-meta-label">选定方案</div><div class="bible-meta-val">'+_mv(sc.num)+' · '+_mv(sc.title)+'</div></div>';
+  
+  // Insert title recs before the main bible content
+  const ss3 = document.getElementById('ss3');
+  if (ss3) {
+    let existingRecsBlock = document.getElementById('title-recs-block');
+    if (!existingRecsBlock) {
+      existingRecsBlock = document.createElement('div');
+      existingRecsBlock.id = 'title-recs-block';
+      const secHead = ss3.querySelector('.sec-head');
+      if (secHead && secHead.nextSibling) {
+        ss3.insertBefore(existingRecsBlock, secHead.nextSibling);
+      } else {
+        ss3.insertBefore(existingRecsBlock, ss3.firstChild.nextSibling || ss3.firstChild);
+      }
+    }
+    existingRecsBlock.innerHTML = titleRecsHtml;
+  }
 
   // 2. 故事简介（字段名保持 logline 向后兼容）
   const logEl = document.getElementById('bible-logline');
@@ -4265,7 +4308,7 @@ function renderBible(data){
   document.getElementById('bible-scheme-sections').innerHTML = Object.entries(spLabels).map(([k,l])=>`
     <div class="bible-sub-section">
       <div class="bible-sub-label">${l}</div>
-      <div class="bible-editable" id="bible-sp-${k}">${escHtml(sp[k]||'')}</div>
+      <div class="bible-editabl      <div class="bible-editable" id="bible-sp-${k}">${escHtml(sp[k]||''  )}</div>
     </div>`).join('');
   Object.keys(spLabels).forEach(k=>{
     const el=document.getElementById(`bible-sp-${k}`);
@@ -4292,7 +4335,7 @@ function renderCharCards(chars){
         ${['appearance','personality','arc','wound','keyMoments'].map(f=>`
           <div class="char-field">
             <div class="char-field-label">${{appearance:'外貌',personality:'性格核心',arc:'人物弧光',wound:'核心伤口',keyMoments:'关键戏份'}[f]}</div>
-            <div class="char-field-val">${escHtml(c[f]||'')}</div>
+                        <div class="char-field-val">${escHtml(c[f]||''  )}</div>
           </div>`).join('')}
       </div>
     </div>`).join('');
@@ -4314,16 +4357,14 @@ function renderBeats(beats){
     return;
   }
   if(countLabel) countLabel.textContent = `共 ${beats.length} 个节拍`;
-  container.innerHTML = beats.map((b, idx) => {
-    const numStr = String(b.num||idx+1).padStart(2,'0');
-    const isMod = PROJECT.bible.modifiedFields[`beat_${idx}_title`] || PROJECT.bible.modifiedFields[`beat_${idx}_summary`];
-    return `<div class="beat-card${isMod?' modified':''}" id="beat-card-${idx}">
-      <div class="beat-num">${numStr}</div>
-      <div class="beat-body">
-        <div class="beat-title">${escHtml(b.title||'')}</div>
-        <div class="beat-summary">${escHtml(b.summary||'')}</div>
-      </div>
-    </div>`;
+  container.innerHTML = beats.map(function(b, idx) {
+    var numStr = String(b.num||idx+1).padStart(2,'0');
+    return '<div class="beat-card" id="beat-card-'+idx+'">' +
+      '<div class="beat-num">'+numStr+'</div>' +
+      '<div class="beat-body">' +
+        '<div class="beat-title">'+escHtml(b.title||'')+'</div>' +
+        '<div class="beat-summary">'+escHtml(b.summary||'')+'</div>' +
+      '</div></div>';
   }).join('');
   // Init edit tracking for each beat field
   beats.forEach((b, idx) => {
@@ -4639,25 +4680,29 @@ function _doExportAsset(key){
 
 // ── Diff 检测：找出中文剧本在翻译后有改动的集 ──
 // targetKey: 'script-en' 或 'script-prod'
-// 返回 {changed: [epIdx], unchanged: [epIdx], total: n}  DOM-independent
+// 返回 {changed: [epIdx], unchanged: [epIdx], total: n}
 function getDiffEps(targetKey){
-  const translatedHashByEp = targetKey === 'script-en' ? scriptState.enHashByEp : scriptState.prodHashByEp;
-  const allEpIdxs = [];
-  bdState.acts.forEach((act, aIdx) => {
-    if (scriptState.actScripts[aIdx]?.status === 'done') {
-      for (let i = act.from-1; i < act.to; i++) allEpIdxs.push(i);
+  const hashByEp = targetKey === 'script-en'
+    ? scriptState.enHashByEp
+    : scriptState.prodHashByEp;
+
+  // 收集所有已生成剧本的集
+  const allEpWraps = [...document.querySelectorAll('[id^="script-ep-wrap-"]')];
+  const allEpIdxs = allEpWraps.map(w => parseInt(w.dataset.ep)).filter(n => !isNaN(n));
+
+  const changed = [], unchanged = [];
+  allEpIdxs.forEach(epIdx => {
+    const currentText = getEpTextForHash(epIdx);
+    if(!currentText){ unchanged.push(epIdx); return; }
+    const currentHash = hashStr(currentText);
+    const translatedHash = hashByEp[epIdx];
+    if(!translatedHash || currentHash !== translatedHash){
+      changed.push(epIdx); // 从未翻译 或 内容有改动
+    } else {
+      unchanged.push(epIdx);
     }
   });
-  if (allEpIdxs.length === 0) {
-    document.querySelectorAll('[id^="script-ep-wrap-"]').forEach(w => { const i=parseInt(w.dataset.ep); if(!isNaN(i)) allEpIdxs.push(i); });
-  }
-  const changed=[], unchanged=[];
-  allEpIdxs.forEach(epIdx => {
-    let cnHash = scriptState.cnHashByEp[epIdx];
-    if (!cnHash) { const t=getEpTextForHash(epIdx); if(t){cnHash=hashStr(t);scriptState.cnHashByEp[epIdx]=cnHash;} else{changed.push(epIdx);return;} }
-    if (!translatedHashByEp[epIdx] || cnHash !== translatedHashByEp[epIdx]) changed.push(epIdx);
-    else unchanged.push(epIdx);
-  });
+
   return { changed, unchanged, total: allEpIdxs.length };
 }
 
@@ -4722,20 +4767,9 @@ function _showTranslatedScriptInBody(key){
   const store = ASSET_STORE[key];
   const label = store?.label || (key === 'script-en' ? '英文剧本' : '制作剧本');
 
-  // 替换工具栏翻译按钮区域为比对按钮，并将右侧导出按钮替换为对应版本导出
+  // 替换工具栏翻译按钮区域为比对按钮，并隐藏右侧原始导出按钮
   const tbWrap = document.getElementById('stb-translate-wrap');
-  const exportBtn = document.getElementById('script-export-btn');
-  // 保存原始导出按钮 HTML，替换为翻译版本导出按钮
-  if(exportBtn && !exportBtn.dataset.origLabel){
-    exportBtn.dataset.origLabel = exportBtn.textContent;
-    exportBtn.dataset.origOnclick = exportBtn.getAttribute('onclick');
-  }
-  if(exportBtn){
-    const exportLabel = key === 'script-en' ? '导出英文剧本' : '导出制作剧本';
-    exportBtn.textContent = exportLabel;
-    exportBtn.setAttribute('onclick', `exportAsset('${key}')`);
-    exportBtn.style.display = '';
-  }
+  const exportBtn = document.querySelector('.script-tb-actions button[onclick="exportCurrentScript()"]');
   if(tbWrap && !tbWrap.dataset.origHtml){
     tbWrap.dataset.origHtml = tbWrap.innerHTML;
   }
@@ -4753,24 +4787,15 @@ function _showTranslatedScriptInBody(key){
   if(!body) return;
 
   if(!store?.text){
-    const isProd=key==='script-prod';
-    body.innerHTML=`<div style="padding:48px 32px;text-align:center;max-width:520px;margin:0 auto">
-      <div style="font-size:32px;margin-bottom:16px">${isProd?'🎬':'🌐'}</div>
-      <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px">${isProd?'制作剧本':'英文剧本'}</div>
-      <div style="font-size:12px;color:var(--i4);margin-bottom:16px">${isProd?'中文场景 + 英文台词':'好莱坞全英格式'}</div>
-      <div style="font-size:13px;color:var(--i3);line-height:1.9;margin-bottom:16px;padding:12px 16px;background:rgba(30,92,58,.04);border-radius:var(--rs);border-left:3px solid var(--gm);text-align:left">
-        <div style="font-weight:600;color:var(--ink);margin-bottom:6px">📌 此页面基于中文剧本生成</div>
-        <div>${isProd?'保留中文场景行与动作行，仅将对白翻译为英文，适合演员对词和分镜标注。':'将全部场景标题、动作描述、对白完整翻译为英文，适合海外平台投递及国际合拍。'}</div>
-      </div>
-      <div style="font-size:12px;padding:14px 16px;background:var(--gg);border-radius:var(--rs);border:1px solid var(--gp);text-align:left;line-height:2">
-        <div style="font-size:11px;font-weight:600;color:var(--gm);letter-spacing:.04em;margin-bottom:8px">操作步骤</div>
-        <div style="color:var(--i2)">① 前往左侧「中文剧本」页面，完成并审阅全部幕剧本</div>
-        <div style="color:var(--i2)">② 点击中文剧本页面右上角「翻译当前幕 ▾」按钮</div>
-        <div style="color:var(--gm);font-weight:500">③ 选择「${isProd?'只翻台词 → 制作剧本':'全文翻译 → 英文剧本'}」</div>
-        <div style="color:var(--i2)">④ 逐幕翻译后，本页自动汇总全本内容并可导出</div>
-      </div>
-      <div style="margin-top:14px;font-size:11px;color:var(--i4)">中文剧本有修改时，可随时在中文剧本页重新翻译对应幕</div>
-    </div>`;
+    var isProd=key==='script-prod';
+    body.innerHTML='<div style="padding:48px 32px;text-align:center;max-width:480px;margin:0 auto">'+
+      '<div style="font-size:28px;margin-bottom:14px">'+(isProd?'🎬':'🌐')+'</div>'+
+      '<div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:10px">'+(isProd?'制作剧本（中文场景 + 英文台词）':'英文剧本（好莱坞全英格式）')+'</div>'+
+      '<div style="font-size:13px;color:var(--i3);line-height:1.85;margin-bottom:14px">'+(isProd?'基于中文剧本派生生成：保留中文场景描述与动作行，仅将对白翻译为英文，供中英对照制作使用。':'基于中文剧本派生生成：将所有场景、动作行、对白全文翻译为英文好莱坞格式，适合海外平台投递。')+'</div>'+
+      '<div style="font-size:12px;padding:10px 14px;background:var(--gg);border-radius:var(--rs);border:1px solid var(--bl);text-align:left;line-height:1.8">'+
+        '<b style="color:var(--gm)">生成步骤：</b><br>① 先在「中文剧本」完成创作<br>② 工具栏点击「翻译当前幕 ▾」<br>③ 选择「'+(isProd?'只翻台词 → 制作剧本':'全文翻译 → 英文剧本')+'」'+
+      '</div>'+
+    '</div>';
     return;
   }
 
@@ -4806,20 +4831,8 @@ function _restoreCnScriptView(){
     delete tbWrap.dataset.origHtml;
   }
   // 恢复原始导出按钮
-  const exportBtn = document.getElementById('script-export-btn');
-  if(exportBtn){
-    if(exportBtn.dataset.origLabel){
-      exportBtn.textContent = exportBtn.dataset.origLabel;
-      delete exportBtn.dataset.origLabel;
-    }
-    if(exportBtn.dataset.origOnclick){
-      exportBtn.setAttribute('onclick', exportBtn.dataset.origOnclick);
-      delete exportBtn.dataset.origOnclick;
-    } else {
-      exportBtn.setAttribute('onclick', 'exportCurrentScript()');
-    }
-    exportBtn.style.display = '';
-  }
+  const exportBtn = document.querySelector('.script-tb-actions button[onclick="exportCurrentScript()"]');
+  if(exportBtn) exportBtn.style.display = '';
   // 重建中文剧本内容
   const body = document.getElementById('script-body');
   if(body) body.innerHTML = '';
@@ -4875,11 +4888,11 @@ function _showDiffPanel(key){
 
 // 同步更新左侧高亮（供 showPage/goStep 调用后更新）
 function confirmBibleAndNext(){
-  // 清除节拍变更提示（用户确认策划案意味着已知晓当前状态）
   document.getElementById('beat-changed-banner')?.remove();
   _changedBeatIdxs?.clear();
   if(!PROJECT.bible.logline){ showToast('策划案尚未生成，请先完成策划追问'); return; }
   hideConfirmDock();
+  var _bcBar4=document.getElementById('bible-confirm-bar'); if(_bcBar4) _bcBar4.style.display='none';
 
   // Force-sync any in-progress contenteditable edits before archiving
   document.querySelectorAll('[data-field]').forEach(el => {
@@ -4920,6 +4933,9 @@ function confirmBibleAndNext(){
   startBreakdown();
 }
 
+function escForAttr(s){
+  return String(s||'').split("'").join('&#39;');
+}
 function escHtml(str){
   if(!str)return'';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -5230,8 +5246,6 @@ ${b.characters&&b.characters.length>0
 同一幕内各节拍的集数分配应有节奏变化，不能全部均等。
 ${buildBeatsContextForAct(act)}
 
-${src.docPlanningLogic ? `【原著核心爆款基因（分集细纲必须继承此逻辑，确保每集都有对应的情绪钩子和冲突结构）】\n${src.docPlanningLogic.substring(0,300)}` : ''}
-
 ${src.docHighlights ? `【原著高光爆点（分集细纲中必须有对应场景，不能遗漏）】\n${src.docHighlights}` : ''}
 
 ${src.docRhythmRules ? `【原著节奏规律（每集卡点设计必须遵守）】\n${src.docRhythmRules}` : ''}
@@ -5287,20 +5301,15 @@ ${buildLockedEditsContext()}
   act.status = 'done';
 
   // Sync to PROJECT episodes for downstream compat
-  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
+  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
 
   // Render the real cards (replace skeletons)
   renderActCards(actIdx);
   updateActNavPill(actIdx);
   updateActSectionStatus(actIdx, 'done');
-
   saveProject();
-
-  const _isLastAct = actIdx >= bdState.acts.length - 1;
-  setTimeout(() => {
-    if (_isLastAct) showConfirmDock('breakdown');
-    else showConfirmDock('bd_act', { actIdx });
-  }, 500);
+  var _isLast = actIdx >= bdState.acts.length - 1;
+  setTimeout(function(){ if(_isLast) showConfirmDock('breakdown'); else showConfirmDock('bd_act',{actIdx:actIdx}); }, 500);
 }
 
 function enrichEp(raw, idx) {
@@ -5465,61 +5474,72 @@ function renderActCards(actIdx) {
 }
 
 function buildEpCardHTML(ep) {
-  const secs = parseInt((ep.duration||'100').replace(/[^0-9]/g,'')) || 100;
-  const durClass = secs < 90 ? 'short' : secs > 120 ? 'long' : 'ok';
-  const vibeHtml = (ep.vibes||[]).map(v =>
-    `<span class="vibe-tag type-${v.type}" onclick="removeVibe(this,'${ep.num}','${v.type}','${v.label}')">${v.label} ×</span>`
-  ).join('');
-
-  return `<div class="ep-card" id="ep-card-${ep.num}" data-ep="${ep.num}">
-    <div class="ep-card-header">
-      <span class="ep-card-num">EP${ep.num}</span>
-      <div class="ep-card-title-wrap">
-        <input class="ep-card-title-input" type="text"
-          value="${escHtml(ep.title)}"
-          data-ep="${ep.num}" data-field="title"
-          onchange="onEpQuickEdit(this)"
-          title="点击修改集标题">
-      </div>
-      <span class="ep-card-duration ${durClass}">${ep.duration}</span>
-    </div>
-    <div class="ep-card-body">
-      <div class="ep-field">
-        <div class="ep-field-label">情节节拍 <span style="font-size:10px;color:var(--i4)">· 在右侧对话框修改</span></div>
-        <div class="ep-field-val" style="font-size:12px;color:var(--i2);line-height:1.75;white-space:pre-wrap;user-select:text;cursor:default">${escHtml(ep.beat)}</div>
-      </div>
-      <div class="ep-field">
-        <div class="ep-field-label">结尾卡点 <span style="font-size:10px;color:var(--i4)">· 可直接修改</span></div>
-        <input class="ep-hook-input" type="text"
-          value="${escHtml(ep.hook)}"
-          data-ep="${ep.num}" data-field="hook"
-          onchange="onEpQuickEdit(this)"
-          title="点击修改卡点">
-      </div>
-    </div>
-    <div class="ep-card-footer">
-      ${vibeHtml}
-      <span class="vibe-tag vibe-tag-add" onclick="openVibePicker(event,'${ep.num}')">+ 爽感标签</span>
-    </div>
-  </div>`;
+  var secs = parseInt((ep.duration||'100').replace(/[^0-9]/g,'')) || 100;
+  var durClass = secs < 90 ? 'short' : secs > 120 ? 'long' : 'ok';
+  var vibeHtml = (ep.vibes||[]).map(function(v) {
+    return '<span class="vibe-tag type-'+v.type+'" onclick="removeVibe(this,\''+ep.num+'\',\''+v.type+'\',\''+v.label+'\')">'+v.label+' ×</span>';
+  }).join('');
+  return '<div class="ep-card" id="ep-card-'+ep.num+'" data-ep="'+ep.num+'">' +
+    '<div class="ep-card-header">' +
+      '<span class="ep-card-num">EP'+ep.num+'</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<input class="ep-card-title-input" type="text" value="'+escHtml(ep.title)+'" data-ep="'+ep.num+'" data-field="title" onchange="onEpQuickEdit(this)" title="点击修改集标题">' +
+      '</div>' +
+      '<span class="ep-card-duration '+durClass+'">'+ep.duration+'</span>' +
+    '</div>' +
+    '<div class="ep-card-body">' +
+      '<div class="ep-field">' +
+        '<div class="ep-field-label">情节节拍 <span style="font-size:10px;color:var(--i4)">· 右侧对话框修改</span></div>' +
+        '<div class="ep-field-val" style="font-size:12px;color:var(--i2);line-height:1.75;white-space:pre-wrap;user-select:text">'+escHtml(ep.beat)+'</div>' +
+      '</div>' +
+      '<div class="ep-field">' +
+        '<div class="ep-field-label">结尾卡点 <span style="font-size:10px;color:var(--i4)">· 可直接修改</span></div>' +
+        '<input class="ep-hook-input" type="text" value="'+escHtml(ep.hook)+'" data-ep="'+ep.num+'" data-field="hook" onchange="onEpQuickEdit(this)">' +
+      '</div>' +
+    '</div>' +
+    '<div class="ep-card-footer">'+vibeHtml+
+      '<span class="vibe-tag vibe-tag-add" onclick="openVibePicker(event,\''+ep.num+'\')">+ 爽感标签</span>' +
+    '</div>' +
+  '</div>';
 }
 
 function buildActEndHTML(act, nextAct, actIdx) {
+  // Generate a summary of this act's hooks
   const hookSummary = act.eps.slice(0,3).map(e=>`第${e.num}集 · ${e.hook.substring(0,35)}…`).join('\n');
   return `<div class="act-end-panel" style="margin-top:16px">
-    <div class="act-end-head"><span style="font-size:16px">✓</span>
+    <div class="act-end-head">
+      <span style="font-size:16px">✓</span>
       <span class="act-end-head-title">${act.name}·${act.label} 已生成（第${act.from}-${act.to}集）</span>
     </div>
     <div class="act-end-body">
-      <div class="act-end-section"><b>本幕结尾卡点摘要</b>\n${hookSummary}</div>
+      <div class="act-end-section"><b>本幕结尾卡点摘要</b>
+${hookSummary}</div>
       <div class="act-end-next">
         <div class="act-end-next-label">↓ 即将进入</div>
         <div class="act-end-next-title">${nextAct.name}·${nextAct.label}（第${nextAct.from}-${nextAct.to}集）</div>
         <div class="act-end-next-desc">${nextAct.desc} · ${nextAct.storyPhase||nextAct.phase}</div>
       </div>
-      <div style="font-size:12px;color:var(--i3);line-height:1.8;margin-top:10px">
-        集标题和卡点可直接点击修改，情节节拍请在右侧对话框告诉 AI。<br>
-        右侧对话框已弹出确认按钮，点击确认后自动生成 ${nextAct.name} 细纲。
+      <div style="font-size:12px;color:var(--i3);line-height:1.7;margin-bottom:12px">
+        请检查本幕细纲，如需修改可直接点击卡片字段编辑，或在右侧对话框告诉 AI。确认无误后点击「生成下一幕」继续。
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-ol" style="height:32px;padding:0 14px;font-size:12px" onclick="this.closest('.act-end-panel').querySelector('.act-review-chat').style.display='block';this.style.display='none'">💬 AI 修改本幕</button>
+        <button class="gen-btn" style="height:36px;padding:0 20px" onclick="confirmActAndGenerateNext(${actIdx}, this)">
+          确认本幕，生成${nextAct.name} →
+        </button>
+      </div>
+      <div class="act-review-chat" style="display:none;margin-top:12px">
+        <div style="border:1px solid var(--bl);border-radius:var(--rs);overflow:hidden">
+          <div id="act-review-chat-msgs-${actIdx}" style="max-height:140px;overflow-y:auto;padding:10px 12px;background:var(--bg);display:flex;flex-direction:column;gap:6px"></div>
+          <div style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--bl)">
+            <textarea class="ci" id="ci-act-review-${actIdx}" rows="1"
+              placeholder="针对本幕提出修改建议……"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendActReviewChat(${actIdx})}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+              style="border:1px solid var(--bd);border-radius:var(--rs);padding:7px 10px;background:var(--wh);flex:1;font-family:'Noto Sans SC',sans-serif;font-size:12px"></textarea>
+            <button class="cs-btn" onclick="sendActReviewChat(${actIdx})">↑</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>`;
@@ -5676,29 +5696,18 @@ function onEpFieldInput(el) {
 }
 
 function onEpFieldBlur(el) {
-  const epNum = el.dataset.ep, field = el.dataset.field;
-  const ep = bdState.allEps.find(e => e.num === epNum);
-  if (ep) {
-    ep[field] = el.textContent.trim();
-    PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
-    saveProject();
-  }
+  var epNum=el.dataset.ep,field=el.dataset.field;
+  var ep=bdState.allEps.find(function(e){return e.num===epNum;});
+  if(ep){ep[field]=el.textContent.trim();PROJECT.episodes.allData=bdState.allEps.map(function(e){return[e.num,e.title,e.beat,e.duration,e.hook];});saveProject();}
 }
-
 function onEpQuickEdit(el) {
-  const epNum = el.dataset.ep, field = el.dataset.field;
-  const val = el.value.trim();
-  if (!val) return;
-  const ep = bdState.allEps.find(e => e.num === epNum);
-  if (!ep) return;
-  ep[field] = val;
-  if (!ep.modifiedFields) ep.modifiedFields = {};
-  ep.modifiedFields[field] = true;
-  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
-  if (PROJECT.episodes.confirmedSnapshot) {
-    const snapEp = PROJECT.episodes.confirmedSnapshot.find(e => e.num === epNum);
-    if (snapEp) snapEp[field] = val;
-  }
+  var epNum=el.dataset.ep,field=el.dataset.field,val=el.value.trim();
+  if(!val) return;
+  var ep=bdState.allEps.find(function(e){return e.num===epNum;}); if(!ep) return;
+  ep[field]=val; if(!ep.modifiedFields) ep.modifiedFields={};
+  ep.modifiedFields[field]=true;
+  PROJECT.episodes.allData=bdState.allEps.map(function(e){return[e.num,e.title,e.beat,e.duration,e.hook];});
+  if(PROJECT.episodes.confirmedSnapshot){var s=PROJECT.episodes.confirmedSnapshot.find(function(e){return e.num===epNum;});if(s)s[field]=val;}
   saveProject();
 }
 
@@ -5763,19 +5772,25 @@ function showBdChatBar() {
 
 function confirmBreakdownAndNext() {
   hideConfirmDock();
-  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook,e.vibes||[]]);
+  PROJECT.episodes.allData = bdState.allEps.map(e=>[e.num,e.title,e.beat,e.duration,e.hook]);
   PROJECT.episodes.confirmedUpTo = bdState.allEps.length;
-  // Persist acts structure so buildScriptUI can reconstruct bdState if needed
-  PROJECT.episodes.acts = JSON.parse(JSON.stringify(bdState.acts));
   PROJECT.outline.confirmed = true;
   breakdownState.totalEps = PROJECT.source.episodeCount;
   breakdownState.allData = PROJECT.episodes.allData;
   breakdownState.generatedBatches = Math.ceil(bdState.allEps.length / 5);
   bdState.confirmed = true;
+  PROJECT.episodes.confirmedSnapshot = JSON.parse(JSON.stringify(bdState.allEps));
   saveProject();
-  archiveBreakdown(); // 入库：分集细纲
-  showToast('细纲已确认！进入剧本创作……');
-  setTimeout(()=>{ showPage('script'); buildScriptUI(); }, 600);
+  archiveBreakdown();
+  showToast('细纲已确认！正在进入剧本创作……');
+  setTimeout(function() {
+    showPage('script');
+    var missingIdxs = bdState.acts.map(function(_,i){return i;}).filter(function(i){return !scriptState.actScripts[i]||scriptState.actScripts[i].status!=='done';});
+    buildScriptUI();
+    if (missingIdxs.length > 0) {
+      setTimeout(function(){ generateScriptAct(missingIdxs[0]); }, 600);
+    }
+  }, 600);
 }
 
 function exportBreakdown() {
@@ -5803,16 +5818,18 @@ function exportBreakdown() {
 // Kept for script page compat
 
 
-// Serialize all rendered ep-wraps
+// Serialize current script DOM to PROJECT.script.allData
 function serializeCurrentScript(){
-  const body = document.getElementById('script-body');
-  if(!body) return;
-  body.querySelectorAll('[id^="script-ep-wrap-"]').forEach(epWrap => {
-    const epIdx = parseInt(epWrap.dataset.ep); if(isNaN(epIdx)) return;
-    PROJECT.script.allData[epIdx] = epWrap.innerHTML;
-    const aIdx = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
-    if(aIdx>=0 && scriptState.actScripts[aIdx]) scriptState.actScripts[aIdx].eps[epIdx] = epWrap.innerHTML;
-  });
+  // 只序列化单集的 ep-wrap，而非整个 body（整个 body 会导致存储体积翻倍）
+  if(currentEp === undefined || currentEp === null) return;
+  const epWrap = document.getElementById(`script-ep-wrap-${currentEp}`);
+  if(epWrap){
+    PROJECT.script.allData[currentEp] = epWrap.innerHTML;
+    const actIdx = bdState.acts.findIndex(a => currentEp >= a.from-1 && currentEp < a.to);
+    if(actIdx >= 0 && scriptState.actScripts[actIdx]){
+      scriptState.actScripts[actIdx].eps[currentEp] = epWrap.innerHTML;
+    }
+  }
 }
 
 function toggleTranslateMenu(e){
@@ -5829,58 +5846,44 @@ function sendChat(ctx){
 }
 
 function renderRecentProjects(){
-  const listWrap = document.getElementById('recent-projects-list');
-  const projects = getProjects();
-
-  // Sidebar dots with tooltip
-  if(listWrap) {
-    if(!projects.length) {
-      listWrap.innerHTML = '<div style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.1);margin:6px auto"></div>';
-    } else {
-      listWrap.innerHTML = projects.slice(0,8).map(p => {
-        const isActive = S.proj === p.name;
-        const tipText = p.name.length > 24 ? p.name.substring(0,24) + '…' : p.name;
-        return `<div class="sb-proj-dot${isActive?' active':''}" data-proj="${escHtml(tipText)}" onclick="loadSavedProj(this.dataset.proj);" data-tip="${escHtml(tipText)}">
-          <div class="sb-proj-dot-inner"></div>
-        </div>`;
-      }).join('');
-    }
+  var listWrap=document.getElementById('recent-projects-list');
+  var projects=JSON.parse(localStorage.getItem('dramamind_projects')||'[]');
+  // Sidebar dots
+  if(listWrap){
+    if(!projects.length){listWrap.innerHTML='<div style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.1);margin:6px auto"></div>';}
+    else{listWrap.innerHTML=projects.slice(0,8).map(function(p){
+      var isActive=S.proj===p.name;
+      var tip=p.name.length>24?p.name.substring(0,24)+'…':p.name;
+      return '<div class="sb-proj-dot'+(isActive?' active':'')+'" onclick="loadSavedProj(\''+escForAttr(p.name)+'\');" data-tip="'+escHtml(tip)+'"><div class="sb-proj-dot-inner"></div></div>';
+    }).join('');}
   }
-
-  // Home page recent project cards (top 3)
-  const homeWrap = document.getElementById('home-recent-wrap');
-  const homeList = document.getElementById('home-recent-list');
-  if (!homeList) return;
-  if (!projects.length) { if(homeWrap) homeWrap.style.display='none'; return; }
-  if (homeWrap) homeWrap.style.display = 'block';
-
-  homeList.innerHTML = projects.slice(0,6).map(p => {
-    const name = p.name || '未命名项目';
-    const savedAt = p.savedAt ? new Date(p.savedAt).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-    const isActive = S.proj === name;
-    const bib = p.PROJECT?.bible;
-    const hasScript = Object.keys(p.scriptState?.actScripts||{}).some(k=>p.scriptState.actScripts[k]?.status==='done');
-    const hasBreakdown = (p.bdState?.allEps?.length||0) > 0;
-    const hasBible = !!(bib?.logline);
-    const stage = hasScript?'剧本创作':hasBreakdown?'分集细纲':hasBible?'改编策划':'方案选择';
-    const stageColor = hasScript?'var(--au)':hasBreakdown?'var(--gi)':hasBible?'var(--gm)':'var(--i4)';
-    const episodeInfo = p.PROJECT?.source?.episodeCount ? `${p.PROJECT.source.episodeCount}集` : '';
-    const borderColor = isActive ? 'var(--gm)' : 'var(--bd)';
-    return `<div data-proj="${escHtml(name)}" onclick="loadSavedProj(this.dataset.proj);"
-      style="padding:13px 14px;background:var(--wh);border:1.5px solid ${borderColor};border-radius:var(--r);cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04);min-height:80px;display:flex;flex-direction:column;justify-content:space-between"
-      onmouseover="this.style.borderColor='var(--gm)';this.style.boxShadow='0 3px 12px rgba(30,92,58,.1)';this.style.transform='translateY(-1px)'"
-      onmouseout="this.style.borderColor='${borderColor}';this.style.boxShadow='0 1px 4px rgba(0,0,0,.04)';this.style.transform='translateY(0)'">
-      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(name)}">${escHtml(name)}</div>
-      <div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-          <span style="font-size:10px;color:#fff;background:${stageColor};padding:1px 7px;border-radius:8px;font-weight:500">${stage}</span>
-          ${episodeInfo?`<span style="font-size:10px;color:var(--i4)">${episodeInfo}</span>`:''}
-        </div>
-        <div style="font-size:10px;color:var(--i4)">${savedAt}</div>
-      </div>
-    </div>`;
+  // Home page cards
+  var homeWrap=document.getElementById('home-recent-wrap');
+  var homeList=document.getElementById('home-recent-list');
+  if(!homeList) return;
+  if(!projects.length){if(homeWrap)homeWrap.style.display='none';return;}
+  if(homeWrap) homeWrap.style.display='block';
+  homeList.innerHTML=projects.slice(0,3).map(function(p){
+    var nm=p.name||'未命名';
+    var isActive=S.proj===nm;
+    var hasScript=Object.keys((p.scriptState&&p.scriptState.actScripts)||{}).some(function(k){return p.scriptState.actScripts[k]&&p.scriptState.actScripts[k].status==='done';});
+    var hasBd=(p.bdState&&p.bdState.allEps&&p.bdState.allEps.length)||0;
+    var hasBible=!!(p.PROJECT&&p.PROJECT.bible&&p.PROJECT.bible.logline);
+    var stage=hasScript?'剧本创作':hasBd?'分集细纲':hasBible?'改编策划':'方案选择';
+    var sc=hasScript?'var(--au)':hasBd?'var(--gi)':hasBible?'var(--gm)':'var(--i4)';
+    var eps=p.PROJECT&&p.PROJECT.source&&p.PROJECT.source.episodeCount;
+    var ts=p.savedAt?new Date(p.savedAt).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    return '<div onclick="loadSavedProj(\''+escForAttr(nm)+'\');" style="flex:1;min-width:180px;padding:14px 16px;background:var(--wh);border:1.5px solid '+(isActive?'var(--gm)':'var(--bd)')+';border-radius:var(--r);cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.borderColor=\'var(--gm)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\''+(isActive?'var(--gm)':'var(--bd)')+'\';this.style.transform=\'translateY(0)\'">'+
+      '<div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(nm)+'</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'+
+        '<span style="font-size:10px;color:#fff;background:'+sc+';padding:1px 8px;border-radius:8px;font-weight:500">'+stage+'</span>'+
+        (eps?'<span style="font-size:10px;color:var(--i4)">'+eps+'集</span>':'')+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--i4)">'+ts+'</div>'+
+    '</div>';
   }).join('');
 }
+
 // ── 统一的 story 页 UI 重建函数 ──
 // 无论是刷新恢复、还是从历史项目入口载入，都必须经过这里
 function restoreStoryUI(){
@@ -5925,8 +5928,8 @@ function restoreStoryUI(){
       setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
     }
     // 追问结束后显示「生成策划案」按钮
-    const bibleBtn = document.getElementById('wb-gen-bible-btn');
-    if(bibleBtn && !PROJECT.bible?.confirmed) bibleBtn.classList.add('show');
+    var bibleBtn=document.getElementById('wb-gen-bible-btn');
+    if(bibleBtn&&!(PROJECT.bible&&PROJECT.bible.confirmed)) bibleBtn.classList.add('show');
 
     // 如果 bible 未确认，且最后一条是 AI 消息且含未回答的选项，恢复选项弹窗
     if(!PROJECT.bible?.confirmed){
@@ -5988,15 +5991,9 @@ function restoreStoryUI(){
   }
 
   // 3. 策划案已确认：渲染策划案内容，跳到 step 3
-  if(PROJECT.bible?.confirmed && PROJECT.bible.logline){
-    // 确保 source 有基本字段（兼容旧存档）
-    if(!PROJECT.source.market && PROJECT.scheme?.title) {
-      PROJECT.source.market = PROJECT.source.market || '欧美市场';
-      PROJECT.source.preference = PROJECT.source.preference || '女频（18–50岁）';
-      PROJECT.source.genre = PROJECT.source.genre || '仿真人向';
-      PROJECT.source.episodeCount = PROJECT.source.episodeCount || 40;
-    }
-    try { renderBible(PROJECT.bible); } catch(e){ console.warn('renderBible error:', e); }
+  if(PROJECT.bible&&PROJECT.bible.confirmed&&PROJECT.bible.logline){
+    if(!PROJECT.source.market){PROJECT.source.market='欧美市场';PROJECT.source.preference=PROJECT.source.preference||'女频（18–50岁）';PROJECT.source.episodeCount=PROJECT.source.episodeCount||40;}
+    try { renderBible(PROJECT.bible); } catch(e){console.warn(e);}
     goStep(3);
   } else if(savedSchemes.length > 0){
     // 有方案但未确认策划案：停在 step 1（方案选择）
@@ -6026,7 +6023,7 @@ function restoreStoryUI(){
 }
 
 function loadSavedProj(name){
-  const projects = getProjects();
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   const snap = projects.find(p => p.name === name);
   if(!snap){ showToast('项目数据不存在'); return; }
 
@@ -6072,14 +6069,8 @@ function loadSavedProj(name){
     }
   }
 
-  // 剧本页内容重建 — 先同步 allData（确保手动编辑不丢失）
+  // 剧本页内容重建
   if(scriptState.actScripts && Object.keys(scriptState.actScripts).length > 0){
-    Object.keys(scriptState.actScripts).forEach(aIdx => {
-      const as=scriptState.actScripts[aIdx]; if(!as?.eps) return;
-      Object.keys(as.eps).forEach(epIdx => {
-        if(!String(epIdx).endsWith('_modified')) PROJECT.script.allData[parseInt(epIdx)]=as.eps[epIdx];
-      });
-    });
     setTimeout(() => { buildScriptUI(); updateScriptStats(); }, 100);
   }
 
@@ -6259,26 +6250,6 @@ let currentActIdx = 0;
 function buildScriptUI() {
   scriptState.total = PROJECT.source.episodeCount || 40;
 
-  // Reconstruct bdState.acts if empty (e.g. after page state reset or project load)
-  if (bdState.acts.length === 0 && PROJECT.source.episodeCount > 0) {
-    if (PROJECT.episodes.acts && PROJECT.episodes.acts.length > 0) {
-      bdState.acts = JSON.parse(JSON.stringify(PROJECT.episodes.acts));
-    } else if (PROJECT.bible.actStructure && PROJECT.bible.actStructure.length > 0) {
-      bdState.acts = buildActsFromBibleStructure(PROJECT.bible.actStructure, PROJECT.source.episodeCount);
-    } else {
-      bdState.acts = planActs(PROJECT.source.episodeCount);
-    }
-    if (PROJECT.episodes.allData.length > 0 && bdState.allEps.length === 0) {
-      bdState.allEps = PROJECT.episodes.allData.map((e, idx) => ({
-        num: e[0]||idx+1, title: e[1]||'', beat: e[2]||'', duration: e[3]||3, hook: e[4]||'', vibes: e[5]||[]
-      }));
-      bdState.allEps.forEach(ep => {
-        const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
-        if (act) { if (!act.eps) act.eps = []; act.eps.push(ep); }
-      });
-    }
-  }
-
   // If restoring from save, re-render all completed acts then show next ungenerated
   const body = document.getElementById('script-body');
   if (!body) return;
@@ -6307,12 +6278,7 @@ function buildScriptUI() {
   body.innerHTML = '';
   renderActTabs();
   const firstActIdx = findNextUngeneratedAct();
-  if (firstActIdx >= 0) {
-    // Hide empty state immediately before generation starts
-    const emptyState = document.getElementById('script-empty-state');
-    if (emptyState) emptyState.style.display = 'none';
-    generateScriptAct(firstActIdx);
-  }
+  if (firstActIdx >= 0) generateScriptAct(firstActIdx);
 }
 
 function findNextUngeneratedAct() {
@@ -6368,7 +6334,7 @@ function renderActTabs() {
 
   // Fallback: no bdState acts
   if (bdState.acts.length === 0) {
-    html = `<div class="act-tab act-tab-pending" style="cursor:default;opacity:.55;font-size:11px;padding:0 12px">请先完成分集细纲</div>`;
+    html = `<div class="act-tab active" id="act-tab-0">全部剧本</div>`;
   }
 
   tabs.innerHTML = html;
@@ -6401,8 +6367,8 @@ async function generateScriptAct(actIdx) {
 
   const cfg = getApiConfig();
   const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'script');
-  const epSlice = PROJECT.episodes.allData.slice(act.from - 1, act.to);
-  if (epSlice.length === 0) { showToast('幕数据异常，请重新确认细纲'); return; }
+  var _epSrc=(PROJECT.episodes.confirmedSnapshot&&PROJECT.episodes.confirmedSnapshot.length>0)?PROJECT.episodes.confirmedSnapshot:bdState.allEps;
+  const epSlice = _epSrc.slice(act.from - 1, act.to);
   const b = PROJECT.bible, sc = PROJECT.scheme, src = PROJECT.source;
   const transcript = PROJECT.inquiry.messages.length > 0
     ? PROJECT.inquiry.messages.map(m=>`${m.role==='ai'?'顾问':'创作者'}：${m.content}`).join('\n\n')
@@ -6487,8 +6453,6 @@ ${buildCharVoiceContext()}`;
 全剧高光情节（在对应集必须完整呈现，不能删减或弱化）：${(b.schemePoints&&b.schemePoints.highlights)||''}
 
 ${src.docHighlights ? `【原著爆点场景还原要求（这些场景的情绪逻辑必须在剧本中有明确对应）】\n${src.docHighlights}` : ''}
-
-${src.docPlanningLogic ? `【原著核心爆款基因（剧本必须继承此逻辑，每集都要有对应的情绪钩子和冲突结构）】\n${src.docPlanningLogic.substring(0,300)}` : ''}
 
 ${src.docRhythmRules ? `【原著节奏规律（剧本节奏设计必须遵守）】\n${src.docRhythmRules}` : ''}
 
@@ -6612,7 +6576,6 @@ function appendActGeneratingPlaceholder(actIdx) {
     </div>`;
   body.appendChild(div);
   div.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  updateScriptEmptyState();
 }
 
 function appendActToBody(actIdx, animate) {
@@ -6655,7 +6618,6 @@ function appendActToBody(actIdx, animate) {
     epWrap.dataset.act = actIdx;
     epWrap.innerHTML = html;
     epsContainer.appendChild(epWrap);
-    if(!scriptState.cnHashByEp[epIdx]){const t=getEpTextForHash(epIdx);if(t)scriptState.cnHashByEp[epIdx]=hashStr(t);}
   }
   block.appendChild(epsContainer);
 
@@ -7541,7 +7503,7 @@ function saveProject(){
     // Also keep dramamind_projects in sync so project manager shows fresh data
     if(S.proj) {
       try {
-        const projects = getProjects();
+        const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
         const idx = projects.findIndex(p => p.name === S.proj);
         if(idx >= 0) { projects[idx] = snapshot; }
         else { projects.unshift(snapshot); }
@@ -7617,25 +7579,6 @@ function restoreFromSnap(snap) {
     bdState.generatedCount = snap.bdState.generatedCount || 0;
     bdState.confirmed = snap.bdState.confirmed || false;
     bdState.chatHistory = snap.bdState.chatHistory || [];
-    // If acts is empty but PROJECT.episodes.acts has data, use it
-    if (bdState.acts.length === 0 && PROJECT.episodes?.acts?.length > 0) {
-      bdState.acts = JSON.parse(JSON.stringify(PROJECT.episodes.acts));
-    }
-  } else if (PROJECT.episodes?.acts?.length > 0) {
-    // Restore from persisted acts structure (saved by confirmBreakdownAndNext)
-    bdState.acts = JSON.parse(JSON.stringify(PROJECT.episodes.acts));
-    bdState.confirmed = (PROJECT.episodes.confirmedUpTo || 0) > 0;
-    bdState.generatedCount = PROJECT.episodes.allData?.length || 0;
-    if (PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
-      bdState.allEps = PROJECT.episodes.allData.map((e, idx) => ({
-        num: e[0] || idx + 1, title: e[1] || '', beat: e[2] || '',
-        duration: e[3] || 3, hook: e[4] || '', vibes: e[5] || [],
-      }));
-      bdState.allEps.forEach(ep => {
-        const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
-        if (act) { if (!act.eps) act.eps = []; act.eps.push(ep); }
-      });
-    }
   } else if (PROJECT.episodes && PROJECT.episodes.allData && PROJECT.episodes.allData.length > 0) {
     // Migrate old format: reconstruct bdState from PROJECT.episodes.allData
     const total = PROJECT.source.episodeCount || PROJECT.episodes.allData.length;
@@ -7646,7 +7589,6 @@ function restoreFromSnap(snap) {
       beat: e[2] || '',
       duration: e[3] || 3,
       hook: e[4] || '',
-      vibes: e[5] || [],
     }));
     bdState.allEps.forEach(ep => {
       const act = bdState.acts.find(a => ep.num >= a.from && ep.num <= a.to);
@@ -7672,7 +7614,7 @@ function newProject(){
   if(S.proj){
     // 自动保存当前项目
     saveProject();
-    const projects = getProjects();
+    const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
     const idx = projects.findIndex(p => p.name === S.proj);
     const snap = {
       name: S.proj, savedAt: Date.now(),
@@ -7684,11 +7626,6 @@ function newProject(){
         finalized: scriptState.finalized,
         actScripts: JSON.parse(JSON.stringify(scriptState.actScripts)),
         chatHistory: scriptState.chatHistory,
-        cnLastEditTs: scriptState.cnLastEditTs||0, enTranslateTs: scriptState.enTranslateTs||0,
-        prodTranslateTs: scriptState.prodTranslateTs||0,
-        cnHashByEp: JSON.parse(JSON.stringify(scriptState.cnHashByEp||{})),
-        enHashByEp: JSON.parse(JSON.stringify(scriptState.enHashByEp||{})),
-        prodHashByEp: JSON.parse(JSON.stringify(scriptState.prodHashByEp||{})),
       },
       bdState: {
         acts: JSON.parse(JSON.stringify(bdState.acts)),
@@ -7711,15 +7648,14 @@ function newProject(){
   PROJECT.inquiry={messages:[],completed:false};
   PROJECT.bible={confirmed:false,logline:'',visual:'',characters:[],beats:[],actStructure:[],schemePoints:{},modifiedFields:{}};
   PROJECT.outline={confirmed:false,characters:'',story:'',wordCount:0};
-  PROJECT.episodes={allData:[],confirmedUpTo:0,acts:[]};
+  PROJECT.episodes={allData:[],confirmedUpTo:0};
   PROJECT.script={generatedBatches:0,allData:{}};
   PROJECT.userEdits={};
   breakdownState.generatedBatches=0; breakdownState.currentBatch=0; breakdownState.allData=[];
   bdState.acts=[]; bdState.allEps=[]; bdState.generatedCount=0; bdState.confirmed=false; bdState.chatHistory=[];
   scriptState.total=40; scriptState.finalized=false; scriptState.actScripts={}; scriptState.chatHistory=[];
-  scriptState.cnLastEditTs=0; scriptState.enTranslateTs=0; scriptState.prodTranslateTs=0;
   scriptState.cnHashByEp={}; scriptState.enHashByEp={}; scriptState.prodHashByEp={};
-  globalChatHistory.length=0; inquiryMode=false; _confirmDockStage=null; _revisionContext=null;
+  globalChatHistory.length=0; inquiryMode=false;
   schemeHistory=[];
   localStorage.removeItem('dramamind_scheme_history');
   inquiryHistory.length=0; inquiryMsgCount=0;
@@ -8338,11 +8274,6 @@ function getApiConfig() {
   catch(e) { return {}; }
 }
 
-function getProjects() {
-  try { return JSON.parse(localStorage.getItem('dramamind_projects') || '[]'); }
-  catch(e) { console.warn('Projects data corrupted:', e); return []; }
-}
-
 // ── 模式说明 ──
 // 专业模式（balanced）：策划阶段+翻译 → Claude Sonnet（无Key时 fallback doubao-seed-2-0-pro）
 //                      细纲 → doubao-seed-2-0-pro；剧本 → doubao-seed-2-0-lite
@@ -8515,7 +8446,6 @@ async function callClaude(userMsg, systemPrompt, maxTokens) {
     throw new Error(e.error?.message || `Claude API 错误 ${res.status}`);
   }
   const data = await res.json();
-  if (!data.content || !data.content.length) throw new Error('Claude 返回内容为空，请重试');
   return data.content[0].text;
 }
 
@@ -8540,7 +8470,6 @@ async function callDoubao_multiTurn(messages, systemPrompt, maxTokens, stage='in
     });
     if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`Claude API 错误 ${res.status}`); }
     const data = await res.json();
-    if (!data.content || !data.content.length) throw new Error('Claude 返回内容为空，请重试');
     return data.content[0].text;
   }
   // 经济模式或无 Claude Key：用豆包（专业模式无Key时 fallback Pro）
@@ -8557,7 +8486,6 @@ async function callDoubao_multiTurn(messages, systemPrompt, maxTokens, stage='in
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
   const data = await res.json();
-  if (!data.choices || !data.choices.length) throw new Error('豆包返回内容为空，请重试');
   return data.choices[0].message.content;
 }
 
@@ -8575,7 +8503,6 @@ async function callDoubao(userMsg, systemPrompt, maxTokens, stage='default') {
   });
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
   const data = await res.json();
-  if (!data.choices || !data.choices.length) throw new Error('豆包返回内容为空，请重试');
   return data.choices[0].message.content;
 }
 
@@ -8612,16 +8539,10 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
   // ── 收集需要翻译的集 epWraps ──
   let epWraps = [];
   if(forceEpIdxs){
+    // diff 翻译：只处理指定集
     forceEpIdxs.forEach(idx => {
-      const domWrap = document.getElementById(`script-ep-wrap-${idx}`);
-      if (domWrap) { epWraps.push(domWrap); return; }
-      const aIdx = bdState.acts.findIndex(a => idx >= a.from-1 && idx < a.to);
-      const storedHtml = aIdx>=0 ? scriptState.actScripts[aIdx]?.eps?.[idx] : null;
-      if (storedHtml) {
-        const syn = document.createElement('div');
-        syn.id=`script-ep-wrap-${idx}`; syn.dataset.ep=idx; syn.dataset.act=aIdx;
-        syn.innerHTML=storedHtml; epWraps.push(syn);
-      }
+      const wrap = document.getElementById(`script-ep-wrap-${idx}`);
+      if(wrap) epWraps.push(wrap);
     });
     if(!epWraps.length){ showToast('指定集的剧本内容不存在'); return; }
   } else if (isCurrentAct) {
@@ -8666,17 +8587,10 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
     const wrap = epWraps[i];
     const epIdx = parseInt(wrap.dataset.ep);
 
-    // 提取中文原文（DOM优先，不在时从存储HTML解析）
-    let elements = dialogueOnly
+    // 从原始 DOM 提取源文本（中文原文）
+    const elements = dialogueOnly
       ? [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
       : [...wrap.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')];
-    if (!elements.length) {
-      const aIdx2 = bdState.acts.findIndex(a => epIdx >= a.from-1 && epIdx < a.to);
-      const stored = aIdx2>=0 ? scriptState.actScripts[aIdx2]?.eps?.[epIdx] : null;
-      if (stored) { const tmp=document.createElement('div'); tmp.innerHTML=stored;
-        elements = dialogueOnly ? [...tmp.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg')]
-          : [...tmp.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-title b')]; }
-    }
     if (!elements.length) continue;
 
     const lines = elements.map(el => {
@@ -9433,7 +9347,6 @@ function viewAssetInMain(key) {
 
 // ══ 确认推进操作卡 ══
 let _confirmDockStage = null; // 'scheme' | 'bible' | 'breakdown'
-let _confirmDockActIdx = -1;
 
 function showConfirmDock(stage, opts){
   _confirmDockStage = stage;
@@ -9442,7 +9355,6 @@ function showConfirmDock(stage, opts){
 
   // opts 用于 bd_act / script_act 动态内容
   const actIdx = opts?.actIdx ?? -1;
-  _confirmDockActIdx = actIdx;
   const actName = actIdx >= 0 ? (bdState.acts[actIdx]?.name || `第${actIdx+1}幕`) : '';
   const nextActIdx = actIdx + 1;
   const nextActName = nextActIdx < bdState.acts.length ? (bdState.acts[nextActIdx]?.name || `第${nextActIdx+1}幕`) : '';
@@ -9503,21 +9415,12 @@ function showConfirmDock(stage, opts){
 
   dock.classList.add('show');
   appendGlobalMsg('ai', `✅ ${cfg.title} — ${cfg.sub}`);
-
-  // 同步显示中间面板的确认按钮（与右侧 dock 保持一致）
-  const bibleConfirmBtn = document.getElementById('bible-confirm-btn');
-  if(bibleConfirmBtn){
-    bibleConfirmBtn.style.display = (stage === 'bible_first' || stage === 'bible') ? 'inline-flex' : 'none';
-  }
 }
 
 function hideConfirmDock(){
   const dock = document.getElementById('confirm-dock');
   if(dock) dock.classList.remove('show');
   _confirmDockStage = null;
-  // 同步隐藏中间面板的确认按钮
-  const bibleConfirmBtn = document.getElementById('bible-confirm-btn');
-  if(bibleConfirmBtn) bibleConfirmBtn.style.display = 'none';
 }
 
 function handleConfirmDockPrimary(){
@@ -9527,10 +9430,9 @@ function handleConfirmDockPrimary(){
   else if(stage === 'bible' || stage === 'bible_first') confirmBibleAndNext();
   else if(stage === 'breakdown') confirmBreakdownAndNext();
   else if(stage === 'bd_act'){
-    const targetIdx = (typeof _confirmDockActIdx === 'number' && _confirmDockActIdx >= 0)
-      ? _confirmDockActIdx
-      : bdState.acts.reduce((last, a, i) => a.status === 'done' ? i : last, -1);
-    if(targetIdx >= 0) confirmActAndGenerateNext(targetIdx, null);
+    // 找到当前已完成的最后一幕，推进下一幕
+    const lastDoneIdx = bdState.acts.reduce((last, a, i) => a.status === 'done' ? i : last, -1);
+    if(lastDoneIdx >= 0) confirmActAndGenerateNext(lastDoneIdx);
   }
   else if(stage === 'script_act'){
     // 找到当前已完成的最后一幕，推进下一幕
@@ -9572,7 +9474,7 @@ function closePM() {
 function renderPMList() {
   const list = document.getElementById('pm-list');
   const countEl = document.getElementById('pm-count');
-  const projects = getProjects();
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
 
   if(countEl) countEl.textContent = `共 ${projects.length} 个项目`;
 
@@ -9607,7 +9509,7 @@ function showPMDetail(idx) {
     el.style.borderColor = i === idx ? 'var(--gp)' : 'transparent';
   });
 
-  const projects = getProjects();
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   const p = projects[idx];
   if(!p) return;
 
@@ -9657,7 +9559,7 @@ function showPMDetail(idx) {
           ${src.docTitle ? `<div style="font-size:12px;color:var(--i3)">原著：${escHtml(src.docTitle)}</div>` : ''}
         </div>
         <div style="display:flex;gap:8px">
-          <button onclick="closePM();loadSavedProj('${escHtml(p.name).replace(/'/g,"\\'")}')" class="gen-btn" style="height:32px;padding:0 16px;font-size:12px">载入项目 →</button>
+          <button onclick="closePM();loadSavedProj('${escForAttr(p.name)}')" class="gen-btn" style="height:32px;padding:0 16px;font-size:12px">载入项目 →</button>
           <button onclick="deletePMProject(${idx})" style="height:32px;padding:0 12px;font-size:12px;border:1px solid #e0453a;border-radius:var(--rs);background:none;color:#e0453a;cursor:pointer">删除</button>
         </div>
       </div>
@@ -9669,7 +9571,7 @@ function showPMDetail(idx) {
 function pmPreviewAsset(btn) {
   const key = btn.dataset.key;
   const pmiIdx = parseInt(btn.dataset.pmi);
-  const projects = getProjects();
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   const p = projects[pmiIdx];
   if(!p || !p.ASSET_STORE?.[key]?.text) { showToast('暂无内容'); return; }
   const store = p.ASSET_STORE[key];
@@ -9692,7 +9594,7 @@ let _pmPreviewStore = null;
 
 function renamePMProject(idx, newName) {
   if(!newName || newName.length < 1) return;
-  const projects = getProjects();
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   if(!projects[idx]) return;
   const oldName = projects[idx].name;
   if(oldName === newName) return;
@@ -9710,7 +9612,7 @@ function renamePMProject(idx, newName) {
 }
 
 function deletePMProject(idx) {
-  const projects = getProjects();
+  const projects = JSON.parse(localStorage.getItem('dramamind_projects') || '[]');
   if(!projects[idx]) return;
   const name = projects[idx].name;
   if(!confirm(`确认删除项目「${name}」？此操作不可撤销。`)) return;
@@ -10038,31 +9940,38 @@ function initWorkbench(){
   document.querySelectorAll('input[name="dramamind-mode"]').forEach(r => {
     r.addEventListener('change', () => _updateModeHighlight(r.value));
   });
-
-  window.addEventListener('beforeunload', () => {
-    try {
-      if(typeof _scriptEditTimers==='object') Object.keys(_scriptEditTimers).forEach(k=>{clearTimeout(_scriptEditTimers[k]);delete _scriptEditTimers[k];});
-      if(typeof serializeCurrentScript==='function') serializeCurrentScript();
-      if(typeof saveProject==='function') saveProject();
-    } catch(_e){}
-  });
 }
 
 function initWbDividers(){
   function makeDraggable(divider, getTarget, side){
     let startX, startW;
-    const onMove = e => {
-      const dx=e.clientX-startX; const nw=side==='left'?startW+dx:startW-dx;
-      const wrap=document.getElementById('workbench-wrap'); const total=wrap?wrap.offsetWidth:window.innerWidth;
-      const clamped=Math.max(side==='left'?160:220, Math.min(total-400, nw));
-      const t=getTarget(); t.style.flex='0 0 '+clamped+'px'; t.style.minWidth=clamped+'px'; t.style.maxWidth=clamped+'px';
-    };
-    const onUp = () => { divider.classList.remove('dragging'); document.body.style.cursor=''; document.body.style.userSelect='';
-      document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); };
     divider.addEventListener('mousedown', e=>{
-      e.preventDefault(); startX=e.clientX; startW=getTarget().offsetWidth;
-      divider.classList.add('dragging'); document.body.style.cursor='col-resize'; document.body.style.userSelect='none';
-      document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
+      e.preventDefault();
+      const target = getTarget();
+      startX = e.clientX; startW = target.offsetWidth;
+      divider.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      const onMove = e=>{
+        const dx = e.clientX - startX;
+        const nw = side==='left' ? startW+dx : startW-dx;
+        const wrap = document.getElementById('workbench-wrap');
+        const maxW = wrap ? wrap.offsetWidth - 160 : window.innerWidth - 160;
+        const clamped = Math.max(80, Math.min(maxW, nw));
+        target.style.width = clamped+'px';
+        target.style.flexBasis = clamped+'px';
+        target.style.flexShrink = '0';
+        target.style.flexGrow = '0';
+      };
+      const onUp = ()=>{
+        divider.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     });
   }
   const divL = document.getElementById('wb-div-l');
