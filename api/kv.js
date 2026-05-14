@@ -90,11 +90,11 @@ export default async function handler(req) {
 
   // ✅ 关键修复：env 读取在函数体内，而非模块顶层
   //    Edge Runtime 模块顶层调用 process.env 会导致 FUNCTION_INVOCATION_FAILED
-  const BASE_URL = process.env.UPSTASH_REDIS_REST_URL;
-  const TOKEN    = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const BASE_URL = process.env.KV_REST_API_URL;
+  const TOKEN    = process.env.KV_REST_API_TOKEN;
 
   if (!BASE_URL || !TOKEN) {
-    return jsonResp({ error: 'Upstash env vars not configured on Vercel' }, 500);
+    return jsonResp({ error: 'KV_REST_API_URL / KV_REST_API_TOKEN 未在 Vercel 配置' }, 500);
   }
 
   const url = new URL(req.url, `https://${req.headers.get('host')}`);
