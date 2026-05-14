@@ -2045,6 +2045,12 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
         <!-- Continuous scroll: all acts append here sequentially -->
         <div class="script-scroll" id="script-scroll">
+          <!-- 空状态：剧本尚未生成 -->
+          <div id="script-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:60px 32px;text-align:center">
+            <div style="font-size:32px;margin-bottom:16px;opacity:.4">✍️</div>
+            <div style="font-size:14px;font-weight:500;color:var(--i3);margin-bottom:8px">中文剧本尚未生成</div>
+            <div style="font-size:12px;color:var(--i4);line-height:1.8;max-width:300px">请先完成改编策划和分集细纲<br>确认细纲后系统将逐幕生成剧本</div>
+          </div>
           <div id="script-body"></div>
         </div>
 
@@ -6241,6 +6247,10 @@ function restoreStoryUI(){
     document.getElementById('gen-mask')?.classList.remove('show');
     const ph = document.getElementById('scheme-cards-placeholder');
     if(ph) ph.style.display = 'none';
+    // 方案已生成但未确认 → 恢复确认提示弹窗
+    if(!PROJECT.scheme.confirmed && PROJECT.scheme.num){
+      setTimeout(() => showConfirmDock('scheme'), 400);
+    }
   }
 
   // 2. 聊天记录重建
@@ -11084,21 +11094,7 @@ ${ctx}
     content: m.content
   }));
 
-  fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
-    method:'POST',
-    headers:{'Authorization':`Bearer ${cfg.doubaoKey}`,'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model: cfg.doubaoModel||'doubao-seed-2-0-lite-260428',
-      max_tokens: 1000,
-      messages:[{role:'system',content:sysPrompt},...recentHistory],
-    })
-  }).then(r=>r.json()).then(d=>{
-    if(!d.choices || !d.choices[0]) {
-      const errMsg = d.error?.message || d.message || JSON.stringify(d);
-      loadEl.textContent = '请求失败：' + errMsg;
-      return;
-    }
-    const reply = d.choices[0].message.content;
+  callDoubao_multiTurn(recentHistory, sysPrompt, 1000, 'default').then(reply => {
     globalChatHistory.push({role:'ai', content:reply, stage:S.page});
     document.getElementById('global-chat-msgs').scrollTop = 9999;
 
