@@ -568,7 +568,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
    Line height: exactly 1 line = 1/6" = 12pt leading
    At 96px/in: 8.5"=816px, 11"=1056px
    ══════════════════════════════════ */
-.script-scroll{flex:1;overflow-y:auto;background:#E8E4DF;padding:24px 0 80px}
+.script-scroll{flex:1;overflow-y:auto;background:#E8F0EC;padding:24px 0 80px}
 
 /* ── Physical paper page — Hollywood letter size, strictly fixed ── */
 .script-page{
@@ -1234,7 +1234,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
 
 /* ── SCRIPT CONTINUOUS SCROLL BODY ── */
-.script-act-divider{display:flex;align-items:center;gap:12px;padding:20px 60px 8px;position:sticky;top:0;z-index:5;background:linear-gradient(to bottom,#e8e4df 85%,transparent 100%)}
+.script-act-divider{display:flex;align-items:center;gap:12px;padding:20px 60px 8px;position:sticky;top:0;z-index:5;background:linear-gradient(to bottom,#e8f0ec 85%,transparent 100%)}
 .script-act-divider-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gm);font-weight:600;font-family:'DM Mono',monospace;white-space:nowrap}
 .script-act-divider-line{flex:1;height:1px;background:linear-gradient(to right,var(--gp),transparent)}
 .script-act-divider-range{font-size:10px;color:var(--i4);white-space:nowrap}
@@ -3247,9 +3247,65 @@ function selScheme(el){
   const chk = el.querySelector('.sc-chk');
   if(chk) chk.textContent='✓';
   document.querySelectorAll('.sc:not(.sel) .sc-chk').forEach(c=>c.textContent='');
+
+  // 用户点击选择方案后，右侧弹出操作浮窗
+  // 若已在策划追问阶段则不重复弹出
+  if(!inquiryMode && !PROJECT.scheme.confirmed){
+    const selTitle = el.querySelector('.sc-title')?.textContent?.trim() || '所选方案';
+    showSchemeSelectionDock(selTitle);
+  }
 }
 
-// ── Shared scheme card HTML builder (single source of truth) ──
+// ── 方案选中后的右侧浮动操作框 ──
+// 提供「确认方向，生成改编策划案」和「继续讨论修改」两个选项
+function showSchemeSelectionDock(schemeTitle){
+  // 先关闭通用确认卡（避免叠加）
+  hideConfirmDock();
+  // 复用 inquiry-choice-dock 来展示这两个选择
+  const dock = document.getElementById('inquiry-choice-dock');
+  const labelEl = document.getElementById('icd-q-label');
+  const choicesEl = document.getElementById('icd-choices');
+  const customWrap = document.getElementById('icd-custom-wrap');
+  if(!dock || !labelEl || !choicesEl) {
+    // fallback: 直接弹 confirm-dock
+    showConfirmDock('scheme');
+    return;
+  }
+  customWrap && customWrap.classList.remove('show');
+  document.getElementById('icd-progress').innerHTML = '';
+  labelEl.textContent = `已选「${schemeTitle}」，请选择下一步`;
+  choicesEl.innerHTML = `
+    <button class="icd-btn" onclick="_schemeSelConfirm()">
+      <div class="icd-btn-letter">✓</div>
+      <span>确认这个方向，生成改编策划案</span>
+    </button>
+    <button class="icd-btn other" onclick="_schemeSelDiscuss()">
+      <div class="icd-btn-letter">💬</div>
+      <span>继续讨论 / 调整方案</span>
+    </button>
+  `;
+  dock.classList.add('show');
+  // 右侧对话同步发出提示
+  appendGlobalMsg('ai', `你选择了「**${schemeTitle}**」。\n\n✅ 如果方向已定，点击「确认这个方向」，系统将进入策划追问，综合原剧节拍逻辑和你的选择生成改编策划案。\n\n💬 如需调整，点击「继续讨论」，方案卡片保留，随时可以重新选择。`);
+  const msgs = document.getElementById('global-chat-msgs');
+  if(msgs) setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 80);
+}
+
+function _schemeSelConfirm(){
+  const dock = document.getElementById('inquiry-choice-dock');
+  if(dock) dock.classList.remove('show');
+  confirmScheme();
+}
+
+function _schemeSelDiscuss(){
+  const dock = document.getElementById('inquiry-choice-dock');
+  if(dock) dock.classList.remove('show');
+  appendGlobalMsg('ai', '好的！方案卡片保持高亮，你可以在下方输入框告诉我想往哪个方向调整，或者切换选择其他方案。讨论完毕后，直接点击方案卡片重新选择，或点击「确认」继续。');
+  const ci = document.getElementById('wb-ci');
+  if(ci) ci.focus();
+}
+
+
 function buildSchemeCardHTML(sc, idx, selected) {
   const titleRecHtml = sc.titleRecs && sc.titleRecs.length > 0
     ? `<div class="sc-title-recs" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">
@@ -3923,6 +3979,8 @@ function sendInquiryBatch(){
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
     if(btn) btn.classList.add('show');
+    // 显示浮动操作卡，引导用户生成改编策划案
+    setTimeout(() => showConfirmDock('inquiry_done'), 300);
   };
 
   if(!cfg.doubaoKey){
@@ -3998,6 +4056,8 @@ function sendInquiryMsg(){
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
     if(btn) btn.classList.add('show');
+    // 显示浮动操作卡，引导用户生成改编策划案
+    setTimeout(() => showConfirmDock('inquiry_done'), 300);
   };
 
   if(!cfg.doubaoKey){
@@ -4988,6 +5048,10 @@ function _showTranslatedScriptInBody(key){
   const body = document.getElementById('script-body');
   if(!body) return;
 
+  // Hide the "中文剧本尚未生成" empty state when viewing prod/en script tabs
+  const emptyStateEl = document.getElementById('script-empty-state');
+  if(emptyStateEl) emptyStateEl.style.display = 'none';
+
   if(!store?.text){
     var isProd = key === 'script-prod';
     body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;padding:32px 32px 24px;border-bottom:1px solid var(--bl);margin-bottom:8px;background:var(--gg)">'+
@@ -5158,6 +5222,12 @@ function _restoreCnScriptView(){
   Object.keys(scriptState.actScripts).sort((a,b)=>a-b).forEach(aIdx => {
     if(scriptState.actScripts[aIdx]?.status === 'done') appendActToBody(parseInt(aIdx), false);
   });
+  // 恢复空状态（只有中文剧本tab才显示"中文剧本尚未生成"）
+  const emptyStateEl = document.getElementById('script-empty-state');
+  if(emptyStateEl) {
+    const hasScript = body && body.children.length > 0;
+    emptyStateEl.style.display = hasScript ? 'none' : 'flex';
+  }
   // 只更新左侧高亮，不调 navTo（避免无限递归）
   document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
   const card = document.getElementById('ac-script-cn');
@@ -8418,6 +8488,15 @@ const STORAGE_KEY = 'dramamind_v2';  // localStorage key
 
 // ── Cloud storage removed: localStorage-only implementation ──
 
+// ── Cloud function stubs (cloud removed, kept as no-ops for compatibility) ──
+let _cloudAvailable = false;
+async function _cloudGet(key) { return null; }
+async function _cloudSet(key, val) { return null; }
+async function _cloudDel(key) { return null; }
+async function _getCloudIndex() { return []; }
+async function _setCloudIndex(idx) { return null; }
+async function _updateCloudIndex(snap) { return null; }
+
 // ── Safe localStorage helpers ──
 function _safeParseJSON(str, fallback) {
   try { return JSON.parse(str); } catch(e) { return fallback; }
@@ -10505,9 +10584,19 @@ function showConfirmDock(stage, opts){
     scheme: {
       icon: '🎯',
       title: '改编方案已生成',
-      sub: '中间面板展示了所有方案，选择一个后点击确认',
-      primary: '确认方案，进入策划追问 →',
+      sub: '请点击中间面板的方案卡片进行选择',
+      primary: '确认所选方案，开始策划追问 →',
       secondary: '继续讨论 / 调整方案',
+      aiMsg: '🎬 原始文件中的改编方案已提取完成！\n\n请在**中间面板**查看各方案的策划思路和故事简介，**直接点击你感兴趣的方案卡片**进行选择——选择后右侧会弹出操作选项，你可以确认方向立即生成策划案，也可以继续和我讨论调整。',
+      hideDock: true,  // 这个阶段不显示操作卡，引导用户去点方案卡
+    },
+    inquiry_done: {
+      icon: '✅',
+      title: '策划追问已完成',
+      sub: '可以生成改编策划案了',
+      primary: '确认，生成改编策划案 →',
+      secondary: '继续补充讨论',
+      aiMsg: '✅ 策划方向已充分讨论！系统将综合**原剧的剧情节拍逻辑、策划逻辑、你选定的改编方案**以及本轮追问确认的细节，生成完整的改编策划案。点击「确认，生成改编策划案」继续；或在下方继续补充你的想法。',
     },
     bible_first: {
       icon: '📋',
@@ -10515,6 +10604,7 @@ function showConfirmDock(stage, opts){
       sub: '请检查故事简介、人物设定与剧情节拍',
       primary: '确认策划案，开始分集细纲 →',
       secondary: '继续讨论 / 修改策划案',
+      aiMsg: '📋 改编策划案已在中间面板生成，包含故事简介、人物小传、剧情节拍等完整内容。请仔细检查各部分是否符合预期。确认后系统将自动生成**分集细纲**；如需调整，在下方告诉我哪里需要修改。',
     },
     bible: {
       icon: '📋',
@@ -10522,6 +10612,7 @@ function showConfirmDock(stage, opts){
       sub: '请检查更新后的内容是否符合预期',
       primary: '确认策划案，开始分集细纲 →',
       secondary: '继续讨论 / 再次修改',
+      aiMsg: '📋 改编策划案已根据你的意见更新，请在中间面板检查修改后的内容。满意后点击「确认」进入分集细纲；仍有调整请继续告诉我。',
     },
     breakdown: {
       icon: '📊',
@@ -10529,6 +10620,7 @@ function showConfirmDock(stage, opts){
       sub: '请确认所有幕的集数和卡点安排',
       primary: '确认细纲，进入剧本创作 →',
       secondary: '继续讨论 / 调整细纲',
+      aiMsg: '📊 所有幕的分集细纲已生成完毕！请检查各集的卡点安排和爽感节奏。确认后系统将进入**剧本创作**阶段；如有调整请告诉我。',
     },
     bd_act: {
       icon: '📊',
@@ -10536,6 +10628,7 @@ function showConfirmDock(stage, opts){
       sub: '请检查本幕集数与卡点安排',
       primary: isLastAct ? '确认本幕，进入剧本创作 →' : `确认本幕，生成${nextActName} →`,
       secondary: '继续讨论 / 修改本幕',
+      aiMsg: `📊 **${actName}**的分集细纲已生成，请检查本幕的集数分配和卡点设计。${isLastAct ? '这是最后一幕，确认后进入剧本创作。' : `确认后将自动生成**${nextActName}**。`}`,
     },
     script_act: {
       icon: '✍️',
@@ -10543,10 +10636,17 @@ function showConfirmDock(stage, opts){
       sub: '请检查场景、动作与对白，确认后继续生成下一幕',
       primary: isLastAct ? '确认，完成全部剧本 →' : `确认本幕，生成${nextActName}剧本 →`,
       secondary: '继续讨论 / 修改本幕',
+      aiMsg: `✍️ **${actName}**剧本已生成，请在左侧编辑区检查场景、动作行和对白。${isLastAct ? '这是最后一幕，确认后完成全本剧本。' : `确认后将自动生成**${nextActName}**剧本。`}`,
     },
   };
   const cfg = configs[stage];
   if(!cfg) return;
+
+  // 在右侧对话框发出引导消息
+  if(cfg.aiMsg) appendGlobalMsg('ai', cfg.aiMsg);
+
+  // hideDock: 只发消息，不显示操作卡（如 scheme 阶段，操作卡由点击方案卡触发）
+  if(cfg.hideDock) return;
 
   document.getElementById('confirm-dock-icon').textContent = cfg.icon;
   document.getElementById('confirm-dock-title').textContent = cfg.title;
@@ -10555,7 +10655,6 @@ function showConfirmDock(stage, opts){
   document.getElementById('confirm-dock-btn-secondary-label').textContent = cfg.secondary;
 
   dock.classList.add('show');
-  appendGlobalMsg('ai', `✅ ${cfg.title} — ${cfg.sub}`);
 }
 
 function hideConfirmDock(){
@@ -10571,6 +10670,7 @@ function handleConfirmDockPrimary(){
   hideConfirmDock();
   if(stage === 'scheme') confirmScheme();
   else if(stage === 'bible' || stage === 'bible_first') confirmBibleAndNext();
+  else if(stage === 'inquiry_done') generateBible();
   else if(stage === 'breakdown') confirmBreakdownAndNext();
   else if(stage === 'bd_act'){
     // Use stored actIdx if available, otherwise find last done act
@@ -10588,10 +10688,32 @@ function handleConfirmDockPrimary(){
 }
 
 function handleConfirmDockSecondary(){
+  const stage = _confirmDockStage;
   hideConfirmDock();
-  // 让输入框聚焦，方便用户继续和 AI 讨论
+
+  // 针对不同阶段发出引导提示，告知用户可以继续讨论
+  const guideMessages = {
+    scheme: '没问题！你可以在下方继续告诉我对某个方案的想法，或者希望方案往哪个方向调整。讨论完毕后，直接点击方案卡片重新选择即可。',
+    inquiry_done: '好的，继续聊！把想法告诉我，细节打磨好后随时可以点击上方「生成改编策划案」按钮，或者告诉我「可以生成了」。',
+    bible_first: '好，我们继续讨论。请告诉我哪里需要调整——故事简介、人物设定、剧情节拍，或是整体方向都可以。',
+    bible: '好的，请告诉我还需要哪些修改，我会帮你整理修改意见后重新生成。',
+    breakdown: '好，继续讨论。你可以告诉我哪一幕的集数或卡点需要调整，我会帮你修改。',
+    bd_act: '好，请告诉我本幕需要哪些修改，我会帮你重新生成这一幕的细纲。',
+    script_act: '好，请告诉我这一幕哪里需要调整，我会帮你修改后重新生成。',
+  };
+
+  const msg = guideMessages[stage];
+  if(msg) appendGlobalMsg('ai', msg);
+
+  // inquiry_done 阶段：确保「生成改编策划案」按钮保持可见
+  if(stage === 'inquiry_done'){
+    const btn = document.getElementById('wb-gen-bible-btn');
+    if(btn) btn.classList.add('show');
+  }
+
+  // 聚焦输入框
   const ci = document.getElementById('wb-ci');
-  if(ci) ci.focus();
+  if(ci) { ci.focus(); }
 }
 
 // ── 同步中间顶栏导出按钮（根据当前显示的 ss0/ss1/ss3）──
@@ -11108,6 +11230,14 @@ ${ctx}
       _showRevisionConfirmDock(summaryText, {type:'bible'});
     } else {
       loadEl.innerHTML = _renderMarkdown(reply);
+      // 方案选择阶段：AI 回复后重新弹出确认卡，让用户随时可以确认
+      if(S.page === 'story' && S.step === 1 && !PROJECT.scheme.confirmed && !_confirmDockStage){
+        setTimeout(() => showConfirmDock('scheme'), 600);
+      }
+      // 策划案已生成但未确认阶段：AI 回复后重新弹出确认卡
+      if(S.page === 'story' && PROJECT.bible?.logline && !PROJECT.bible?.confirmed && !_confirmDockStage){
+        setTimeout(() => showConfirmDock('bible_first'), 600);
+      }
     }
   }).catch(e=>{
     loadEl.textContent = '请求失败：' + e.message;
