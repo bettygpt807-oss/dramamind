@@ -569,54 +569,25 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
    At 96px/in: 8.5"=816px, 11"=1056px
    ══════════════════════════════════ */
 .script-scroll{flex:1;overflow-y:auto;background:#E8E4DF;padding:24px 0 80px}
-/* Episode card collapse toggle */
-.script-page.ep-collapsed .sp-body,
-.script-page.ep-collapsed .script-ep-content > :not(.ep-card-header) {
-  display: none;
-}
-.script-page.ep-collapsed {
-  min-height: unset;
-  padding-bottom: 18px;
-}
-.ep-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  cursor: default;
-}
-.ep-collapse-btn {
-  flex-shrink: 0;
-  background: none;
-  border: 1px solid var(--bd);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 10px;
-  color: var(--i4);
-  cursor: pointer;
-  font-family: 'Noto Sans SC', sans-serif;
-  transition: all .15s;
-  letter-spacing: .04em;
-  user-select: none;
-}
-.ep-collapse-btn:hover { border-color: var(--gm); color: var(--gm); background: var(--gg); }
 
-/* Script page CSS (existing block follows) */
-  width:816px;          /* 8.5" at 96px/in — standard letter */
-  min-height:1056px;    /* at least 11" tall, but grows with content */
-  height:auto;          /* allow natural growth — editing surface, not print preview */
-  margin:0 auto 24px;
+/* ── Physical paper page — Hollywood letter size, strictly fixed ── */
+.script-page{
+  width:816px;
+  min-height:1056px;
+  max-height:1056px;
+  height:1056px;
+  overflow:hidden;
+  margin:0 auto 28px;
   background:#FEFEFE;
-  /* 1" top/bottom, 1.5" left, 1" right — standard spec */
   padding:96px 96px 96px 144px;
   font-family:'Courier Prime','Courier New',Courier,monospace;
-  font-size:12pt;       /* exactly 12pt */
+  font-size:12pt;
   line-height:1.5;
   color:#1A1A1A;
   box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07);
   position:relative;
-  overflow:visible;     /* content grows naturally — no overflow clip */
   box-sizing:border-box;
+  flex-shrink:0;
 }
 /* Paginated content area inside each fixed page */
 .script-page-content{
@@ -629,15 +600,15 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   font-family:'Courier Prime','Courier New',Courier,monospace;
   font-size:12pt;color:#666;
 }
-/* Time estimate — bottom right corner, shows page count info */
+/* Time estimate — bottom right corner */
 .sp-time-est{
   position:absolute;bottom:20px;right:20px;
   font-size:10px;color:#BBB;
   font-family:'Noto Sans SC',sans-serif;letter-spacing:.04em;
 }
-/* Script episodes container — direct edit mode */
+/* Script episodes container — hidden data store, paginator reads from here */
 .script-eps-container {
-  padding-top: 8px;
+  display: none;
 }
 
 /* Hidden episode content wrapper — paginator reads from here */
@@ -711,14 +682,43 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   display:block;
   width:100%;
 }
+/* ── Physical page body — single contenteditable for free cross-format selection ── */
+.sp-page-body{
+  outline:none;
+  cursor:text;
+  display:block;
+  width:100%;
+  white-space:pre-wrap;
+}
+.sp-page-body:focus{
+  background:transparent;
+}
+/* 物理页内子元素保留格式样式，但不是独立 contenteditable */
+.sp-page-body .sp-scene,
+.sp-page-body .sp-action,
+.sp-page-body .sp-char,
+.sp-page-body .sp-paren,
+.sp-page-body .sp-dlg,
+.sp-page-body .sp-transition{
+  cursor:text;
+}
+.sp-page-body .sp-scene:hover,
+.sp-page-body .sp-action:hover,
+.sp-page-body .sp-char:hover,
+.sp-page-body .sp-paren:hover,
+.sp-page-body .sp-dlg:hover,
+.sp-page-body .sp-transition:hover{
+  background:rgba(30,92,58,.03);
+  border-radius:2px;
+}
 .sp-body:focus{
   background:transparent;
 }
 .sp-body:focus-within{
   background:transparent;
 }
-/* Subtle focus ring on the card when editing */
-.script-page:focus-within{
+/* Subtle focus ring on physical page when editing */
+.script-page[data-physical]:focus-within{
   box-shadow:0 2px 8px rgba(0,0,0,.10),0 8px 32px rgba(0,0,0,.07),0 0 0 2px rgba(42,122,80,.18);
 }
 /* Keep visual formatting on child elements (not contenteditable individually) */
@@ -1952,10 +1952,11 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     <div class="bd-header">
       <div>
         <div class="bd-header-title">分集细纲</div>
-        <div class="bd-header-sub" id="bd-header-sub">基于创意策划案逐幕生成 · 每幕确认后生成下一幕 · 点击任意字段可直接编辑</div>
+        <div class="bd-header-sub" id="bd-header-sub">基于创意策划案逐幕生成 · 每幕确认后生成下一幕</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <span id="bd-edit-indicator" style="display:none;font-size:11px;color:var(--au)">✎ 有字段已手动修改</span>
+        <button class="stb-export-btn" id="bd-gantt-btn" onclick="toggleGanttView()" title="全局爽感曲线甘特图">📊 爽感曲线</button>
         <button class="stb-export-btn" onclick="exportBreakdown()">↓ 导出</button>
         <!-- 确认按钮已移至右侧对话框，此处保留隐藏备用 -->
         <button class="gen-btn" id="bd-confirm-btn" style="display:none" onclick="confirmBreakdownAndNext()">
@@ -1969,6 +1970,28 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
       <!-- Act nav pills -->
       <div class="act-nav" id="act-nav"></div>
+
+      <!-- Fix 1: Global Gantt View — 全局爽感曲线鸟瞰视图 -->
+      <div id="bd-gantt-panel" style="display:none;background:var(--wh);border:1px solid var(--bl);border-radius:var(--r);padding:20px 24px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink)">全局爽感曲线 · 鸟瞰视图</div>
+            <div style="font-size:11px;color:var(--i4);margin-top:2px">X轴 = 集数 &nbsp;·&nbsp; Y轴 = 爽感强度 &nbsp;·&nbsp; 点击集数跳转</div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#1E5C3A;display:inline-block"></span>大爽</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#4A9A6A;display:inline-block"></span>小爽/逆袭</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#C9A85C;display:inline-block"></span>情感破防</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#3a5ab8;display:inline-block"></span>真相揭露</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#D0DDD4;display:inline-block"></span>憋屈/压迫</span>
+          </div>
+        </div>
+        <div id="gantt-chart-wrap" style="overflow-x:auto;overflow-y:hidden">
+          <canvas id="gantt-canvas" height="160" style="display:block;cursor:pointer"></canvas>
+        </div>
+        <div id="gantt-tooltip" style="display:none;position:fixed;background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);font-family:'Noto Sans SC',sans-serif;font-size:11px;padding:6px 10px;border-radius:6px;pointer-events:none;z-index:500;line-height:1.6;max-width:240px"></div>
+        <div style="margin-top:12px;font-size:10px;color:var(--i4);text-align:center" id="gantt-density-tip"></div>
+      </div>
 
       <!-- Acts container: each act rendered sequentially -->
       <div id="acts-container"></div>
@@ -2007,10 +2030,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
             <div class="stb-sep"></div>
             <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
             <div class="stb-sep"></div>
-            <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
+            <button class="stb-action-btn" onclick="openCharCheck()" title="检查角色台词风格一致性">人物一致性</button>
             <div class="stb-sep"></div>
-            <button class="stb-action-btn" onclick="collapseAllEps()" title="收起全部集">收起全部</button>
-            <button class="stb-action-btn" onclick="expandAllEps()" title="展开全部集">展开全部</button>
+            <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
+
           </div>
         </div>
       </div>
@@ -2508,6 +2531,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 <div class="gen-mask" id="gen-mask">
   <div class="spinner"></div>
   <div class="gen-txt" id="gen-txt">生成中……</div>
+  <button id="gen-cancel-btn" onclick="cancelGeneration()" style="display:none;margin-top:4px;padding:6px 18px;border:1px solid rgba(255,255,255,.35);border-radius:20px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);font-family:'Noto Sans SC',sans-serif;font-size:12px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">取消生成</button>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -2970,6 +2994,40 @@ const PROJECT = {
 // Populate source from intake on project start
 // ── 待执行的延迟任务（用户配置 Key 后自动继续）──
 let _pendingTask = null; // 'start' | 'regen'
+
+// ── 全局生成取消控制器（Fix 5: AbortController support）──
+let _genAbortController = null; // 当前正在进行的生成任务的 AbortController
+
+// 创建一个新的 AbortController，终止旧的（如有），并返回新的 signal
+function _startGenAbort(label) {
+  if (_genAbortController) {
+    try { _genAbortController.abort(); } catch(_){}
+  }
+  _genAbortController = new AbortController();
+  _genAbortController._label = label || 'gen';
+  return _genAbortController.signal;
+}
+
+// 取消当前生成任务
+function cancelGeneration() {
+  if (_genAbortController) {
+    _genAbortController.abort();
+    _genAbortController = null;
+    showToast('已取消生成');
+    // 隐藏各种 loading mask
+    const genMask = document.getElementById('gen-mask');
+    if (genMask) genMask.classList.remove('show');
+    const cancelBtn = document.getElementById('gen-cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    _unlockPageForScriptGen();
+  }
+}
+
+// 在 fetch 调用上附加 AbortSignal（传入 signal 参数）
+function _fetchWithAbort(url, options, signal) {
+  if (signal) options = { ...options, signal };
+  return fetch(url, options);
+}
 
 async function startProject(){
   const userInput = (document.getElementById('intake-input')?.value || '').trim();
@@ -3974,7 +4032,7 @@ async function generateBible(){
   // 如果已有策划案内容，先存入历史版本
   if(PROJECT.bible.logline) saveBibleSnapshot(`第 ${bibleHistory.length + 1} 版`);
   const cfg = getApiConfig();
-  const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'bible');
+  const callFn = (msg, sys, tok, sig) => callAny(msg, sys, tok, 'bible', sig);
   const src = PROJECT.source;
   const sc = PROJECT.scheme;
 
@@ -4260,24 +4318,36 @@ ${inquiryDecisions}
 请生成 ${beatCount} 个节拍，不得减少。原著有${docBeatCount > 0 ? docBeatCount + '个节拍，策划案节拍数不得少于此数，' : ''}可酌情追加延展节拍。`;
 
   document.getElementById('gen-txt').textContent = '正在生成策划案（1/2）项目基础信息…';
+  // Fix 5: Show cancel button + create AbortSignal
+  const _bibleSignal = _startGenAbort('bible');
+  const _cancelBtn = document.getElementById('gen-cancel-btn');
+  if (_cancelBtn) _cancelBtn.style.display = 'block';
 
   try {
     // 第一段：元数据
-    const raw1 = await callFn(userMsg, sysPromptMeta, 6000);
+    const raw1 = await callFn(userMsg, sysPromptMeta, 6000, _bibleSignal);
+
+    // Fix 7: 元数据生成成功后立即保存到 PROJECT.bible，beats 失败时可单独重试
+    let bibleDataMeta = {};
+    try {
+      const c1m = raw1.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+      const s1m = c1m.indexOf('{'), e1m = c1m.lastIndexOf('}');
+      if(s1m >= 0 && e1m >= 0) bibleDataMeta = JSON.parse(c1m.slice(s1m, e1m+1));
+    } catch(err){ console.warn('Bible meta parse error (early save):', err); }
+    if (bibleDataMeta.logline) {
+      // 元数据已成功，立即写入 PROJECT.bible 保留（beats 失败时不需要重跑 meta）
+      Object.assign(PROJECT.bible, bibleDataMeta);
+      PROJECT.bible._metaSaved = true;
+      saveProject();
+    }
 
     document.getElementById('gen-txt').textContent = '正在生成策划案（2/2）剧情节拍序列…';
 
     // 第二段：beats
-    const raw2 = await callFn(userMsgBeats, sysPromptBeats, 6000);
+    const raw2 = await callFn(userMsgBeats, sysPromptBeats, 6000, _bibleSignal);
 
     // 合并两段结果
-    let bibleData = {};
-    try {
-      const c1 = raw1.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-      const s1 = c1.indexOf('{'), e1 = c1.lastIndexOf('}');
-      if(s1 >= 0 && e1 >= 0) bibleData = JSON.parse(c1.slice(s1, e1+1));
-    } catch(err){ console.warn('Bible meta parse error:', err); }
-
+    let bibleData = bibleDataMeta;
     try {
       const c2 = raw2.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
       const s2 = c2.indexOf('['), e2 = c2.lastIndexOf(']');
@@ -4290,9 +4360,18 @@ ${inquiryDecisions}
       }));
     }
 
+    if (_cancelBtn) _cancelBtn.style.display = 'none';
+    _genAbortController = null;
     doRender(JSON.stringify(bibleData));
   }
-  catch(e){ document.getElementById('gen-mask').classList.remove('show'); if(e.message!=='no key') showToast('生成失败：'+e.message); doRender(JSON.stringify(getMockBible())); }
+  catch(e){
+    if (_cancelBtn) _cancelBtn.style.display = 'none';
+    _genAbortController = null;
+    document.getElementById('gen-mask').classList.remove('show');
+    if (e.name === 'AbortError') { /* user cancelled — no toast */ return; }
+    if(e.message!=='no key') showToast('生成失败：'+e.message);
+    doRender(JSON.stringify(getMockBible()));
+  }
 }
 
 function getMockBible(){
@@ -5462,6 +5541,13 @@ ${bdState.allEps.slice(-3).map(e=>`第${e.num}集《${e.title}》\n情节：${e.
   const realDocTitle = src.docTitle || sc.title || (src.userRequirements||'').substring(0,30);
   const userMsg = `请为【${act.name}·${act.label}（第${act.from}-${act.to}集）】生成分集细纲，返回严格JSON数组。
 
+【总纲：创意策划案是分集细纲的圣经（Bible）——每集的情节必须在策划案的框架内展开】
+分集细纲的核心任务是把策划案的剧情节拍「拆解落地」：
+- 每个节拍的戏剧功能、情绪走向、冲突结构，必须在对应集的 beat 字段中具体体现
+- 策划案的高光情节，在对应幕的对应集必须完整呈现，不能回避或弱化
+- 节奏逻辑（爽感分布、憋屈循环）必须严格对照策划案的 rhythm 字段分配到每集
+- 人物的每一次重要决策，必须符合策划案确立的人物弧光方向
+
 【项目信息】
 原著/IP：${realDocTitle}  改编方案：${sc.num}·${sc.title}
 目标市场：${src.market}  受众：${src.preference}
@@ -5493,6 +5579,7 @@ ${b.characters&&b.characters.length>0
 - 核心冲突节拍、情感破防节拍：4-5集  
 - 高潮大爽点节拍：可延展到5-6集
 同一幕内各节拍的集数分配应有节奏变化，不能全部均等。
+注意：节拍列表末尾标注「衔接参考节拍」的，本幕只需在最后1-2集引入其开头，完整内容在下一幕展开，切勿在本幕将其完整覆盖。
 ${buildBeatsContextForAct(act)}
 
 ${src.docHighlights ? `【原著高光爆点（分集细纲中必须有对应场景，不能遗漏）】\n${src.docHighlights}` : ''}
@@ -5521,10 +5608,15 @@ ${buildLockedEditsContext()}
     rawData = buildMockActData(act);
   } else {
     try {
-      const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'breakdown');
-      const raw = await callFn(userMsg, sysPrompt, 6000);
+      const _bdSignal = _startGenAbort('breakdown');
+      const _cancelBtn = document.getElementById('gen-cancel-btn');
+      const callFn = (msg, sys, tok, sig) => callAny(msg, sys, tok, 'breakdown', sig);
+      const raw = await callFn(userMsg, sysPrompt, 6000, _bdSignal);
+      _genAbortController = null;
       rawData = parseEpJSON(raw, act.from - 1, act.count);
     } catch(e) {
+      _genAbortController = null;
+      if (e.name === 'AbortError') { act.status = 'pending'; updateActNavPill(actIdx); updateActSectionStatus(actIdx, 'pending'); return; }
       rawData = buildMockActData(act);
     }
   }
@@ -5557,6 +5649,7 @@ ${buildLockedEditsContext()}
   updateActNavPill(actIdx);
   updateActSectionStatus(actIdx, 'done');
   saveProject();
+  _maybeRefreshGantt(); // Fix 1: refresh gantt chart after act generation
   var _isLast = actIdx >= bdState.acts.length - 1;
   setTimeout(function(){ if(_isLast) showConfirmDock('breakdown'); else showConfirmDock('bd_act',{actIdx:actIdx}); }, 500);
 }
@@ -5619,21 +5712,26 @@ function buildBeatsContextForAct(act) {
   if (!beats || beats.length === 0) return '（节拍数据未生成，以分集细纲为准）';
   const totalEps = PROJECT.source.episodeCount || 40;
   const totalBeats = beats.length;
-  
-  // Map act's episode range to beat range with slight overlap to avoid gaps
-  // Ensure last act always gets at least the final beats
+
   const beatFrom = Math.max(0, Math.floor((act.from - 1) / totalEps * totalBeats));
   const isLastAct = act.to >= totalEps;
+  // +1 overlap：给当前幕额外看到下一幕的第一个节拍作为"衔接预告"
   const beatTo = isLastAct ? totalBeats : Math.min(totalBeats, Math.max(beatFrom + 1, Math.ceil(act.to / totalEps * totalBeats) + 1));
   const actBeats = beats.slice(beatFrom, beatTo);
-  
+
   if (actBeats.length === 0) {
-    // Fallback: give last 2 beats to any act that gets none
     return beats.slice(-2).map(b => `节拍 ${String(b.num).padStart(2,'0')}【${b.title}】\n${b.summary}`).join('\n\n');
   }
-  return actBeats.map(b =>
-    `节拍 ${String(b.num).padStart(2,'0')}【${b.title}】\n${b.summary}`
-  ).join('\n\n');
+
+  // 最后一个节拍（仅非最后幕）是衔接参考节拍，标注说明避免AI重复展开
+  return actBeats.map((b, i) => {
+    const isOverlapBeat = !isLastAct && i === actBeats.length - 1;
+    const label = `节拍 ${String(b.num).padStart(2,'0')}【${b.title}】`;
+    const note = isOverlapBeat
+      ? '（衔接参考节拍：本幕最后几集收尾时可引入此节拍的开头，但完整展开在下一幕，本幕不必覆盖全部内容）'
+      : '';
+    return `${label}${note}\n${b.summary}`;
+  }).join('\n\n');
 }
 
 
@@ -5758,11 +5856,6 @@ function buildActEndHTML(act, nextAct, actIdx) {
       <span style="font-size:16px">✓</span>
       <span class="act-end-head-title">${act.name}·${act.label} 已生成（第${act.from}-${act.to}集）</span>
     </div>
-    <div class="act-end-body">
-      <div style="font-size:12px;color:var(--i3);line-height:1.8">
-        请检查本幕细纲，如需修改可直接点击卡片字段编辑，或在右侧对话框与 AI 讨论修改。确认无误后，在右侧对话框点击确认按钮，继续生成${nextAct ? `${nextAct.name}·${nextAct.label}（第${nextAct.from}-${nextAct.to}集）` : '下一幕'}。
-      </div>
-    </div>
   </div>`;
 }
 
@@ -5771,9 +5864,6 @@ function buildFinalActEndHTML() {
     <div class="act-end-head">
       <span style="font-size:16px">✓</span>
       <span class="act-end-head-title">全部分集细纲已生成</span>
-    </div>
-    <div class="act-end-body">
-      <div class="act-end-section">请检查所有幕的细纲，如有需要修改的地方可直接编辑，或通过右侧对话框告诉 AI。确认完成后点击右侧对话框中的「确认细纲，进入剧本创作」。</div>
     </div>
   </div>`;
 }
@@ -5958,6 +6048,7 @@ function addVibe(epNum, type, label) {
   const card = document.getElementById(`ep-card-${epNum}`);
   if (card) card.outerHTML = buildEpCardHTML(ep);
   saveProject();
+  _maybeRefreshGantt();
 }
 
 function removeVibe(el, epNum, type, label) {
@@ -5969,6 +6060,7 @@ function removeVibe(el, epNum, type, label) {
   const card = document.getElementById(`ep-card-${epNum}`);
   if (card) card.outerHTML = buildEpCardHTML(ep);
   saveProject();
+  _maybeRefreshGantt();
 }
 
 // Close vibe selector on outside click
@@ -6051,7 +6143,13 @@ function exportBreakdown() {
 
 // Serialize all visible script ep-wraps to PROJECT.script.allData
 function serializeCurrentScript(){
-  // Serialize every rendered episode wrap (direct-edit mode — all are visible)
+  // 先强制把所有物理页上的编辑内容同步回隐藏数据容器（清除 600ms 延迟积压）
+  document.querySelectorAll('.script-page[data-physical] .sp-page-body[contenteditable]').forEach(pageBody => {
+    const epIdx = parseInt(pageBody.dataset.ep);
+    if (!isNaN(epIdx)) syncPageBodyToData(pageBody, epIdx);
+  });
+
+  // 再序列化隐藏数据容器到 PROJECT.script.allData
   const allWraps = document.querySelectorAll('[id^="script-ep-wrap-"]');
   allWraps.forEach(epWrap => {
     const epIdx = parseInt(epWrap.dataset.ep);
@@ -6340,13 +6438,14 @@ function _updateScriptStatsLive() {
     scroll.querySelectorAll('[id^="script-ep-wrap-"] .sp-body').forEach(b => {
       total += (b.textContent || '').replace(/\s+/g,'').length;
     });
-    const estPages = Math.max(1, Math.round(total / 800));
+    const physPages = scroll.querySelectorAll('.script-page[data-physical]').length;
+    const estPages = physPages || Math.max(1, Math.round(total / 800));
     const statWords = document.getElementById('stat-words');
     const statPages = document.getElementById('stat-pages');
     const statDur   = document.getElementById('stat-duration');
     if(statWords) statWords.textContent = total.toLocaleString() + ' 字';
-    if(statPages) statPages.textContent = estPages + ' 页（估）';
-    if(statDur)   statDur.textContent   = `≈ ${estPages} 分钟`;
+    if(statPages) statPages.textContent = estPages + (physPages ? '' : '（估）') + ' 页';
+    if(statDur)   statDur.textContent   = `≈ ${estPages} 分钟（1页≈1分钟）`;
   }, 300);
 }
 
@@ -6400,50 +6499,201 @@ function _onScriptFocusOut(e) {
   const scroll = document.getElementById('script-scroll');
   if (scroll && e.relatedTarget && scroll.contains(e.relatedTarget)) return;
   _scriptEditing = false;
-  // Run stats update + scene nav refresh 400ms after user leaves the editor
+  // Wait 2s after user clearly leaves editor before repaginating, to avoid content jump
   if (_repagAfterEditTimer) clearTimeout(_repagAfterEditTimer);
   _repagAfterEditTimer = setTimeout(() => {
-    repaginateScript();
-    buildSceneNav();
-  }, 400);
+    // Add soft transition before repaginating
+    if (scroll) scroll.style.transition = 'opacity 0.18s ease';
+    requestAnimationFrame(() => {
+      repaginateScript();
+      buildSceneNav();
+      if (scroll) setTimeout(() => { scroll.style.transition = ''; }, 220);
+    });
+  }, 2000);
+}
+
+// ── 同步物理页 sp-page-body 容器整体内容回隐藏 sp-body ──
+// 物理页使用单一 contenteditable 容器（sp-page-body），整体同步比逐元素 posKey 更可靠
+function syncPageBodyToData(pageBodyEl, epIdx) {
+  if (isNaN(epIdx)) return;
+  const epWrap = document.getElementById(`script-ep-wrap-${epIdx}`);
+  if (!epWrap) return;
+  const targetBody = epWrap.querySelector('.sp-body');
+  if (!targetBody) return;
+
+  // 把物理页容器中的格式元素按顺序同步回隐藏 sp-body
+  // 策略：按类型+顺序一一对应，保留未被修改的元素
+  const srcEls = [...pageBodyEl.querySelectorAll(
+    '.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition'
+  )];
+  const dstEls = [...targetBody.querySelectorAll(
+    '.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition'
+  )];
+
+  // 按位置一一映射同步（元素数量通常一致，若不一致以 src 为准）
+  srcEls.forEach((srcEl, i) => {
+    if (dstEls[i]) {
+      dstEls[i].textContent = srcEl.textContent;
+    }
+  });
+
+  onScriptBodyEdit(targetBody);
+}
+
+// ── 保留 syncPhysicalEditToData 作为兼容 stub（新架构已不使用）──
+function syncPhysicalEditToData(editedEl) {
+  const epIdx = parseInt(editedEl.dataset.ep);
+  syncPageBodyToData(editedEl.closest('.sp-page-body') || editedEl, epIdx);
 }
 
 function repaginateScript() {
-  // Direct-edit mode: sp-body elements ARE the visible editing surface.
-  // No physical page DOM rebuild — that was causing focus/cursor loss on every keystroke.
-  // Just update the stats bar using live DOM content.
-
+  // ══ Hollywood Auto-Pagination Engine ══
+  // 从隐藏数据容器读取内容 → 离屏测量高度 → 填充固定 816×1056px 纸张
   const scroll = document.getElementById('script-scroll');
   if (!scroll) return;
 
-  // Collect all text for word count
-  let totalWords = 0;
+  // ── 1. 收集所有剧本元素 ──
+  const allItems = [];
   const epWraps = scroll.querySelectorAll('[id^="script-ep-wrap-"]');
+  if (!epWraps.length) return;
+
   epWraps.forEach(wrap => {
+    const epIdx = parseInt(wrap.dataset.ep);
+    if (isNaN(epIdx)) return;
+
+    const titleEl = wrap.querySelector('.sp-title');
+    if (titleEl) {
+      allItems.push({ node: titleEl.cloneNode(true), type: 'title', epIdx });
+    }
+
     const body = wrap.querySelector('.sp-body');
-    if (body) totalWords += (body.textContent || '').replace(/\s+/g,'').length;
+    if (body) {
+      // 把整个集的内容打包为一个 body-group item（单一 contenteditable 容器）
+      // 这样物理页上用户可以跨格式自由选中、复制、删除，不被独立元素边界卡住
+      const bodyClone = document.createElement('div');
+      bodyClone.className = 'sp-page-body';
+      bodyClone.setAttribute('contenteditable', 'true');
+      bodyClone.setAttribute('spellcheck', 'false');
+      bodyClone.dataset.ep = epIdx;
+      body.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition').forEach(el => {
+        if (!el.textContent.trim()) return;
+        const clone = el.cloneNode(true);
+        // 子元素保留格式 CSS 类名，但不再各自 contenteditable
+        clone.removeAttribute('contenteditable');
+        bodyClone.appendChild(clone);
+      });
+      if (bodyClone.children.length > 0) {
+        allItems.push({ node: bodyClone, type: 'body', epIdx });
+      }
+    }
   });
 
-  // Estimate pages: ~800 Chinese chars per page (approx)
-  const estPages = Math.max(1, Math.round(totalWords / 800));
+  if (!allItems.length) return;
 
+  // ── 2. 离屏测量每个元素高度 ──
+  const PAGE_CONTENT_WIDTH = 816 - 144 - 96; // 576px
+  const measureWrap = document.createElement('div');
+  measureWrap.style.cssText = `position:fixed;left:-9999px;top:0;width:${PAGE_CONTENT_WIDTH}px;` +
+    `font-family:'Courier Prime','Courier New',Courier,monospace;font-size:12pt;line-height:1.5;` +
+    `visibility:hidden;pointer-events:none;z-index:-1;`;
+  document.body.appendChild(measureWrap);
+  const heights = allItems.map(item => {
+    measureWrap.innerHTML = '';
+    measureWrap.appendChild(item.node.cloneNode(true));
+    return measureWrap.scrollHeight + 2;
+  });
+  document.body.removeChild(measureWrap);
+
+  // ── 3. 智能装箱分页 ──
+  const PAGE_USABLE   = 864;
+  const TITLE_RESERVE = 80;
+  const MIN_ORPHAN    = 40;
+  const pages = [];
+  let currentPage = [], currentHeight = 0;
+
+  allItems.forEach((item, i) => {
+    const h = heights[i];
+    if (item.type === 'title' && currentPage.length > 0 && currentHeight + h + TITLE_RESERVE > PAGE_USABLE) {
+      pages.push(currentPage); currentPage = []; currentHeight = 0;
+    }
+    if (currentHeight + h > PAGE_USABLE && currentPage.length > 0) {
+      if (currentHeight > MIN_ORPHAN) {
+        pages.push(currentPage); currentPage = []; currentHeight = 0;
+      }
+    }
+    currentPage.push(item);
+    currentHeight += h;
+  });
+  if (currentPage.length > 0) pages.push(currentPage);
+
+  // ── 4. 构建物理页 DOM ──
+  scroll.querySelectorAll('.script-page[data-physical]').forEach(p => p.remove());
+
+  const totalPages = pages.length;
+  let totalWords = 0;
+  const epFirstPageMap = {};
+  const fragment = document.createDocumentFragment();
+
+  pages.forEach((pageItems, pageIdx) => {
+    const pageNum = pageIdx + 1;
+    const pageEl = document.createElement('div');
+    pageEl.className = 'script-page';
+    pageEl.dataset.physical = '1';
+    pageEl.id = `sp-physical-${pageIdx}`;
+
+    const numEl = document.createElement('div');
+    numEl.className = 'sp-page-num';
+    numEl.textContent = `${pageNum}.`;
+    pageEl.appendChild(numEl);
+
+    const contentEl = document.createElement('div');
+    contentEl.className = 'script-page-content';
+
+    pageItems.forEach(item => {
+      const node = item.node.cloneNode(true);
+      if (item.epIdx !== undefined && !(item.epIdx in epFirstPageMap)) {
+        epFirstPageMap[item.epIdx] = pageNum;
+      }
+      totalWords += (node.textContent || '').replace(/\s+/g, '').length;
+      if (node.getAttribute('contenteditable') === 'true') {
+        const epIdxNode = parseInt(node.dataset.ep);
+        node.addEventListener('input', function() {
+          node._syncTimeout && clearTimeout(node._syncTimeout);
+          node._syncTimeout = setTimeout(() => syncPageBodyToData(node, epIdxNode), 600);
+          _updateScriptStatsLive();
+        });
+        node.addEventListener('focus', _onScriptFocusIn);
+        node.addEventListener('blur', _onScriptFocusOut);
+      }
+      contentEl.appendChild(node);
+    });
+    pageEl.appendChild(contentEl);
+
+    const timeEst = document.createElement('div');
+    timeEst.className = 'sp-time-est';
+    timeEst.textContent = pageIdx === totalPages - 1
+      ? `共 ${totalPages} 页 · 约 ${totalPages} 分钟`
+      : `第 ${pageNum} / ${totalPages} 页`;
+    pageEl.appendChild(timeEst);
+    fragment.appendChild(pageEl);
+  });
+
+  // 物理页插入隐藏数据块之前
+  const firstDataBlock = scroll.querySelector('.script-act-block');
+  if (firstDataBlock) {
+    scroll.insertBefore(fragment, firstDataBlock);
+  } else {
+    scroll.appendChild(fragment);
+  }
+
+  // ── 5. 更新统计栏 ──
   const statWords = document.getElementById('stat-words');
   const statPages = document.getElementById('stat-pages');
   const statDur   = document.getElementById('stat-duration');
   if (statWords) statWords.textContent = totalWords.toLocaleString() + ' 字';
-  if (statPages) statPages.textContent = estPages + ' 页（估）';
-  if (statDur)   statDur.textContent   = `≈ ${estPages} 分钟（1页≈1分钟）`;
+  if (statPages) statPages.textContent = totalPages + ' 页';
+  if (statDur)   statDur.textContent   = `≈ ${totalPages} 分钟（1页≈1分钟）`;
 
-  // Build ep→page map for scrollToAct compatibility (approximate)
-  const epFirstPageMap = {};
-  let runningEp = 0;
-  epWraps.forEach(wrap => {
-    const epIdx = parseInt(wrap.dataset.ep);
-    if (!isNaN(epIdx)) {
-      epFirstPageMap[epIdx] = runningEp + 1;
-      runningEp++;
-    }
-  });
   window._epFirstPageMap = epFirstPageMap;
 }
 
@@ -6452,7 +6702,9 @@ function repaginateScript() {
 function buildSceneNav(){
   const list=document.getElementById('sb-scenes-list');
   if(!list) return;
-  const scenes=document.querySelectorAll('#script-body .sp-scene');
+  // 优先从物理页获取（有物理页时），fallback 到隐藏数据容器
+  let scenes = [...document.querySelectorAll('.script-page[data-physical] .sp-scene')];
+  if(!scenes.length) scenes = [...document.querySelectorAll('[id^="script-ep-wrap-"] .sp-scene')];
   if(!scenes.length){
     list.innerHTML='<div style="font-size:11px;color:var(--i4);text-align:center;padding:24px 8px">暂无场景标题</div>';
     return;
@@ -6467,14 +6719,15 @@ function buildSceneNav(){
   });
 }
 function scrollToScene(idx){
-  const scenes=document.querySelectorAll('#script-body .sp-scene');
+  let scenes = [...document.querySelectorAll('.script-page[data-physical] .sp-scene')];
+  if(!scenes.length) scenes = [...document.querySelectorAll('[id^="script-ep-wrap-"] .sp-scene')];
   if(scenes[idx]) scenes[idx].scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 // ── 5c Dual dialogue ──
 function insertDualDialogue(){
   document.getElementById('sel-toolbar').classList.remove('show');
-  const anchor=activeScriptEl||document.querySelector('#script-body .sp-char');
+  const anchor=activeScriptEl||document.querySelector('.script-page[data-physical] .sp-char')||document.querySelector('[id^="script-ep-wrap-"] .sp-char');
   if(!anchor) return;
   const dual=document.createElement('div');
   dual.className='sp-dual';
@@ -6495,7 +6748,9 @@ function insertDualDialogue(){
 let acIndex=-1;
 function getCharacterNames(){
   const names=new Set();
-  document.querySelectorAll('#script-body .sp-char').forEach(el=>{
+  const charEls = document.querySelectorAll('.script-page[data-physical] .sp-char');
+  const src = charEls.length > 0 ? charEls : document.querySelectorAll('[id^="script-ep-wrap-"] .sp-char');
+  src.forEach(el=>{
     const t=el.textContent.trim();
     if(t) names.add(t);
   });
@@ -6678,14 +6933,17 @@ function renderActTabs() {
 function scrollToAct(aIdx) {
   currentActIdx = aIdx;
   renderActTabs();
-  // Scroll to the first episode wrap of this act (direct-edit mode)
   const act = bdState.acts[aIdx];
   if (act) {
     const firstEpIdx = act.from - 1;
-    const epWrap = document.getElementById(`script-ep-wrap-${firstEpIdx}`);
-    if (epWrap) { epWrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const pageNum = window._epFirstPageMap && window._epFirstPageMap[firstEpIdx];
+    if (pageNum) {
+      const pageEl = document.getElementById(`sp-physical-${pageNum - 1}`);
+      if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    }
+    const firstPage = document.querySelector('.script-page[data-physical]');
+    if (firstPage) { firstPage.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   }
-  // Fallback: scroll to act block
   const el = document.getElementById(`script-act-block-${aIdx}`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -6771,7 +7029,8 @@ async function generateScriptAct(actIdx) {
   appendActGeneratingPlaceholder(actIdx);
 
   const cfg = getApiConfig();
-  const callFn = (msg, sys, tok) => callAny(msg, sys, tok, 'script');
+  const _scriptSignal = _startGenAbort('script');
+  const callFn = (msg, sys, tok, sig) => callAny(msg, sys, tok, 'script', sig || _scriptSignal);
   var _epSrc=(PROJECT.episodes.confirmedSnapshot&&PROJECT.episodes.confirmedSnapshot.length>0)?PROJECT.episodes.confirmedSnapshot:bdState.allEps;
   const epSlice = _epSrc.slice(act.from - 1, act.to);
   const b = PROJECT.bible, sc = PROJECT.scheme, src = PROJECT.source;
@@ -6851,6 +7110,13 @@ ${buildCharVoiceContext()}`;
 
   const realDocTitle = src.docTitle || sc.title || (src.userRequirements||'').substring(0,30);
   const userMsg = `请为【${act.name}·${act.label}（第${act.from}-${act.to}集）】创作完整剧本。
+
+【总纲：创意策划案是本剧本的圣经（Bible）——所有场景、对白、情绪设计必须服从其逻辑】
+本剧本是「原著爆款节拍结构 × 改编方案新设定」的有机结合体：
+- 每集的情绪曲线、冲突结构、结尾卡点，必须忠于策划案的节拍节奏和爽感分布
+- 所有人物行为和对白，必须符合策划案确立的人物弧光和伤口设定
+- 视觉场景和氛围，必须贴合策划案的视觉风格基调
+- 原著的高光爆点情绪，必须在对应集中有具体场景落地（非概括性描述）
 
 【项目信息】
 原著/IP：${realDocTitle}  改编方案：${sc.title}
@@ -6978,13 +7244,28 @@ ${lockedEdits ? `【用户锁定修改——必须严格继承】\n${lockedEdits
 
   document.getElementById('gen-txt').textContent = `正在生成${act.name}剧本（第${act.from}-${act.to}集）……`;
   document.getElementById('gen-mask').classList.add('show');
+  const _cancelBtnScript = document.getElementById('gen-cancel-btn');
+  if (_cancelBtnScript) _cancelBtnScript.style.display = 'block';
 
   try {
-    const raw = await callFn(userMsg, sysPrompt, 6000);
+    const raw = await callFn(userMsg, sysPrompt, 6000, _scriptSignal);
+    _genAbortController = null;
+    if (_cancelBtnScript) _cancelBtnScript.style.display = 'none';
     document.getElementById('gen-mask').classList.remove('show');
     doRender(raw);
   } catch(err) {
+    _genAbortController = null;
+    if (_cancelBtnScript) _cancelBtnScript.style.display = 'none';
     document.getElementById('gen-mask').classList.remove('show');
+    if (err.name === 'AbortError') {
+      // User cancelled — reset act status so they can retry
+      scriptState.actScripts[actIdx] = null;
+      renderActTabs();
+      const loadingEl = document.getElementById(`script-act-loading-${actIdx}`);
+      if (loadingEl) loadingEl.remove();
+      _unlockPageForScriptGen();
+      return;
+    }
     if (err.message !== 'no key') showToast('生成失败：' + err.message);
     doRender('');
   } finally {
@@ -7059,19 +7340,10 @@ function appendActToBody(actIdx, animate) {
   block.className = 'script-act-block';
   if (animate) block.style.cssText = 'animation:fadeIn .3s ease';
 
-  // ① Sticky act divider header
-  const divider = document.createElement('div');
-  divider.className = 'script-act-divider';
-  divider.innerHTML = `<span class="script-act-divider-label">${act.name} · ${act.label}</span>
-    <div class="script-act-divider-line"></div>
-    <span class="script-act-divider-range">第${act.from}–${act.to}集 · ${act.desc}</span>`;
-  block.appendChild(divider);
-
-  // ② All episode scripts — directly visible and editable
+  // 隐藏数据容器：存储所有集的原始 HTML，供分页引擎读取
   const epsContainer = document.createElement('div');
   epsContainer.id = `script-act-eps-${actIdx}`;
-  epsContainer.className = 'script-eps-container';
-  // NOT hidden: sp-body elements are the editing surface directly
+  epsContainer.className = 'script-eps-container'; // display:none via CSS
   for (let i = 0; i < act.count; i++) {
     const epIdx = act.from - 1 + i;
     const html = as.eps[epIdx] || buildMockScriptHTML(epIdx);
@@ -7079,33 +7351,13 @@ function appendActToBody(actIdx, animate) {
     epWrap.id = `script-ep-wrap-${epIdx}`;
     epWrap.dataset.ep = epIdx;
     epWrap.dataset.act = actIdx;
-    epWrap.className = 'script-page';
     epWrap.innerHTML = html;
     epsContainer.appendChild(epWrap);
   }
   block.appendChild(epsContainer);
-
-  // ③ Act end panel
-  const endPanel = document.createElement('div');
-  endPanel.className = 'script-act-end';
-  endPanel.id = `script-act-end-${actIdx}`;
-  if (isLast) {
-    endPanel.innerHTML = `<div class="script-act-end-head">
-        <div class="script-act-end-check">✓</div>
-        <div class="script-act-end-title">全部幕剧本已生成</div>
-      </div>
-      <div class="script-act-end-actions"></div>`;
-  } else {
-    endPanel.innerHTML = `<div class="script-act-end-head">
-        <div class="script-act-end-check">✓</div>
-        <div class="script-act-end-title">${act.name}·${act.label} 已生成（第${act.from}-${act.to}集）</div>
-        <div class="script-act-end-meta">${act.count}集 · 可直接编辑</div>
-      </div>`;
-  }
-  block.appendChild(endPanel);
   body.appendChild(block);
   updateScriptEmptyState();
-  // Trigger repagination after DOM settles
+  // 触发完整分页引擎
   setTimeout(scheduleRepaginate, 150);
 }
 
@@ -7327,10 +7579,7 @@ function buildScriptHTMLFromText(text, epIdx) {
   });
   
   return `<div class="script-ep-content" id="sp-${epIdx}" data-ep-idx="${epIdx}">
-    <div class="ep-card-header">
-      <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
-      <button class="ep-collapse-btn" onclick="toggleEpCollapse(this)" title="折叠/展开本集">收起</button>
-    </div>
+    <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
     <div class="sp-body" contenteditable="true" spellcheck="false" data-ep="${epIdx}"
       oninput="onScriptBodyEdit(this)" onblur="saveScriptBody(this)">${innerHtml}</div>
   </div>`;
@@ -7344,10 +7593,7 @@ function buildMockScriptHTML(epIdx) {
   const hook = projEp ? projEp[4] : '';
   const pageNum = epIdx + 1;
   return `<div class="script-ep-content" id="sp-${epIdx}" data-ep-idx="${epIdx}">
-    <div class="ep-card-header">
-      <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
-      <button class="ep-collapse-btn" onclick="toggleEpCollapse(this)" title="折叠/展开本集">收起</button>
-    </div>
+    <div class="sp-title"><b>第 ${String(pageNum).padStart(2,'0')} 集　${escHtml(title)}</b></div>
     <div class="sp-body" contenteditable="true" spellcheck="false" data-ep="${epIdx}"
       oninput="onScriptBodyEdit(this)" onblur="saveScriptBody(this)"><div class="sp-scene" data-ep="${epIdx}" data-type="scene">内景　主场景　日间</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(beat.substring(0,200))}</div><div class="sp-scene" data-ep="${epIdx}" data-type="scene">外景　场景　接续</div><div class="sp-action" data-ep="${epIdx}" data-type="action">${escHtml(hook)}</div></div>
   </div>`;
@@ -7431,7 +7677,7 @@ function _setEpStatus(epIdx, state) {
     badge = document.createElement('span');
     badge.className = 'ep-edit-status';
     badge.style.cssText = 'font-size:10px;font-family:"Noto Sans SC",sans-serif;letter-spacing:.04em;padding:1px 7px;border-radius:8px;margin-left:8px;vertical-align:middle;transition:all .25s;pointer-events:none';
-    const header = wrap.querySelector('.ep-card-header .sp-title b');
+    const header = wrap.querySelector('.sp-title b');
     if(header) header.after(badge);
   }
   if(_epStatusTimers[epIdx]) clearTimeout(_epStatusTimers[epIdx]);
@@ -7463,6 +7709,15 @@ function onScriptFieldEdit(el) {
 }
 
 function saveScriptField(el) {
+  // 兼容物理页 sp-page-body：先同步到隐藏容器再保存
+  const pageBodyEl = el.closest ? el.closest('.sp-page-body') : null;
+  if (pageBodyEl) {
+    const epIdx = parseInt(pageBodyEl.dataset.ep);
+    if (!isNaN(epIdx)) syncPageBodyToData(pageBodyEl, epIdx);
+    const epWrap = epIdx !== undefined ? document.getElementById(`script-ep-wrap-${epIdx}`) : null;
+    const hiddenBody = epWrap?.querySelector('.sp-body');
+    if (hiddenBody) { saveScriptBody(hiddenBody); return; }
+  }
   // If el is inside an sp-body, save via the body
   const bodyEl = el.closest ? el.closest('.sp-body') : null;
   if (bodyEl) { saveScriptBody(bodyEl); return; }
@@ -7485,14 +7740,19 @@ function initScriptScrollObserver() {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
-      // Find which ep wrap is most in view
-      const epWraps = scroll.querySelectorAll('[data-ep]');
-      let bestIdx = 0, bestY = Infinity;
-      epWraps.forEach(el => {
+      // 从物理页检测当前正在查看的集
+      const pages = scroll.querySelectorAll('.script-page[data-physical]');
+      let bestPage = null, bestY = Infinity;
+      pages.forEach(el => {
         const rect = el.getBoundingClientRect();
         const dist = Math.abs(rect.top - 120);
-        if (dist < bestY) { bestY = dist; bestIdx = parseInt(el.dataset.ep); }
+        if (dist < bestY) { bestY = dist; bestPage = el; }
       });
+      let bestIdx = currentEp;
+      if (bestPage) {
+        const firstEpEl = bestPage.querySelector('[data-ep]');
+        if (firstEpEl) bestIdx = parseInt(firstEpEl.dataset.ep) || currentEp;
+      }
       if (bestIdx !== currentEp) {
         currentEp = bestIdx;
         const aIdx = bdState.acts.findIndex(a => bestIdx >= a.from-1 && bestIdx < a.to);
@@ -7507,11 +7767,14 @@ function initScriptScrollObserver() {
   });
 }
 
-// selEpTab — scrolls to the episode wrap in direct-edit mode
+// selEpTab — 滚动到对应物理页
 function selEpTab(el, i) {
   currentEp = i;
-  const wrap = document.getElementById(`script-ep-wrap-${i}`);
-  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const pageNum = window._epFirstPageMap && window._epFirstPageMap[i];
+  if (pageNum) {
+    const pageEl = document.getElementById(`sp-physical-${pageNum - 1}`);
+    if (pageEl) { pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
   updateScriptSidebar(i);
 }
 
@@ -7537,7 +7800,8 @@ function exportCurrentScript() {
   const titleEsc = (projTitle + ' · 剧本').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   paras.push(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="2880" w:after="480"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="36"/></w:rPr><w:t>${titleEsc}</w:t></w:r></w:p>`);
 
-  body.querySelectorAll('.script-page').forEach(page => {
+  // 从隐藏数据容器读取（不从物理页，避免读到重复内容）
+  body.querySelectorAll('[id^="script-ep-wrap-"]').forEach(page => {
     // Episode title
     const titleEl = page.querySelector('.sp-title b');
     if(titleEl) {
@@ -7746,7 +8010,8 @@ document.addEventListener('mouseup', (e) => {
     return;
   }
   // Look for sp-body or any script element with data-ep
-  const target = sel.anchorNode?.parentElement?.closest('.sp-body,[data-ep]');
+  // 兼容物理页 sp-page-body 和隐藏容器 sp-body
+  const target = sel.anchorNode?.parentElement?.closest('.sp-body,.sp-page-body,[data-ep]');
   if(!target) { document.getElementById('sel-toolbar').classList.remove('show'); return; }
   const scriptEl = sel.anchorNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   _selectedEl = scriptEl || target;
@@ -7842,7 +8107,8 @@ function changeElement(newType) {
   const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   const target = focusEl || _selectedEl?.closest?.('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
   if(!target) return;
-  const body = target.closest('.sp-body');
+  // 兼容物理页 sp-page-body 和隐藏容器 sp-body
+  const body = target.closest('.sp-body') || target.closest('.sp-page-body');
 
   // Change the element's class
   target.className = newType;
@@ -7852,7 +8118,14 @@ function changeElement(newType) {
     placeCursorAtEnd(target);
   }
 
-  if (body) onScriptBodyEdit(body);
+  if (body) {
+    if (body.classList.contains('sp-page-body')) {
+      const epIdx = parseInt(body.dataset.ep);
+      if (!isNaN(epIdx)) { syncPageBodyToData(body, epIdx); }
+    } else {
+      onScriptBodyEdit(body);
+    }
+  }
   showToast('已转换为 ' + {
     'sp-scene':'场景标题','sp-action':'动作','sp-char':'人物名',
     'sp-paren':'括号说明','sp-dlg':'对白','sp-transition':'转场'
@@ -7898,7 +8171,8 @@ function initScriptEditorKeys() {
   
   scroll.addEventListener('keydown', function(e) {
     const el = document.activeElement;
-    const body = el?.closest('.sp-body');
+    // 兼容物理页 sp-page-body 和隐藏容器 sp-body 两种模式
+    const body = el?.closest('.sp-body') || el?.closest('.sp-page-body');
     if (!body) return;
 
     // The "focused" script element is the one containing the cursor
@@ -7906,7 +8180,7 @@ function initScriptEditorKeys() {
     const focusEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition') || null;
     const currentType = focusEl ? [...focusEl.classList].find(c => SCRIPT_ELEMENT_CYCLE.includes(c)) : null;
 
-    // Resolve epIdx and sourceBody — always sp-body (direct edit mode)
+    // Resolve epIdx and sourceBody
     const epIdx = parseInt(body.dataset.ep);
     const sourceBody = body;
 
@@ -7962,12 +8236,12 @@ function initScriptEditorKeys() {
   }, true);
   
   scroll.addEventListener('focusin', function(e) {
-    // Track editing state for repagination guard
+    // Track editing state for repagination guard（兼容物理页 sp-page-body）
     const el = e.target;
-    const inScript = el && el.closest('.sp-body');
+    const inScript = el && (el.closest('.sp-body') || el.closest('.sp-page-body'));
     if (inScript) _onScriptFocusIn();
     // Track last focused script element
-    if (el && el.classList.contains('sp-body')) {
+    if (el && (el.classList.contains('sp-body') || el.classList.contains('sp-page-body'))) {
       _lastFocusedScriptEl = el;
     } else if (el) {
       const found = el.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
@@ -8080,8 +8354,11 @@ function insertFormatElement(type) {
   // Try to find currently focused element inside any sp-body
   const sel = window.getSelection();
   let refEl = sel?.focusNode?.parentElement?.closest('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition');
-  const body = refEl?.closest('.sp-body') || (_lastFocusedScriptEl?.closest ? _lastFocusedScriptEl.closest('.sp-body') : null);
-  
+  const body = refEl?.closest('.sp-body') || refEl?.closest('.sp-page-body') ||
+    (_lastFocusedScriptEl?.closest
+      ? (_lastFocusedScriptEl.closest('.sp-body') || _lastFocusedScriptEl.closest('.sp-page-body'))
+      : null);
+
   if (body) {
     const epIdx = parseInt(body.dataset.ep);
     const newEl = document.createElement('div');
@@ -8307,7 +8584,10 @@ function saveProject(){
     localStorage.setItem(STORAGE_KEY, serialized);
     _syncIndexToLocal(snapshot);
   } catch(e) {
-    if(e.name === 'QuotaExceededError') showToast('⚠ 本地存储已满，数据已同步云端');
+    if(e.name === 'QuotaExceededError') {
+      // Trigger auto-degradation
+      _localSaveFallback(snapshot, serialized);
+    }
   }
 
   // ── 3. UI 反馈 ──
@@ -8325,12 +8605,52 @@ function _syncIndexToLocal(snapshot) {
 }
 
 function _localSaveFallback(snapshot, serialized) {
-  try {
-    localStorage.setItem(STORAGE_KEY, serialized);
-    _syncIndexToLocal(snapshot);
-  } catch(e) {
-    if(e.name === 'QuotaExceededError') showToast('⚠ 本地存储已满，请导出项目备份');
+  // Fix 6: Auto-degradation on QuotaExceededError — prune old projects before giving up
+  let attempts = 0;
+  const tryWrite = (s) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, s);
+      _syncIndexToLocal(snapshot);
+      if (attempts > 0) showToast(`⚠ 已自动清理旧项目数据以腾出空间（清理了 ${attempts} 个项目）`);
+      return true;
+    } catch(e) {
+      if (e.name !== 'QuotaExceededError') return false;
+      return false;
+    }
+  };
+
+  if (tryWrite(serialized)) return;
+
+  // Step 1: 先尝试删除最老的项目（每次删一个，最多删5个）
+  for (let i = 0; i < 5; i++) {
+    try {
+      const projects = _getSavedProjects();
+      if (projects.length <= 1) break; // 保留当前项目
+      // 删除最老的（排在末尾的）且非当前项目
+      const toRemove = [...projects].reverse().find(p => p.name !== snapshot.name);
+      if (!toRemove) break;
+      const filtered = projects.filter(p => p.name !== toRemove.name);
+      localStorage.setItem('dramamind_projects', JSON.stringify(filtered));
+      localStorage.removeItem(`dm:proj:${toRemove.name}`);
+      attempts++;
+      if (tryWrite(serialized)) return;
+    } catch(_) { break; }
   }
+
+  // Step 2: 还是不够 — 精简当前 snapshot（移除已存档的剧本内容）
+  try {
+    const slim = JSON.parse(serialized);
+    if (slim.PROJECT?.script?.allData) slim.PROJECT.script.allData = {};
+    if (slim.scriptState?.actScripts) {
+      Object.keys(slim.scriptState.actScripts).forEach(k => {
+        if (slim.scriptState.actScripts[k]?.eps) slim.scriptState.actScripts[k].eps = {};
+      });
+    }
+    const slimStr = JSON.stringify(slim);
+    if (tryWrite(slimStr)) { showToast('⚠ 存储空间紧张，已压缩剧本缓存，内容仍在（可重新生成）'); return; }
+  } catch(_) {}
+
+  showToast('⚠ 本地存储已满，请在「项目管理」中删除不需要的旧项目');
 }
 
 function _showSaveIndicator(msg, ms) {
@@ -8493,14 +8813,14 @@ function newProject(){
         total: scriptState.total,
         finalized: scriptState.finalized,
         actScripts: JSON.parse(JSON.stringify(scriptState.actScripts)),
-        chatHistory: scriptState.chatHistory,
+        chatHistory: JSON.parse(JSON.stringify(scriptState.chatHistory || [])), // Fix: deep copy to avoid reference mutation on reset
       },
       bdState: {
         acts: JSON.parse(JSON.stringify(bdState.acts)),
         allEps: JSON.parse(JSON.stringify(bdState.allEps)),
         generatedCount: bdState.generatedCount,
         confirmed: bdState.confirmed,
-        chatHistory: bdState.chatHistory,
+        chatHistory: JSON.parse(JSON.stringify(bdState.chatHistory || [])), // Fix: deep copy to avoid reference mutation on reset
       },
     };
     if(idx >= 0) projects[idx] = snap; else projects.unshift(snap);
@@ -9194,11 +9514,11 @@ function getModelForStage(stage) {
 }
 
 // ── 统一调用入口：自动选 Claude 或豆包 ──
-async function callAny(userMsg, systemPrompt, maxTokens=2000, stage='default') {
+async function callAny(userMsg, systemPrompt, maxTokens=2000, stage='default', signal=null) {
   if(shouldUseClaude(stage)){
-    return callClaude(userMsg, systemPrompt, maxTokens);
+    return callClaude(userMsg, systemPrompt, maxTokens, signal);
   }
-  return callDoubao(userMsg, systemPrompt, maxTokens, stage);
+  return callDoubao(userMsg, systemPrompt, maxTokens, stage, signal);
 }
 
 function openApiConfig() {
@@ -9290,7 +9610,7 @@ function persistApiConfig() {
 }
 
 // ══ API CALLS ══
-async function callClaude(userMsg, systemPrompt, maxTokens) {
+async function callClaude(userMsg, systemPrompt, maxTokens, signal=null) {
   const cfg = getApiConfig();
   if (!cfg.claudeKey) { showToast('请先点击右上角「API配置」填写 Claude API Key'); throw new Error('no key'); }
 
@@ -9309,7 +9629,7 @@ async function callClaude(userMsg, systemPrompt, maxTokens) {
 
   let res;
   try {
-    res = await fetch(url, {
+    const fetchOpts = {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -9318,8 +9638,11 @@ async function callClaude(userMsg, systemPrompt, maxTokens) {
         system: systemPrompt,
         messages: [{ role: 'user', content: userMsg }],
       }),
-    });
+    };
+    if (signal) fetchOpts.signal = signal;
+    res = await fetch(url, fetchOpts);
   } catch(networkErr) {
+    if (networkErr.name === 'AbortError') throw networkErr; // let caller handle
     // Failed to fetch — 通常是国内网络被防火墙拦截
     if(!cfg.claudeBase){
       showToast('⚠ Claude 连接失败 — 国内需要填写中转站地址，请点击「API配置」填写「Claude 接口地址」');
@@ -9377,10 +9700,10 @@ async function callDoubao_multiTurn(messages, systemPrompt, maxTokens, stage='in
   return data.choices[0].message.content;
 }
 
-async function callDoubao(userMsg, systemPrompt, maxTokens, stage='default') {
+async function callDoubao(userMsg, systemPrompt, maxTokens, stage='default', signal=null) {
   const cfg = getApiConfig();
   if (!cfg.doubaoKey) { showToast('请先点击右上角「API配置」填写豆包 API Key'); throw new Error('no key'); }
-  const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+  const fetchOpts = {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${cfg.doubaoKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -9388,7 +9711,9 @@ async function callDoubao(userMsg, systemPrompt, maxTokens, stage='default') {
       max_tokens: maxTokens || 4096,
       messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }],
     }),
-  });
+  };
+  if (signal) fetchOpts.signal = signal;
+  const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', fetchOpts);
   if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `豆包 API 错误 ${res.status}`); }
   const data = await res.json();
   return data.choices[0].message.content;
@@ -10189,7 +10514,7 @@ function archiveScriptCn(){
 // mode: 'all' = full text, 'prod' = same (CN scene stays, translated dialogue included)
 function extractScriptLines(body, mode) {
   const out = [];
-  body.querySelectorAll('.script-page').forEach(page => {
+  body.querySelectorAll('[id^="script-ep-wrap-"]').forEach(page => {
     const titleEl = page.querySelector('.sp-title b');
     if(titleEl){ out.push(''); out.push(titleEl.textContent.trim()); out.push(''); }
     page.querySelectorAll('.sp-scene,.sp-action,.sp-char,.sp-paren,.sp-dlg,.sp-transition').forEach(el => {
@@ -10440,7 +10765,7 @@ async function renderPMList() {
   }
 
   window._pmProjects = projects;
-  if(countEl) countEl.textContent = `共 ${projects.length} 个项目${_cloudAvailable ? ' · ☁ 云端同步' : ' · 本地存储'}`;
+  if(countEl) countEl.textContent = `共 ${projects.length} 个项目 · 本地存储`;
 
   if(!projects.length) {
     list.innerHTML = '<div style="font-size:12px;color:var(--i4);padding:16px 10px;text-align:center">暂无保存的项目</div>';
@@ -11048,6 +11373,366 @@ async function sendChatReal(ctx) {
   }
   c.scrollTop = c.scrollHeight;
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// FIX 1: 全局爽感曲线甘特图（Gantt Chart）
+// ══════════════════════════════════════════════════════════════════════
+
+let _ganttVisible = false;
+
+function toggleGanttView() {
+  const panel = document.getElementById('bd-gantt-panel');
+  const btn = document.getElementById('bd-gantt-btn');
+  if (!panel) return;
+  _ganttVisible = !_ganttVisible;
+  panel.style.display = _ganttVisible ? 'block' : 'none';
+  if (btn) {
+    btn.style.background = _ganttVisible ? 'var(--gm)' : '';
+    btn.style.color = _ganttVisible ? '#fff' : '';
+    btn.style.borderColor = _ganttVisible ? 'var(--gm)' : '';
+  }
+  if (_ganttVisible) renderGanttChart();
+}
+
+// vibe type → score mapping (Y轴爽感强度)
+const VIBE_SCORE = { bigthrill: 5, thrill: 3, reveal: 3, emotion: 2, suppress: -1 };
+const VIBE_COLOR = { bigthrill: '#1E5C3A', thrill: '#4A9A6A', reveal: '#3a5ab8', emotion: '#C9A85C', suppress: '#D0DDD4' };
+const VIBE_LABEL = { bigthrill: '大爽', thrill: '小爽', reveal: '揭露', emotion: '情感', suppress: '憋屈' };
+
+function _epVibeScore(ep) {
+  const vibes = ep.vibes || [];
+  if (!vibes.length) return 0;
+  return vibes.reduce((s, v) => s + (VIBE_SCORE[v.type] || 0), 0);
+}
+
+function _epDominantVibe(ep) {
+  const vibes = ep.vibes || [];
+  if (!vibes.length) return null;
+  return vibes.reduce((best, v) => {
+    const s = VIBE_SCORE[v.type] || 0;
+    return s > (VIBE_SCORE[best?.type] || -99) ? v : best;
+  }, null);
+}
+
+function renderGanttChart() {
+  const canvas = document.getElementById('gantt-canvas');
+  const wrap = document.getElementById('gantt-chart-wrap');
+  const tipEl = document.getElementById('gantt-density-tip');
+  if (!canvas || !bdState.allEps || !bdState.allEps.length) return;
+
+  const eps = bdState.allEps;
+  const total = eps.length;
+
+  // Canvas sizing
+  const BAR_W = Math.max(14, Math.min(28, Math.floor((wrap.clientWidth - 60) / total)));
+  const GAP = 2;
+  const CHART_W = total * (BAR_W + GAP) + 48;
+  const CHART_H = 160;
+  const PAD_L = 36;
+  const PAD_B = 28;
+  const PAD_T = 10;
+  const PLOT_H = CHART_H - PAD_T - PAD_B;
+
+  canvas.width = Math.max(CHART_W, wrap.clientWidth);
+  canvas.height = CHART_H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, CHART_H);
+
+  // Background
+  ctx.fillStyle = '#F7FAF8';
+  ctx.fillRect(0, 0, canvas.width, CHART_H);
+
+  // Y-axis grid lines & labels (scores: -1, 0, 2, 3, 5)
+  const Y_MIN = -2, Y_MAX = 6;
+  const yScale = (v) => PAD_T + PLOT_H - (v - Y_MIN) / (Y_MAX - Y_MIN) * PLOT_H;
+  const gridScores = [5, 3, 0, -1];
+  const gridLabels = { 5: '大爽', 3: '小爽', 0: '中性', '-1': '憋屈' };
+
+  ctx.font = '9px "Noto Sans SC", sans-serif';
+  ctx.textAlign = 'right';
+  gridScores.forEach(score => {
+    const y = yScale(score);
+    ctx.strokeStyle = score === 0 ? 'rgba(0,0,0,.15)' : 'rgba(0,0,0,.06)';
+    ctx.lineWidth = score === 0 ? 1 : 0.5;
+    ctx.setLineDash(score === 0 ? [] : [3,3]);
+    ctx.beginPath();
+    ctx.moveTo(PAD_L, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = score === 0 ? '#5A7060' : '#8A9E90';
+    ctx.fillText(gridLabels[score], PAD_L - 4, y + 3);
+  });
+
+  // Draw bar for each episode
+  const barXStart = PAD_L + 4;
+  eps.forEach((ep, i) => {
+    const score = _epVibeScore(ep);
+    const dominant = _epDominantVibe(ep);
+    const color = dominant ? (VIBE_COLOR[dominant.type] || '#D0DDD4') : '#E8EEE9';
+
+    const x = barXStart + i * (BAR_W + GAP);
+    const barH = Math.abs(score) / (Y_MAX - Y_MIN) * PLOT_H;
+    const y0 = yScale(0);
+
+    if (score >= 0) {
+      // Bar going up
+      ctx.fillStyle = color;
+      const rh = Math.max(3, barH);
+      _roundRect(ctx, x, y0 - rh, BAR_W, rh, 2);
+      ctx.fill();
+    } else {
+      // Bar going down (suppress)
+      ctx.fillStyle = color;
+      const rh = Math.max(3, barH);
+      _roundRect(ctx, x, y0, BAR_W, rh, 2);
+      ctx.fill();
+    }
+
+    // Episode number label (every 5th or if bar space allows)
+    if (total <= 60 && (BAR_W >= 18 || i % 5 === 0 || i === total - 1)) {
+      ctx.fillStyle = '#8A9E90';
+      ctx.font = '8px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(ep.num, x + BAR_W / 2, CHART_H - PAD_B + 12);
+    }
+  });
+
+  // Act boundary lines
+  bdState.acts.forEach(act => {
+    const x = barXStart + (act.from - 1) * (BAR_W + GAP) - GAP;
+    ctx.strokeStyle = 'rgba(42,122,80,.35)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath();
+    ctx.moveTo(x, PAD_T);
+    ctx.lineTo(x, CHART_H - PAD_B);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Act label
+    ctx.fillStyle = '#2A7A50';
+    ctx.font = '8px "Noto Sans SC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(act.name, x + 3, PAD_T + 9);
+  });
+
+  // Density insight
+  const thrillEps = eps.filter(ep => ep.vibes && ep.vibes.some(v => v.type === 'bigthrill' || v.type === 'thrill')).length;
+  const suppressEps = eps.filter(ep => ep.vibes && ep.vibes.some(v => v.type === 'suppress')).length;
+  const density = total > 0 ? Math.round(thrillEps / total * 100) : 0;
+  let densityMsg = `全剧共 ${total} 集：爽感集 ${thrillEps} 集（${density}%）· 憋屈集 ${suppressEps} 集`;
+  if (density < 30) densityMsg += '  ⚠ 爽感密度偏低，建议在憋屈段增加小爽点';
+  else if (density > 70) densityMsg += '  💡 爽感密集，注意留出憋屈段制造对比张力';
+  if (tipEl) tipEl.textContent = densityMsg;
+
+  // Hover interaction
+  canvas.onmousemove = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const epIdx = Math.floor((mx - barXStart) / (BAR_W + GAP));
+    const tooltip = document.getElementById('gantt-tooltip');
+    if (epIdx >= 0 && epIdx < eps.length) {
+      const ep = eps[epIdx];
+      const vibeStr = (ep.vibes||[]).map(v => v.label).join(' · ') || '无标签';
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+      tooltip.innerHTML = `<b>第${ep.num}集《${escHtml((ep.title||'').substring(0,10))}》</b><br>爽感：${vibeStr}<br><span style="color:rgba(255,255,255,.6)">${escHtml((ep.hook||'').substring(0,40))}${ep.hook&&ep.hook.length>40?'…':''}</span>`;
+    } else {
+      tooltip.style.display = 'none';
+    }
+  };
+  canvas.onmouseleave = () => { document.getElementById('gantt-tooltip').style.display = 'none'; };
+  canvas.onclick = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const epIdx = Math.floor((mx - barXStart) / (BAR_W + GAP));
+    if (epIdx >= 0 && epIdx < eps.length) {
+      // Jump to episode card
+      const card = document.getElementById(`ep-card-${eps[epIdx].num}`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+}
+
+function _roundRect(ctx, x, y, w, h, r) {
+  if (w < 2*r) r = w/2;
+  if (h < 2*r) r = h/2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+// Auto-refresh Gantt when episodes are updated
+function _maybeRefreshGantt() {
+  if (_ganttVisible) setTimeout(renderGanttChart, 100);
+}
+
+
+// ══════════════════════════════════════════════════════════════════════
+// FIX 2: 人物对白风格一致性检查（Character Voice Consistency Check）
+// ══════════════════════════════════════════════════════════════════════
+
+let _charCheckSelected = null;
+
+function openCharCheck() {
+  const modal = document.getElementById('char-check-modal');
+  if (!modal) return;
+
+  // Check we have script content
+  const hasScript = scriptState.actScripts && Object.keys(scriptState.actScripts).some(k => scriptState.actScripts[k]?.status === 'done');
+  if (!hasScript) { showToast('请先生成剧本后再进行人物一致性检查'); return; }
+
+  // Build character tab list from bible + extract names from script
+  const chars = (PROJECT.bible && PROJECT.bible.characters) || [];
+  // Also extract character names from script [CHARACTER] tags
+  const scriptChars = new Set();
+  Object.values(scriptState.actScripts || {}).forEach(act => {
+    if (!act || act.status !== 'done') return;
+    Object.values(act.eps || {}).forEach(html => {
+      if (!html) return;
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      div.querySelectorAll('.sp-char').forEach(el => {
+        const n = el.textContent.trim();
+        if (n && n.length < 30) scriptChars.add(n);
+      });
+    });
+  });
+
+  // Merge bible chars + script-detected chars
+  const allCharNames = [...new Set([...chars.map(c => c.name), ...scriptChars])].filter(Boolean).slice(0, 8);
+
+  if (!allCharNames.length) { showToast('未检测到角色信息，请先完成策划案中的人物设定'); return; }
+
+  _charCheckSelected = allCharNames[0];
+  const tabsEl = document.getElementById('char-check-tabs');
+  tabsEl.innerHTML = allCharNames.map(n =>
+    `<button onclick="selectCharCheckTab(this,'${escForAttr(n)}')" data-char="${escForAttr(n)}"
+      style="height:26px;padding:0 12px;border-radius:13px;border:1px solid var(--bl);background:${n===_charCheckSelected?'var(--gm)':'var(--bg)'};color:${n===_charCheckSelected?'#fff':'var(--i2)'};font-size:11px;font-family:'Noto Sans SC',sans-serif;cursor:pointer;transition:all .15s">${escHtml(n)}</button>`
+  ).join('');
+
+  const body = document.getElementById('char-check-body');
+  body.innerHTML = '<div style="text-align:center;color:var(--i4);font-size:13px;padding-top:40px;line-height:2">选择角色后点击「开始检查」<br>AI 将对比策划案中的人物设定与剧本台词风格</div>';
+
+  modal.style.display = 'flex';
+}
+
+function closeCharCheck() {
+  const modal = document.getElementById('char-check-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function selectCharCheckTab(el, charName) {
+  _charCheckSelected = charName;
+  el.parentElement.querySelectorAll('button').forEach(b => {
+    const isActive = b.dataset.char === charName;
+    b.style.background = isActive ? 'var(--gm)' : 'var(--bg)';
+    b.style.color = isActive ? '#fff' : 'var(--i2)';
+    b.style.borderColor = isActive ? 'var(--gm)' : 'var(--bl)';
+  });
+}
+
+async function runCharCheck() {
+  if (!_charCheckSelected) { showToast('请先选择要检查的角色'); return; }
+  const charName = _charCheckSelected;
+  const body = document.getElementById('char-check-body');
+  const runBtn = document.getElementById('char-check-run-btn');
+
+  // Extract all dialogue lines for this character from the script
+  const dialogues = [];
+  Object.entries(scriptState.actScripts || {}).sort((a,b) => a[0]-b[0]).forEach(([actIdx, act]) => {
+    if (!act || act.status !== 'done') return;
+    Object.entries(act.eps || {}).sort((a,b) => a[0]-b[0]).forEach(([epIdx, html]) => {
+      if (!html) return;
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      const els = div.querySelectorAll('.sp-char, .sp-dlg');
+      let lastChar = null;
+      els.forEach(el => {
+        if (el.classList.contains('sp-char')) {
+          lastChar = el.textContent.trim().toUpperCase();
+        } else if (el.classList.contains('sp-dlg') && lastChar) {
+          if (lastChar.toUpperCase().includes(charName.toUpperCase()) || charName.toUpperCase().includes(lastChar)) {
+            dialogues.push({ ep: parseInt(epIdx)+1, line: el.textContent.trim() });
+          }
+        }
+      });
+    });
+  });
+
+  if (dialogues.length < 3) {
+    body.innerHTML = `<div style="padding:24px;color:var(--i3);font-size:13px;text-align:center">「${escHtml(charName)}」在剧本中台词较少（仅 ${dialogues.length} 句），建议生成更多幕剧本后再检查</div>`;
+    return;
+  }
+
+  // Find character bible profile
+  const chars = (PROJECT.bible && PROJECT.bible.characters) || [];
+  const charProfile = chars.find(c => c.name && (c.name.toUpperCase().includes(charName.toUpperCase()) || charName.toUpperCase().includes(c.name.toUpperCase())));
+
+  // Show loading state
+  body.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:24px;color:var(--i3);font-size:13px"><div class="spinner" style="width:20px;height:20px;border-width:2px;flex-shrink:0"></div>正在分析「${escHtml(charName)}」的 ${dialogues.length} 句台词，与策划案人物设定对比中…</div>`;
+  if (runBtn) { runBtn.disabled = true; runBtn.textContent = '检查中…'; }
+
+  const cfg = getApiConfig();
+  const profileDesc = charProfile
+    ? `【策划案人物设定】\n姓名：${charProfile.name}\n角色：${charProfile.role || '—'}\n性格：${charProfile.personality || '—'}\n弧光：${charProfile.arc || '—'}\n语言风格（keyMoments）：${charProfile.keyMoments || '—'}`
+    : `（策划案中无「${charName}」的详细人物设定，请根据其在故事中的角色地位和剧本整体风格判断一致性）`;
+
+  // Sample up to 20 lines to avoid prompt overload
+  const sampleLines = dialogues.length > 20
+    ? [...dialogues.slice(0,5), ...dialogues.slice(Math.floor(dialogues.length/2)-2, Math.floor(dialogues.length/2)+3), ...dialogues.slice(-5)]
+    : dialogues;
+
+  const linesStr = sampleLines.map(d => `第${d.ep}集：「${d.line}」`).join('\n');
+
+  const sysPrompt = `你是一位资深剧本审阅专家，专注竖屏短剧人物一致性审核。请用中文回复，结构清晰，语言专业但易读。`;
+  const userMsg = `请审查以下短剧角色的台词，判断其风格一致性。
+
+${profileDesc}
+
+【抽样台词（共从剧本中提取 ${dialogues.length} 句，以下为代表性抽样）】
+${linesStr}
+
+请从以下维度输出审查报告（使用 Markdown 格式，每个维度给出具体例句佐证）：
+
+## 一致性总评
+给出「优秀 / 良好 / 需改进 / 风格飘移严重」四级结论，并一句话说明原因。
+
+## 语言风格分析
+分析台词整体的词汇选择、句式长短、情绪表达方式，是否贯穿始终。
+
+## 优秀例句（最多3句）
+选出最符合人物性格的台词，并说明亮点。
+
+## 风险台词（最多3句）
+选出风格偏离或与人物设定矛盾的台词，并给出修改建议。
+
+## 修改建议
+若存在风格漂移，给出2-3条具体的台词写作指导建议（结合人物性格特点）。`;
+
+  try {
+    const reply = await callAny(userMsg, sysPrompt, 3000, 'bible');
+    body.innerHTML = `
+      <div style="margin-bottom:14px;padding:10px 14px;background:var(--gg);border:1px solid var(--gp);border-radius:var(--rs);font-size:11px;color:var(--i3)">
+        已分析「${escHtml(charName)}」共 <b style="color:var(--gm)">${dialogues.length}</b> 句台词（抽样 ${sampleLines.length} 句进行 AI 审核）
+      </div>
+      <div style="font-size:13px;color:var(--ink);line-height:1.8">${_renderMarkdown(reply)}</div>`;
+  } catch(e) {
+    body.innerHTML = `<div style="padding:24px;color:#b02020;font-size:13px">${e.message === 'no key' ? '请先配置 API Key' : '检查失败：' + escHtml(e.message)}</div>`;
+  } finally {
+    if (runBtn) { runBtn.disabled = false; runBtn.textContent = '重新检查'; }
+  }
+}
+
 </script>
 
 <!-- ASSET PREVIEW MODAL -->
@@ -11218,6 +11903,25 @@ async function sendChatReal(ctx) {
       <div id="pm-detail" style="flex:1;overflow-y:auto;padding:20px 24px">
         <div style="text-align:center;color:var(--i4);font-size:13px;padding-top:60px;line-height:2">← 选择左侧项目<br>查看该项目的所有归档资产</div>
       </div>
+    </div>
+  </div>
+</div><!-- Fix 2: CHARACTER VOICE CONSISTENCY MODAL -->
+<div id="char-check-modal" style="display:none;position:fixed;inset:0;background:rgba(10,31,18,.5);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto" onclick="if(event.target===this)closeCharCheck()">
+  <div style="background:var(--wh);border-radius:14px;width:700px;max-width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px 14px;border-bottom:1px solid var(--bl);flex-shrink:0">
+      <div>
+        <div style="font-family:'Playfair Display','Noto Serif SC',serif;font-size:16px;font-weight:600;color:var(--ink)">人物对白一致性检查</div>
+        <div style="font-size:11px;color:var(--i4);margin-top:2px">按角色提取剧本台词 · AI 判断是否符合策划案人物设定</div>
+      </div>
+      <button onclick="closeCharCheck()" style="background:none;border:none;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:var(--rs);color:var(--i3);font-size:20px" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='none'">×</button>
+    </div>
+    <div style="padding:16px 24px;border-bottom:1px solid var(--bl);flex-shrink:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--i3)">选择要检查的角色：</span>
+      <div id="char-check-tabs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <button onclick="runCharCheck()" id="char-check-run-btn" style="margin-left:auto;height:30px;padding:0 16px;border:none;border-radius:var(--rs);background:var(--gm);color:#fff;font-family:'Noto Sans SC',sans-serif;font-size:12px;font-weight:500;cursor:pointer">开始检查</button>
+    </div>
+    <div id="char-check-body" style="flex:1;overflow-y:auto;padding:20px 24px;min-height:200px">
+      <div style="text-align:center;color:var(--i4);font-size:13px;padding-top:40px;line-height:2">选择角色后点击「开始检查」<br>AI 将对比策划案中的人物设定与剧本台词风格</div>
     </div>
   </div>
 </div>
