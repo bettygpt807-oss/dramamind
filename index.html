@@ -2043,16 +2043,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
 
 
-      <!-- Continuous scroll: all acts append here sequentially -->
-      <div class="script-scroll" id="script-scroll">
-        <!-- 空状态：剧本尚未生成 -->
-        <div id="script-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:60px 32px;text-align:center">
-          <div style="font-size:32px;margin-bottom:16px;opacity:.4">✍️</div>
-          <div style="font-size:14px;font-weight:500;color:var(--i3);margin-bottom:8px">中文剧本尚未生成</div>
-          <div style="font-size:12px;color:var(--i4);line-height:1.8;max-width:300px">请先完成改编策划和分集细纲<br>确认细纲后系统将逐幕生成剧本</div>
+        <!-- Continuous scroll: all acts append here sequentially -->
+        <div class="script-scroll" id="script-scroll">
+          <div id="script-body"></div>
         </div>
-        <div id="script-body"></div>
-      </div>
 
     </div>
 
@@ -4990,12 +4984,14 @@ function _showTranslatedScriptInBody(key){
 
   if(!store?.text){
     var isProd = key === 'script-prod';
-    body.innerHTML='<div style="padding:48px 32px;text-align:center;max-width:480px;margin:0 auto">'+
-      '<div style="font-size:28px;margin-bottom:14px">'+(isProd?'🎬':'🌐')+'</div>'+
-      '<div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:10px">'+(isProd?'制作剧本（中文场景 + 英文台词）':'英文剧本（好莱坞全英格式）')+'</div>'+
-      '<div style="font-size:13px;color:var(--i3);line-height:1.85;margin-bottom:14px">'+(isProd?'基于中文剧本派生生成：保留中文场景描述与动作行，仅将对白翻译为英文，供中英对照制作使用。':'基于中文剧本派生生成：将所有场景、动作行、对白全文翻译为英文好莱坞格式，适合海外平台投递。')+'</div>'+
-      '<div style="font-size:12px;padding:10px 14px;background:var(--gg);border-radius:var(--rs);border:1px solid var(--bl);text-align:left;line-height:1.8">'+
-        '<b style="color:var(--gm)">生成步骤：</b><br>① 先在「中文剧本」完成创作<br>② 工具栏点击「翻译当前幕 ▾」<br>③ 选择「'+(isProd?'只翻台词 → 制作剧本':'全文翻译 → 英文剧本')+'」'+
+    body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;padding:32px 32px 24px;border-bottom:1px solid var(--bl);margin-bottom:8px;background:var(--gg)">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+        '<span style="font-size:22px">'+(isProd?'🎬':'🌐')+'</span>'+
+        '<span style="font-size:15px;font-weight:600;color:var(--ink)">'+(isProd?'制作剧本（中文场景 + 英文台词）':'英文剧本（好莱坞全英格式）')+'</span>'+
+      '</div>'+
+      '<div style="font-size:13px;color:var(--i3);line-height:1.85;margin-bottom:12px;text-align:center;max-width:460px">'+(isProd?'基于中文剧本派生生成：保留中文场景描述与动作行，仅将对白翻译为英文，供中英对照制作使用。':'基于中文剧本派生生成：将所有场景、动作行、对白全文翻译为英文好莱坞格式，适合海外平台投递。')+'</div>'+
+      '<div style="font-size:12px;padding:10px 14px;background:var(--wh);border-radius:var(--rs);border:1px solid var(--bl);line-height:1.8;max-width:360px">'+
+        '<b style="color:var(--gm)">生成步骤：</b>　① 先在「中文剧本」完成创作　② 工具栏点击「翻译当前幕 ▾」　③ 选择「'+(isProd?'只翻台词 → 制作剧本':'全文翻译 → 英文剧本')+'」'+
       '</div>'+
     '</div>';
     return;
@@ -6326,6 +6322,12 @@ function restoreStoryUI(){
     if(!PROJECT.source.market){PROJECT.source.market='欧美市场';PROJECT.source.preference=PROJECT.source.preference||'女频（18–50岁）';PROJECT.source.episodeCount=PROJECT.source.episodeCount||40;}
     try { renderBible(PROJECT.bible); } catch(e){console.warn(e);}
     goStep(3);
+  } else if(PROJECT.bible&&PROJECT.bible.logline&&!PROJECT.bible.confirmed){
+    // Bible generated but not yet confirmed — render it and show confirm dock
+    if(!PROJECT.source.market){PROJECT.source.market='欧美市场';PROJECT.source.preference=PROJECT.source.preference||'女频（18–50岁）';PROJECT.source.episodeCount=PROJECT.source.episodeCount||40;}
+    try { renderBible(PROJECT.bible); } catch(e){console.warn(e);}
+    goStep(3);
+    setTimeout(() => showConfirmDock('bible_first'), 400);
   } else if(savedSchemes.length > 0){
     // 有方案但未确认策划案：停在 step 1（方案选择）
     goStep(1);
@@ -6361,15 +6363,13 @@ async function loadSavedProj(name){
   }
 
   let snap = null;
-  // 1. 优先云端
-  try {
-    snap = await _cloudGet(`dm:proj:${name}`);
-    _cloudAvailable = true;
-  } catch(e) {}
-  // 2. localStorage fallback
+  // localStorage only
+  const projects = _getSavedProjects();
+  snap = projects.find(p => p.name === name);
+  // fallback: try STORAGE_KEY (last saved project)
   if(!snap) {
-    const projects = _getSavedProjects();
-    snap = projects.find(p => p.name === name);
+    const last = _safeParseJSON(localStorage.getItem(STORAGE_KEY), null);
+    if(last && last.name === name) snap = last;
   }
   if(!snap){ showToast('项目数据不存在'); return; }
 
@@ -8402,66 +8402,11 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// ══ PERSISTENCE — localStorage ══
+// ══ PERSISTENCE — localStorage only ══
 
-const STORAGE_KEY = 'dramamind_v2';  // localStorage fallback key
+const STORAGE_KEY = 'dramamind_v2';  // localStorage key
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ── Cloud KV Storage Layer (Upstash via /api/kv)  ────────────────────────────
-// 所有项目数据优先存云端；API 不可用时自动降级到 localStorage。
-// key 命名规则：
-//   dm:proj:{name}        — 单个项目完整快照
-//   dm:index              — 项目索引列表（name + savedAt + meta，不含正文）
-// ══════════════════════════════════════════════════════════════════════════════
-
-const KV_API = '/api/kv';
-let _cloudAvailable = null; // null=未知, true=可用, false=不可用
-
-async function _kvRequest(method, op, bodyOrParams = {}) {
-  try {
-    let url = `${KV_API}?op=${op}`;
-    let opts = { method, headers: {} };
-    if (method === 'GET') {
-      Object.entries(bodyOrParams).forEach(([k,v]) => url += `&${k}=${encodeURIComponent(v)}`);
-    } else {
-      opts.headers['Content-Type'] = 'application/json';
-      opts.body = JSON.stringify(bodyOrParams);
-    }
-    const res = await fetch(url, opts);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch(e) {
-    _cloudAvailable = false;
-    throw e;
-  }
-}
-
-async function _cloudSet(key, value) {
-  const r = await _kvRequest('POST', 'set', { key, value: JSON.stringify(value) });
-  _cloudAvailable = true;
-  return r.ok;
-}
-async function _cloudGet(key) {
-  const r = await _kvRequest('GET', 'get', { key });
-  _cloudAvailable = true;
-  const raw = r.value;
-  if (raw === null || raw === undefined) return null;
-  try { return JSON.parse(raw); } catch(e) { return raw; }
-}
-async function _cloudDel(key) {
-  const r = await _kvRequest('POST', 'del', { key });
-  _cloudAvailable = true;
-  return r.ok;
-}
-
-// 项目索引：轻量摘要数组，存在 dm:index
-async function _getCloudIndex() {
-  try { return (await _cloudGet('dm:index')) || []; }
-  catch(e) { return []; }
-}
-async function _setCloudIndex(idx) {
-  try { await _cloudSet('dm:index', idx); } catch(e) {}
-}
+// ── Cloud storage removed: localStorage-only implementation ──
 
 // ── Safe localStorage helpers ──
 function _safeParseJSON(str, fallback) {
@@ -8522,25 +8467,10 @@ function _buildSnapshot() {
   };
 }
 
-// ── 更新项目索引（云端 dm:index） ──
-async function _updateCloudIndex(snapshot) {
-  const index = await _getCloudIndex();
-  const meta = {
-    name: snapshot.name,
-    savedAt: snapshot.savedAt,
-    market: snapshot.PROJECT?.source?.market || '',
-    genre: snapshot.PROJECT?.source?.genre || '',
-    episodeCount: snapshot.PROJECT?.source?.episodeCount || 0,
-    stage: snapshot.S?.page || 'home',
-  };
-  const i = index.findIndex(m => m.name === snapshot.name);
-  if(i >= 0) index[i] = meta; else index.unshift(meta);
-  await _setCloudIndex(index.slice(0, 50)); // 最多保留 50 个项目的索引
-}
+// ── 项目索引更新（本地 localStorage） ──
 
 let _saveTimer = null;
 let _skipSerializeOnNextSave = false;
-let _saveInFlight = false;
 
 function saveProject(){
   if (!_skipSerializeOnNextSave) serializeCurrentScript();
@@ -8557,40 +8487,17 @@ function saveProject(){
   const serialized = JSON.stringify(snapshot);
   const sizeMB = serialized.length / (1024 * 1024);
 
-  // ── 1. 优先写云端（异步，不阻塞 UI） ──
-  if (!_saveInFlight) {
-    _saveInFlight = true;
-    (async () => {
-      try {
-        await _cloudSet(`dm:proj:${snapshot.name}`, snapshot);
-        await _updateCloudIndex(snapshot);
-        _cloudAvailable = true;
-        // 云端成功后，更新 localStorage 里的项目索引（供同步 UI 使用）
-        _syncIndexToLocal(snapshot);
-        _showSaveIndicator('☁ 已同步', 2000);
-      } catch(e) {
-        // 云端失败 → fallback 到 localStorage
-        console.warn('[cloud save failed, using localStorage]', e.message);
-        _localSaveFallback(snapshot, serialized);
-        _showSaveIndicator('已保存（本地）', 2000);
-      } finally {
-        _saveInFlight = false;
-      }
-    })();
-  }
-
-  // ── 2. 同时写 localStorage 作为即时备份（同步） ──
+  // ── localStorage 存储 ──
   try {
     localStorage.setItem(STORAGE_KEY, serialized);
     _syncIndexToLocal(snapshot);
   } catch(e) {
     if(e.name === 'QuotaExceededError') {
-      // Trigger auto-degradation
       _localSaveFallback(snapshot, serialized);
     }
   }
 
-  // ── 3. UI 反馈 ──
+  // ── UI 反馈 ──
   _showSaveIndicator('已保存', 2000);
   _updateStorageBar(serialized.length, sizeMB);
 }
@@ -11186,6 +11093,11 @@ ${ctx}
       messages:[{role:'system',content:sysPrompt},...recentHistory],
     })
   }).then(r=>r.json()).then(d=>{
+    if(!d.choices || !d.choices[0]) {
+      const errMsg = d.error?.message || d.message || JSON.stringify(d);
+      loadEl.textContent = '请求失败：' + errMsg;
+      return;
+    }
     const reply = d.choices[0].message.content;
     globalChatHistory.push({role:'ai', content:reply, stage:S.page});
     document.getElementById('global-chat-msgs').scrollTop = 9999;
