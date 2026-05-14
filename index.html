@@ -568,7 +568,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
    Line height: exactly 1 line = 1/6" = 12pt leading
    At 96px/in: 8.5"=816px, 11"=1056px
    ══════════════════════════════════ */
-.script-scroll{flex:1;overflow-y:auto;background:#E8E4DF;padding:24px 0 80px}
+.script-scroll{flex:1;overflow-y:auto;background:#E8F0EC;padding:24px 0 80px}
 
 /* ── Physical paper page — Hollywood letter size, strictly fixed ── */
 .script-page{
@@ -1234,7 +1234,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
 
 /* ── SCRIPT CONTINUOUS SCROLL BODY ── */
-.script-act-divider{display:flex;align-items:center;gap:12px;padding:20px 60px 8px;position:sticky;top:0;z-index:5;background:linear-gradient(to bottom,#e8e4df 85%,transparent 100%)}
+.script-act-divider{display:flex;align-items:center;gap:12px;padding:20px 60px 8px;position:sticky;top:0;z-index:5;background:linear-gradient(to bottom,#e8f0ec 85%,transparent 100%)}
 .script-act-divider-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gm);font-weight:600;font-family:'DM Mono',monospace;white-space:nowrap}
 .script-act-divider-line{flex:1;height:1px;background:linear-gradient(to right,var(--gp),transparent)}
 .script-act-divider-range{font-size:10px;color:var(--i4);white-space:nowrap}
@@ -1793,268 +1793,6 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
   </div>
 </div>
-
-<!-- ══ STORY DEV ══ -->
-<div class="page" id="page-story">
-  <!-- 统一顶部栏：项目名 + 当前视图导出按钮 -->
-  <div class="ph" style="padding:0 20px;height:48px;display:flex;align-items:center;gap:10px;flex-shrink:0;border-bottom:1px solid var(--bd);background:var(--wh)">
-    <div class="ph-sub" id="story-lbl" style="font-size:13px;color:var(--i3)"></div>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-      <button id="story-export-btn-doc" onclick="exportSingleAsset('doc')" class="stb-export-btn" style="display:none">↓ 导出</button>
-      <button id="story-export-btn-scheme" onclick="exportSingleAsset('scheme')" class="stb-export-btn" style="display:none">↓ 导出</button>
-      <button id="story-export-btn-bible" onclick="exportSingleAsset('bible')" class="stb-export-btn" style="display:none">↓ 导出</button>
-    </div>
-  </div>
-  <div class="story-layout">
-    <div class="story-main">
-
-      <!-- 原始文档展示（ss0） -->
-      <div id="ss0" style="display:none">
-        <div id="ss0-content" class="ss0-doc-body"></div>
-      </div>
-
-      <!-- 改编方案 -->
-      <div id="ss1">
-        <div class="scheme-cards" id="scheme-cards-container">
-          <div id="scheme-cards-placeholder" style="padding:32px 20px;text-align:center;color:var(--i4);font-size:13px;border:1.5px dashed var(--bl);border-radius:var(--r)">
-            <div style="font-size:20px;margin-bottom:8px">🎬</div>
-            <div>改编方案将在你提交需求后自动生成</div>
-            <div style="font-size:11px;margin-top:4px">请先在首页上传 DramaLens 拆解文档并描述需求，点击「开始创作」</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 改编策划（生成后显示） -->
-      <div id="ss3" style="display:none">
-        <!-- 空状态 -->
-        <div id="ss3-empty" style="display:none;padding:60px 20px;text-align:center">
-          <div style="font-size:28px;margin-bottom:12px">📋</div>
-          <div style="font-size:14px;color:var(--i3);margin-bottom:6px">改编策划尚未生成</div>
-          <div style="font-size:12px;color:var(--i4);line-height:1.8">请先在「改编方案」中确认方案<br>完成策划追问后系统自动生成</div>
-        </div>
-        <div id="ss3-content">
-        <!-- 隐藏的历史版本按钮，供 JS 控制显示 -->
-        <button id="bible-history-btn" onclick="openBibleHistory()" style="display:none;height:28px;padding:0 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:11px;color:var(--i3);cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-bottom:12px">历史版本 <span id="bible-history-count" style="color:var(--gm)">0</span></button>
-
-        <!-- 1. 项目基本信息 -->
-        <div class="bible-block" id="bible-block-meta">
-          <div class="bible-block-head">
-            <span class="bible-block-icon">📋</span>
-            <span class="bible-block-label">项目基本信息</span>
-          </div>
-          <div class="bible-block-body" id="bible-meta">
-            <div class="bible-meta-grid" id="bible-meta-grid">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 故事简介 -->
-        <div class="bible-block" id="bible-block-logline">
-          <div class="bible-block-head">
-            <span class="bible-block-icon">✦</span>
-            <span class="bible-block-label">故事简介</span>
-            
-          </div>
-          <div class="bible-block-body">
-            <div class="bible-editable" id="bible-logline">—</div>
-          </div>
-        </div>
-
-        <!-- 3. 视觉风格与基调 -->
-        <div class="bible-block" id="bible-block-visual">
-          <div class="bible-block-head">
-            <span class="bible-block-icon">🎨</span>
-            <span class="bible-block-label">视觉风格与基调</span>
-            
-          </div>
-          <div class="bible-block-body">
-            <div class="bible-editable" id="bible-visual">—</div>
-          </div>
-        </div>
-
-        <!-- 4. 核心创作逻辑 -->
-        <div class="bible-block" id="bible-block-scheme">
-          <div class="bible-block-head">
-            <span class="bible-block-icon">⚙</span>
-            <span class="bible-block-label">核心创作逻辑</span>
-            
-          </div>
-          <div class="bible-block-body">
-            <div class="bible-sub-sections" id="bible-scheme-sections">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. 人物小传 -->
-        <div class="bible-block" id="bible-block-chars">
-          <div class="bible-block-head">
-            <span class="bible-block-icon">👤</span>
-            <span class="bible-block-label">人物小传</span>
-            <span style="font-size:11px;color:var(--i3);margin-left:auto">修改后将提示重新生成相关内容</span>
-            <button class="btn-ol" style="height:26px;padding:0 10px;font-size:11px;margin-left:8px" onclick="addCharCard()">+ 添加角色</button>
-          </div>
-          <div class="bible-block-body">
-            <div class="char-cards-grid" id="bible-char-cards">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- 6. 剧情节拍 -->
-        <div class="bible-block" id="bible-block-beats">
-          <div class="bible-block-head">
-            <span class="bible-block-icon">🎬</span>
-            <span class="bible-block-label">剧情节拍</span>
-            <span style="font-size:11px;color:var(--i3);margin-left:8px" id="beats-count-label"></span>
-            <span class="bible-edit-hint" style="margin-left:auto">点击任意节拍可直接编辑</span>
-          </div>
-          <div class="bible-block-body" style="padding:10px 16px">
-            <div id="bible-beats-container">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Bible confirm button removed — moved to right panel confirm dock -->
-        <!-- Bible refinement chat — moved to right panel, this is hidden -->
-        <div id="bible-chat-area" style="display:none">
-          <div class="cb">
-            <div class="cb-head">💬 继续完善策划案</div>
-            <div class="cb-body" style="padding:0">
-              <div class="chat-history-inner" id="bible-chat-msgs" style="max-height:200px;overflow-y:auto;padding:12px 14px">
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <textarea class="ci" id="ci-bible" rows="1"
-              placeholder="针对策划案提问或要求修改……"
-              onkeydown="ckEnter(event,'bible')"
-              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
-              style="border:1.5px solid var(--bd);border-radius:var(--rs);padding:8px 12px;background:var(--wh)"></textarea>
-            <button class="cs-btn" onclick="sendChat('bible')" aria-label="发送">↑</button>
-          </div>
-        </div>
-        </div><!-- /ss3-content -->
-      </div><!-- /ss3 -->
-
-    </div><!-- story-main -->
-
-  </div>
-</div>
-
-<!-- ══ BREAKDOWN ══ -->
-<div class="page" id="page-breakdown">
-  <div class="bd-layout">
-
-    <!-- Header -->
-    <div class="bd-header">
-      <div>
-        <div class="bd-header-title">分集细纲</div>
-        <div class="bd-header-sub" id="bd-header-sub">基于创意策划案逐幕生成 · 每幕确认后生成下一幕</div>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <span id="bd-edit-indicator" style="display:none;font-size:11px;color:var(--au)">✎ 有字段已手动修改</span>
-        <button class="stb-export-btn" id="bd-gantt-btn" onclick="toggleGanttView()" title="全局爽感曲线甘特图">📊 爽感曲线</button>
-        <button class="stb-export-btn" onclick="exportBreakdown()">↓ 导出</button>
-        <!-- 确认按钮已移至右侧对话框，此处保留隐藏备用 -->
-        <button class="gen-btn" id="bd-confirm-btn" style="display:none" onclick="confirmBreakdownAndNext()">
-          确认全部细纲 → 进入剧本创作
-        </button>
-      </div>
-    </div>
-
-    <!-- Main scroll area -->
-    <div class="bd-main" id="bd-main">
-
-      <!-- Act nav pills -->
-      <div class="act-nav" id="act-nav"></div>
-
-      <!-- Fix 1: Global Gantt View — 全局爽感曲线鸟瞰视图 -->
-      <div id="bd-gantt-panel" style="display:none;background:var(--wh);border:1px solid var(--bl);border-radius:var(--r);padding:20px 24px;margin-bottom:20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--ink)">全局爽感曲线 · 鸟瞰视图</div>
-            <div style="font-size:11px;color:var(--i4);margin-top:2px">X轴 = 集数 &nbsp;·&nbsp; Y轴 = 爽感强度 &nbsp;·&nbsp; 点击集数跳转</div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#1E5C3A;display:inline-block"></span>大爽</span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#4A9A6A;display:inline-block"></span>小爽/逆袭</span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#C9A85C;display:inline-block"></span>情感破防</span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#3a5ab8;display:inline-block"></span>真相揭露</span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#D0DDD4;display:inline-block"></span>憋屈/压迫</span>
-          </div>
-        </div>
-        <div id="gantt-chart-wrap" style="overflow-x:auto;overflow-y:hidden">
-          <canvas id="gantt-canvas" height="160" style="display:block;cursor:pointer"></canvas>
-        </div>
-        <div id="gantt-tooltip" style="display:none;position:fixed;background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);font-family:'Noto Sans SC',sans-serif;font-size:11px;padding:6px 10px;border-radius:6px;pointer-events:none;z-index:500;line-height:1.6;max-width:240px"></div>
-        <div style="margin-top:12px;font-size:10px;color:var(--i4);text-align:center" id="gantt-density-tip"></div>
-      </div>
-
-      <!-- Acts container: each act rendered sequentially -->
-      <div id="acts-container"></div>
-
-    </div>
-  </div>
-
-</div>
-
-<!-- Vibe tag selector popover -->
-<div class="vibe-selector" id="vibe-selector" style="display:none"></div>
-
-<!-- ══ SCRIPT ══ -->
-<div class="page" id="page-script">
-  <div class="script-layout">
-    <div class="script-ea">
-
-      <!-- Toolbar -->
-      <div class="script-tb">
-        <div class="script-tb-top">
-          <div class="script-tb-actions" style="padding-left:16px;gap:8px">
-            <span class="script-stat" id="stat-words">— 字</span>
-            <span class="script-stat-sep">·</span>
-            <span class="script-stat" id="stat-pages">— 页</span>
-            <span class="script-stat-sep">·</span>
-            <span class="script-stat" id="stat-duration">— s</span>
-          </div>
-          <div class="script-tb-actions" style="margin-left:auto">
-            <div class="stb-translate-wrap" id="stb-translate-wrap">
-              <button class="stb-action-btn" onclick="toggleTranslateMenu(event)">翻译当前幕 ▾</button>
-              <div class="stb-dropdown" id="stb-translate-menu" style="display:none">
-                <div class="stb-dd-item" onclick="translateScript('current-act-dialogue')">只翻台词 → 制作剧本</div>
-                <div class="stb-dd-item" onclick="translateScript('current-act')">全文翻译 → 英文剧本</div>
-              </div>
-            </div>
-            <div class="stb-sep"></div>
-            <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
-            <div class="stb-sep"></div>
-            <button class="stb-action-btn" onclick="openCharCheck()" title="检查角色台词风格一致性">人物一致性</button>
-            <div class="stb-sep"></div>
-            <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Act tabs (幕级导航) -->
-      <div class="act-tabs" id="act-tabs"></div>
-
-
-
-        <!-- Continuous scroll: all acts append here sequentially -->
-        <div class="script-scroll" id="script-scroll">
-          <div id="script-body"></div>
-        </div>
-
-    </div>
-
-  </div><!-- /script-layout -->
-  <!-- 全屏退出按钮 -->
-  <button class="immersive-exit" id="immersive-exit-btn" onclick="toggleImmersive()">✕ 退出全屏</button>
-</div><!-- /page-script -->
-
 <!-- Selection toolbar (appears on text selection in script) -->
 <div class="selection-toolbar" id="sel-toolbar">
   <button class="sel-btn comment-btn" onclick="openAiEditInput(event)">✏ AI修改</button>
@@ -2382,7 +2120,272 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 
   <!-- 中栏：挂载点，各 page 的主内容在这里渲染 -->
   <div class="wb-mid" id="wb-mid">
-    <!-- page-story / page-breakdown / page-script 会被 JS 移入此处 -->
+  <!-- ══ STORY DEV ══ -->
+<div class="page" id="page-story">
+  <!-- 统一顶部栏：项目名 + 当前视图导出按钮 -->
+  <div class="ph" style="padding:0 20px;height:48px;display:flex;align-items:center;gap:10px;flex-shrink:0;border-bottom:1px solid var(--bd);background:var(--wh)">
+    <div class="ph-sub" id="story-lbl" style="font-size:13px;color:var(--i3)"></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+      <button id="story-export-btn-doc" onclick="exportSingleAsset('doc')" class="stb-export-btn" style="display:none">↓ 导出</button>
+      <button id="story-export-btn-scheme" onclick="exportSingleAsset('scheme')" class="stb-export-btn" style="display:none">↓ 导出</button>
+      <button id="story-export-btn-bible" onclick="exportSingleAsset('bible')" class="stb-export-btn" style="display:none">↓ 导出</button>
+    </div>
+  </div>
+  <div class="story-layout">
+    <div class="story-main">
+
+      <!-- 原始文档展示（ss0） -->
+      <div id="ss0" style="display:none">
+        <div id="ss0-content" class="ss0-doc-body"></div>
+      </div>
+
+      <!-- 改编方案 -->
+      <div id="ss1">
+        <div class="scheme-cards" id="scheme-cards-container">
+          <div id="scheme-cards-placeholder" style="padding:32px 20px;text-align:center;color:var(--i4);font-size:13px;border:1.5px dashed var(--bl);border-radius:var(--r)">
+            <div style="font-size:20px;margin-bottom:8px">🎬</div>
+            <div>改编方案将在你提交需求后自动生成</div>
+            <div style="font-size:11px;margin-top:4px">请先在首页上传 DramaLens 拆解文档并描述需求，点击「开始创作」</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 改编策划（生成后显示） -->
+      <div id="ss3" style="display:none">
+        <!-- 空状态 -->
+        <div id="ss3-empty" style="display:none;padding:60px 20px;text-align:center">
+          <div style="font-size:28px;margin-bottom:12px">📋</div>
+          <div style="font-size:14px;color:var(--i3);margin-bottom:6px">改编策划尚未生成</div>
+          <div style="font-size:12px;color:var(--i4);line-height:1.8">请先在「改编方案」中确认方案<br>完成策划追问后系统自动生成</div>
+        </div>
+        <div id="ss3-content">
+        <!-- 隐藏的历史版本按钮，供 JS 控制显示 -->
+        <button id="bible-history-btn" onclick="openBibleHistory()" style="display:none;height:28px;padding:0 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--wh);font-size:11px;color:var(--i3);cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-bottom:12px">历史版本 <span id="bible-history-count" style="color:var(--gm)">0</span></button>
+
+        <!-- 1. 项目基本信息 -->
+        <div class="bible-block" id="bible-block-meta">
+          <div class="bible-block-head">
+            <span class="bible-block-icon">📋</span>
+            <span class="bible-block-label">项目基本信息</span>
+          </div>
+          <div class="bible-block-body" id="bible-meta">
+            <div class="bible-meta-grid" id="bible-meta-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 故事简介 -->
+        <div class="bible-block" id="bible-block-logline">
+          <div class="bible-block-head">
+            <span class="bible-block-icon">✦</span>
+            <span class="bible-block-label">故事简介</span>
+            
+          </div>
+          <div class="bible-block-body">
+            <div class="bible-editable" id="bible-logline">—</div>
+          </div>
+        </div>
+
+        <!-- 3. 视觉风格与基调 -->
+        <div class="bible-block" id="bible-block-visual">
+          <div class="bible-block-head">
+            <span class="bible-block-icon">🎨</span>
+            <span class="bible-block-label">视觉风格与基调</span>
+            
+          </div>
+          <div class="bible-block-body">
+            <div class="bible-editable" id="bible-visual">—</div>
+          </div>
+        </div>
+
+        <!-- 4. 核心创作逻辑 -->
+        <div class="bible-block" id="bible-block-scheme">
+          <div class="bible-block-head">
+            <span class="bible-block-icon">⚙</span>
+            <span class="bible-block-label">核心创作逻辑</span>
+            
+          </div>
+          <div class="bible-block-body">
+            <div class="bible-sub-sections" id="bible-scheme-sections">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. 人物小传 -->
+        <div class="bible-block" id="bible-block-chars">
+          <div class="bible-block-head">
+            <span class="bible-block-icon">👤</span>
+            <span class="bible-block-label">人物小传</span>
+            <span style="font-size:11px;color:var(--i3);margin-left:auto">修改后将提示重新生成相关内容</span>
+            <button class="btn-ol" style="height:26px;padding:0 10px;font-size:11px;margin-left:8px" onclick="addCharCard()">+ 添加角色</button>
+          </div>
+          <div class="bible-block-body">
+            <div class="char-cards-grid" id="bible-char-cards">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. 剧情节拍 -->
+        <div class="bible-block" id="bible-block-beats">
+          <div class="bible-block-head">
+            <span class="bible-block-icon">🎬</span>
+            <span class="bible-block-label">剧情节拍</span>
+            <span style="font-size:11px;color:var(--i3);margin-left:8px" id="beats-count-label"></span>
+            <span class="bible-edit-hint" style="margin-left:auto">点击任意节拍可直接编辑</span>
+          </div>
+          <div class="bible-block-body" style="padding:10px 16px">
+            <div id="bible-beats-container">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Bible confirm button removed — moved to right panel confirm dock -->
+        <!-- Bible refinement chat — moved to right panel, this is hidden -->
+        <div id="bible-chat-area" style="display:none">
+          <div class="cb">
+            <div class="cb-head">💬 继续完善策划案</div>
+            <div class="cb-body" style="padding:0">
+              <div class="chat-history-inner" id="bible-chat-msgs" style="max-height:200px;overflow-y:auto;padding:12px 14px">
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <textarea class="ci" id="ci-bible" rows="1"
+              placeholder="针对策划案提问或要求修改……"
+              onkeydown="ckEnter(event,'bible')"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+              style="border:1.5px solid var(--bd);border-radius:var(--rs);padding:8px 12px;background:var(--wh)"></textarea>
+            <button class="cs-btn" onclick="sendChat('bible')" aria-label="发送">↑</button>
+          </div>
+        </div>
+        </div><!-- /ss3-content -->
+      </div><!-- /ss3 -->
+
+    </div><!-- story-main -->
+
+  </div>
+</div>
+
+<!-- ══ BREAKDOWN ══ -->
+<div class="page" id="page-breakdown">
+  <div class="bd-layout">
+
+    <!-- Header -->
+    <div class="bd-header">
+      <div>
+        <div class="bd-header-title">分集细纲</div>
+        <div class="bd-header-sub" id="bd-header-sub">基于创意策划案逐幕生成 · 每幕确认后生成下一幕</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <span id="bd-edit-indicator" style="display:none;font-size:11px;color:var(--au)">✎ 有字段已手动修改</span>
+        <button class="stb-export-btn" id="bd-gantt-btn" onclick="toggleGanttView()" title="全局爽感曲线甘特图">📊 爽感曲线</button>
+        <button class="stb-export-btn" onclick="exportBreakdown()">↓ 导出</button>
+        <!-- 确认按钮已移至右侧对话框，此处保留隐藏备用 -->
+        <button class="gen-btn" id="bd-confirm-btn" style="display:none" onclick="confirmBreakdownAndNext()">
+          确认全部细纲 → 进入剧本创作
+        </button>
+      </div>
+    </div>
+
+    <!-- Main scroll area -->
+    <div class="bd-main" id="bd-main">
+
+      <!-- Act nav pills -->
+      <div class="act-nav" id="act-nav"></div>
+
+      <!-- Fix 1: Global Gantt View — 全局爽感曲线鸟瞰视图 -->
+      <div id="bd-gantt-panel" style="display:none;background:var(--wh);border:1px solid var(--bl);border-radius:var(--r);padding:20px 24px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--ink)">全局爽感曲线 · 鸟瞰视图</div>
+            <div style="font-size:11px;color:var(--i4);margin-top:2px">X轴 = 集数 &nbsp;·&nbsp; Y轴 = 爽感强度 &nbsp;·&nbsp; 点击集数跳转</div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#1E5C3A;display:inline-block"></span>大爽</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#4A9A6A;display:inline-block"></span>小爽/逆袭</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#C9A85C;display:inline-block"></span>情感破防</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#3a5ab8;display:inline-block"></span>真相揭露</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--i3)"><span style="width:10px;height:10px;border-radius:2px;background:#D0DDD4;display:inline-block"></span>憋屈/压迫</span>
+          </div>
+        </div>
+        <div id="gantt-chart-wrap" style="overflow-x:auto;overflow-y:hidden">
+          <canvas id="gantt-canvas" height="160" style="display:block;cursor:pointer"></canvas>
+        </div>
+        <div id="gantt-tooltip" style="display:none;position:fixed;background:rgba(15,26,20,.92);color:rgba(255,255,255,.9);font-family:'Noto Sans SC',sans-serif;font-size:11px;padding:6px 10px;border-radius:6px;pointer-events:none;z-index:500;line-height:1.6;max-width:240px"></div>
+        <div style="margin-top:12px;font-size:10px;color:var(--i4);text-align:center" id="gantt-density-tip"></div>
+      </div>
+
+      <!-- Acts container: each act rendered sequentially -->
+      <div id="acts-container"></div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Vibe tag selector popover -->
+<div class="vibe-selector" id="vibe-selector" style="display:none"></div>
+
+<!-- ══ SCRIPT ══ -->
+<div class="page" id="page-script">
+  <div class="script-layout">
+    <div class="script-ea">
+
+      <!-- Toolbar -->
+      <div class="script-tb">
+        <div class="script-tb-top">
+          <div class="script-tb-actions" style="padding-left:16px;gap:8px">
+            <span class="script-stat" id="stat-words">— 字</span>
+            <span class="script-stat-sep">·</span>
+            <span class="script-stat" id="stat-pages">— 页</span>
+            <span class="script-stat-sep">·</span>
+            <span class="script-stat" id="stat-duration">— s</span>
+          </div>
+          <div class="script-tb-actions" style="margin-left:auto">
+            <div class="stb-translate-wrap" id="stb-translate-wrap">
+              <button class="stb-action-btn" onclick="toggleTranslateMenu(event)">翻译当前幕 ▾</button>
+              <div class="stb-dropdown" id="stb-translate-menu" style="display:none">
+                <div class="stb-dd-item" onclick="translateScript('current-act-dialogue')">只翻台词 → 制作剧本</div>
+                <div class="stb-dd-item" onclick="translateScript('current-act')">全文翻译 → 英文剧本</div>
+              </div>
+            </div>
+            <div class="stb-sep"></div>
+            <button class="immersive-btn" onclick="toggleImmersive()" id="btn-immersive" title="全屏沉浸模式">⛶</button>
+            <div class="stb-sep"></div>
+            <button class="stb-action-btn" onclick="openCharCheck()" title="检查角色台词风格一致性">人物一致性</button>
+            <div class="stb-sep"></div>
+            <button class="stb-action-btn" onclick="exportCurrentScript()">导出</button>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Act tabs (幕级导航) -->
+      <div class="act-tabs" id="act-tabs"></div>
+
+
+
+        <!-- Continuous scroll: all acts append here sequentially -->
+        <div class="script-scroll" id="script-scroll">
+          <!-- 空状态：剧本尚未生成 -->
+          <div id="script-empty-state" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:60px 32px;text-align:center">
+            <div style="font-size:32px;margin-bottom:16px;opacity:.4">✍️</div>
+            <div style="font-size:14px;font-weight:500;color:var(--i3);margin-bottom:8px">中文剧本尚未生成</div>
+            <div style="font-size:12px;color:var(--i4);line-height:1.8;max-width:300px">请先完成改编策划和分集细纲<br>确认细纲后系统将逐幕生成剧本</div>
+          </div>
+          <div id="script-body"></div>
+        </div>
+
+    </div>
+
+  </div><!-- /script-layout -->
+  <!-- 全屏退出按钮 -->
+  <button class="immersive-exit" id="immersive-exit-btn" onclick="toggleImmersive()">✕ 退出全屏</button>
+</div><!-- /page-script -->
   </div>
 
   <div class="wb-divider" id="wb-div-r"></div>
@@ -2548,27 +2551,10 @@ function showPage(p){
   // 三栏工作台：story/breakdown/script 在三栏中显示，home/prod 全宽显示
   const isWorkbench = ['story','breakdown','script'].includes(p);
   const wbWrap = document.getElementById('workbench-wrap');
-  const mainContent = document.getElementById('page-'+p)?.closest('.main-content');
 
   if(isWorkbench){
-    // 显示三栏容器
+    // 显示三栏容器；page-home 由 .page/.page.active 机制控制显隐，无需手动操作
     if(wbWrap) wbWrap.style.display = 'flex';
-    // 确保 page-home 完全脱离流，避免占据空间把三栏挤到右侧
-    const homeEl = document.getElementById('page-home');
-    if(homeEl) homeEl.style.display = 'none';
-    // 把当前 page 移入中栏
-    const wbMid = document.getElementById('wb-mid');
-    if(wbMid && pageEl){
-      // 先把 wb-mid 中已有的 page 移回 main-content（防止页面丢失）
-      [...wbMid.children].forEach(child => {
-        if(child.classList.contains('page')){
-          document.querySelector('.main-content').appendChild(child);
-        }
-      });
-      // 把目标 page 移入中栏
-      wbMid.appendChild(pageEl);
-      pageEl.classList.add('active');
-    }
     // 更新右栏阶段标签
     const stageLabels = {story:'改编策划', breakdown:'分集细纲', script:'剧本创作'};
     const stageTag = document.getElementById('wb-stage-tag');
@@ -2576,19 +2562,8 @@ function showPage(p){
     // 添加阶段分隔消息到对话框
     addStageMark(stageLabels[p] || p);
   } else {
-    // 非工作台页面：隐藏三栏，把所有 page 移回 main-content
+    // 非工作台页面：隐藏三栏容器
     if(wbWrap) wbWrap.style.display = 'none';
-    // 恢复 page-home 的正常流（若当前是首页则为 flex，否则 none 由 .page 控制）
-    const homeEl = document.getElementById('page-home');
-    if(homeEl) homeEl.style.display = '';
-    const wbMid = document.getElementById('wb-mid');
-    if(wbMid){
-      [...wbMid.children].forEach(child => {
-        if(child.classList.contains('page')){
-          document.querySelector('.main-content').appendChild(child);
-        }
-      });
-    }
   }
 
   if(p==='script') setTimeout(initScriptScrollObserver, 100);
@@ -3009,10 +2984,7 @@ function cancelGeneration() {
     _genAbortController = null;
     showToast('已取消生成');
     // 隐藏各种 loading mask
-    const genMask = document.getElementById('gen-mask');
-    if (genMask) genMask.classList.remove('show');
-    const cancelBtn = document.getElementById('gen-cancel-btn');
-    if (cancelBtn) cancelBtn.style.display = 'none';
+    hideMask();
     _unlockPageForScriptGen();
   }
 }
@@ -3050,10 +3022,10 @@ async function startProject(){
     if(!uploadedDocText){
       showToast('文档读取中，请稍候…');
       document.getElementById('gen-txt').textContent = '正在读取文档…';
-      document.getElementById('gen-mask').classList.add('show');
+      showMask();
     }
     await docReadyPromise;
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
   }
 
   const g=document.getElementById('sel-genre');
@@ -3085,7 +3057,6 @@ async function startProject(){
   const epsText = epsEl ? epsEl.options[epsEl.selectedIndex].text : '40集';
   const totalEpsMatch = epsText.match(/(\d+)集/);
   PROJECT.source.episodeCount = totalEpsMatch ? parseInt(totalEpsMatch[1]) : 40;
-  breakdownState.totalEps = PROJECT.source.episodeCount;
 
   const nm = g.options[g.selectedIndex].text.split('（')[0].trim()+' · '+p.options[p.selectedIndex].text.split('（')[0].trim()+' · '+m.options[m.selectedIndex].text;
   S.proj = nm;
@@ -3163,10 +3134,8 @@ ${src.userRequirements ? `用户补充需求：${src.userRequirements}` : ''}
 ${docText}`, sysPrompt, 6000, 'extract')
       .then(raw => {
         try {
-          const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-          const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
-          if(s >= 0 && e >= 0){
-            const info = JSON.parse(clean.slice(s, e+1));
+          const info = parseJsonFromAI(raw, '{');
+          if(info !== null){
             ['docTitle','docPlanningLogic','docBeatCount','docBeatSequence','docCharacters','docHighlights','docRhythmRules','docExistingSchemes'].forEach(k => {
               if(info[k] !== undefined && info[k] !== null && info[k] !== '') PROJECT.source[k] = info[k];
             });
@@ -3178,13 +3147,11 @@ ${docText}`, sysPrompt, 6000, 'extract')
   };
 
   const doRender = (raw) => {
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     let schemes = null;
     if(raw){
       try {
-        const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-        const s = clean.indexOf('['), e = clean.lastIndexOf(']');
-        if(s >= 0 && e >= 0) schemes = JSON.parse(clean.slice(s, e+1));
+        schemes = parseJsonFromAI(raw, '[') || schemes;
       } catch(err){ console.error('doRender parse error:', err, raw?.substring(0,200)); }
     }
     // 只有不在 story 页时才跳转，避免重新生成时把已有进度 step 重置为1
@@ -3216,7 +3183,7 @@ ${docText}`, sysPrompt, 6000, 'extract')
       ? '正在深度读取文档并生成改编方案……'
       : (userInput ? '正在解析方案内容……' : '正在生成改编方案……');
     document.getElementById('gen-txt').textContent = genMsg;
-    document.getElementById('gen-mask').classList.add('show');
+    showMask();
 
     let pipeline;
     // ── 优先级：有文档 → generateSchemes（文档+userInput 全部注入 prompt）
@@ -3241,9 +3208,65 @@ function selScheme(el){
   const chk = el.querySelector('.sc-chk');
   if(chk) chk.textContent='✓';
   document.querySelectorAll('.sc:not(.sel) .sc-chk').forEach(c=>c.textContent='');
+
+  // 用户点击选择方案后，右侧弹出操作浮窗
+  // 若已在策划追问阶段则不重复弹出
+  if(!inquiryMode && !PROJECT.scheme.confirmed){
+    const selTitle = el.querySelector('.sc-title')?.textContent?.trim() || '所选方案';
+    showSchemeSelectionDock(selTitle);
+  }
 }
 
-// ── Shared scheme card HTML builder (single source of truth) ──
+// ── 方案选中后的右侧浮动操作框 ──
+// 提供「确认方向，生成改编策划案」和「继续讨论修改」两个选项
+function showSchemeSelectionDock(schemeTitle){
+  // 先关闭通用确认卡（避免叠加）
+  hideConfirmDock();
+  // 复用 inquiry-choice-dock 来展示这两个选择
+  const dock = document.getElementById('inquiry-choice-dock');
+  const labelEl = document.getElementById('icd-q-label');
+  const choicesEl = document.getElementById('icd-choices');
+  const customWrap = document.getElementById('icd-custom-wrap');
+  if(!dock || !labelEl || !choicesEl) {
+    // fallback: 直接弹 confirm-dock
+    showConfirmDock('scheme');
+    return;
+  }
+  customWrap && customWrap.classList.remove('show');
+  document.getElementById('icd-progress').innerHTML = '';
+  labelEl.textContent = `已选「${schemeTitle}」，请选择下一步`;
+  choicesEl.innerHTML = `
+    <button class="icd-btn" onclick="_schemeSelConfirm()">
+      <div class="icd-btn-letter">✓</div>
+      <span>确认这个方向，生成改编策划案</span>
+    </button>
+    <button class="icd-btn other" onclick="_schemeSelDiscuss()">
+      <div class="icd-btn-letter">💬</div>
+      <span>继续讨论 / 调整方案</span>
+    </button>
+  `;
+  dock.classList.add('show');
+  // 右侧对话同步发出提示
+  appendGlobalMsg('ai', `你选择了「**${schemeTitle}**」。\n\n✅ 如果方向已定，点击「确认这个方向」，系统将进入策划追问，综合原剧节拍逻辑和你的选择生成改编策划案。\n\n💬 如需调整，点击「继续讨论」，方案卡片保留，随时可以重新选择。`);
+  const msgs = document.getElementById('global-chat-msgs');
+  if(msgs) setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 80);
+}
+
+function _schemeSelConfirm(){
+  const dock = document.getElementById('inquiry-choice-dock');
+  if(dock) dock.classList.remove('show');
+  confirmScheme();
+}
+
+function _schemeSelDiscuss(){
+  const dock = document.getElementById('inquiry-choice-dock');
+  if(dock) dock.classList.remove('show');
+  appendGlobalMsg('ai', '好的！方案卡片保持高亮，你可以在下方输入框告诉我想往哪个方向调整，或者切换选择其他方案。讨论完毕后，直接点击方案卡片重新选择，或点击「确认」继续。');
+  const ci = document.getElementById('wb-ci');
+  if(ci) ci.focus();
+}
+
+
 function buildSchemeCardHTML(sc, idx, selected) {
   const titleRecHtml = sc.titleRecs && sc.titleRecs.length > 0
     ? `<div class="sc-title-recs" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">
@@ -3917,6 +3940,8 @@ function sendInquiryBatch(){
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
     if(btn) btn.classList.add('show');
+    // 显示浮动操作卡，引导用户生成改编策划案
+    setTimeout(() => showConfirmDock('inquiry_done'), 300);
   };
 
   if(!cfg.doubaoKey){
@@ -3992,6 +4017,8 @@ function sendInquiryMsg(){
   const showBibleBtn = () => {
     const btn = document.getElementById('wb-gen-bible-btn');
     if(btn) btn.classList.add('show');
+    // 显示浮动操作卡，引导用户生成改编策划案
+    setTimeout(() => showConfirmDock('inquiry_done'), 300);
   };
 
   if(!cfg.doubaoKey){
@@ -4033,7 +4060,7 @@ async function generateBible(){
   const transcript = PROJECT.inquiry.messages.map(m=>`${m.role==='ai'?'顾问':'创作者'}：${m.content}`).join('\n\n');
 
   document.getElementById('gen-txt').textContent = '正在生成创意策划案……';
-  document.getElementById('gen-mask').classList.add('show');
+  showMask();
 
   // 节拍数量：以文档原著节拍数为下限，在此基础上根据项目体量合理延展
   // 原则：只多不少，必须覆盖原著所有节拍，再根据集数体量酌情追加
@@ -4191,13 +4218,11 @@ actStructure 字段必须参考原著文档的幕数和每幕划分方式——�
 不要因为字数多就截断或压缩输出。`;
 
   const doRender = (raw) => {
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     let bibleData = null;
     let usedMock = false;
     try {
-      const clean = raw ? raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim() : '';
-      const s=clean.indexOf('{'), e=clean.lastIndexOf('}');
-      bibleData = s>=0&&e>=0 ? JSON.parse(clean.slice(s,e+1)) : null;
+      bibleData = parseJsonFromAI(raw, '{');
     } catch(err){ bibleData=null; }
     if(!bibleData){ bibleData=getMockBible(); usedMock=true; }
     renderBible(bibleData);
@@ -4324,9 +4349,8 @@ ${inquiryDecisions}
     // Fix 7: 元数据生成成功后立即保存到 PROJECT.bible，beats 失败时可单独重试
     let bibleDataMeta = {};
     try {
-      const c1m = raw1.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-      const s1m = c1m.indexOf('{'), e1m = c1m.lastIndexOf('}');
-      if(s1m >= 0 && e1m >= 0) bibleDataMeta = JSON.parse(c1m.slice(s1m, e1m+1));
+      const _meta = parseJsonFromAI(raw1, '{');
+      if (_meta !== null) bibleDataMeta = _meta;
     } catch(err){ console.warn('Bible meta parse error (early save):', err); }
     if (bibleDataMeta.logline) {
       // 元数据已成功，立即写入 PROJECT.bible 保留（beats 失败时不需要重跑 meta）
@@ -4343,9 +4367,8 @@ ${inquiryDecisions}
     // 合并两段结果
     let bibleData = bibleDataMeta;
     try {
-      const c2 = raw2.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-      const s2 = c2.indexOf('['), e2 = c2.lastIndexOf(']');
-      if(s2 >= 0 && e2 >= 0) bibleData.beats = JSON.parse(c2.slice(s2, e2+1));
+      const _beats = parseJsonFromAI(raw2, '[');
+      if (_beats !== null) bibleData.beats = _beats;
     } catch(err){ console.warn('Bible beats parse error:', err); }
 
     if(!bibleData.beats || bibleData.beats.length === 0){
@@ -4361,7 +4384,7 @@ ${inquiryDecisions}
   catch(e){
     if (_cancelBtn) _cancelBtn.style.display = 'none';
     _genAbortController = null;
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     if (e.name === 'AbortError') { /* user cancelled — no toast */ return; }
     if(e.message!=='no key') showToast('生成失败：'+e.message);
     doRender(JSON.stringify(getMockBible()));
@@ -4982,6 +5005,10 @@ function _showTranslatedScriptInBody(key){
   const body = document.getElementById('script-body');
   if(!body) return;
 
+  // Hide the "中文剧本尚未生成" empty state when viewing prod/en script tabs
+  const emptyStateEl = document.getElementById('script-empty-state');
+  if(emptyStateEl) emptyStateEl.style.display = 'none';
+
   if(!store?.text){
     var isProd = key === 'script-prod';
     body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;padding:32px 32px 24px;border-bottom:1px solid var(--bl);margin-bottom:8px;background:var(--gg)">'+
@@ -5152,6 +5179,12 @@ function _restoreCnScriptView(){
   Object.keys(scriptState.actScripts).sort((a,b)=>a-b).forEach(aIdx => {
     if(scriptState.actScripts[aIdx]?.status === 'done') appendActToBody(parseInt(aIdx), false);
   });
+  // 恢复空状态（只有中文剧本tab才显示"中文剧本尚未生成"）
+  const emptyStateEl = document.getElementById('script-empty-state');
+  if(emptyStateEl) {
+    const hasScript = body && body.children.length > 0;
+    emptyStateEl.style.display = hasScript ? 'none' : 'flex';
+  }
   // 只更新左侧高亮，不调 navTo（避免无限递归）
   document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
   const card = document.getElementById('ac-script-cn');
@@ -5234,7 +5267,6 @@ function confirmBibleAndNext(){
     story:`${PROJECT.bible.schemePoints.structure||''}\n\n节奏：${PROJECT.bible.schemePoints.rhythm||''}\n\n悬念：${PROJECT.bible.schemePoints.suspense||''}`,
     wordCount:0,
   };
-  breakdownState.totalEps = PROJECT.source.episodeCount || 40;
   showToast('策划案已确认！开始生成分集细纲……');
   saveProject();
   archiveBible(); // 入库：创意策划案
@@ -5254,13 +5286,41 @@ function confirmBibleAndNext(){
 }
 
 function escForAttr(s){
-  return String(s||'').split("'").join('&#39;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function escHtml(str){
   if(!str)return'';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── JSON 解析公共工具（统一处理 AI 返回的 fenced JSON）──
+function parseJsonFromAI(raw, bracket) {
+  if (!raw) return null;
+  const b = bracket || '[';
+  const close = b === '[' ? ']' : '}';
+  const clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  const s = clean.indexOf(b), e = clean.lastIndexOf(close);
+  if (s < 0 || e < 0) return null;
+  try { return JSON.parse(clean.slice(s, e + 1)); } catch { return null; }
+}
+
+
+
+// ── gen-mask 显示/隐藏统一封装 ──
+function showMask(txt, showCancel) {
+  const mask = document.getElementById('gen-mask');
+  const txtEl = document.getElementById('gen-txt');
+  const cancelBtn = document.getElementById('gen-cancel-btn');
+  if (txtEl && txt) txtEl.textContent = txt;
+  if (cancelBtn) cancelBtn.style.display = showCancel ? '' : 'none';
+  if (mask) mask.classList.add('show');
+}
+function hideMask() {
+  const mask = document.getElementById('gen-mask');
+  if (mask) mask.classList.remove('show');
+  const cancelBtn = document.getElementById('gen-cancel-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+}
 // ── Select a title recommendation and update project name ──
 function selectTitleRec(idx) {
   const recs = PROJECT.scheme.titleRecs;
@@ -5321,10 +5381,6 @@ const bdState = {
   chatHistory: [],   // [{role,content}] for AI chat
 };
 
-// Keep breakdownState as alias for script page compat
-const breakdownState = {
-  batchSize: 5, totalEps: 40, generatedBatches: 0, currentBatch: 0, allData: [],
-};
 
 // ── 从策划案幕结构构建细纲幕列表（与策划案幕结构对齐）──
 function buildActsFromBibleStructure(actStructure, total) {
@@ -5450,9 +5506,6 @@ async function startBreakdown() {
   bdState.allEps = [];
   bdState.generatedCount = 0;
   bdState.confirmed = false;
-
-  // Sync breakdownState for script page compat
-  breakdownState.totalEps = total;
 
   showPage('breakdown');
   renderActNav();
@@ -5693,10 +5746,7 @@ function buildMockActData(act) {
 function parseEpJSON(raw, startIdx, count) {
   if (!raw) return null;
   try {
-    const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-    const s = clean.indexOf('['), e = clean.lastIndexOf(']');
-    if (s < 0 || e < 0) return null;
-    const arr = JSON.parse(clean.slice(s, e+1));
+    const arr = parseJsonFromAI(raw, '[');
     if (!Array.isArray(arr) || arr.length === 0) return null;
     return arr;
   } catch(err) { return null; }
@@ -6084,9 +6134,6 @@ function confirmBreakdownAndNext() {
   PROJECT.episodes.confirmedUpTo = bdState.allEps.length;
   if (!PROJECT.outline) PROJECT.outline = { confirmed: false, characters: '', story: '', wordCount: 0 };
   PROJECT.outline.confirmed = true;
-  breakdownState.totalEps = PROJECT.source.episodeCount;
-  breakdownState.allData = PROJECT.episodes.allData;
-  breakdownState.generatedBatches = Math.ceil(bdState.allEps.length / 5);
   bdState.confirmed = true;
   PROJECT.episodes.confirmedSnapshot = JSON.parse(JSON.stringify(bdState.allEps));
   saveProject();
@@ -6164,11 +6211,11 @@ function toggleTranslateMenu(e){
   m.style.display=m.style.display==='none'?'block':'none';
 }
 function translateScript(mode){
-  translateScriptReal(mode);
+  translateScriptReal(mode).catch(e => { showToast('翻译出错：' + (e.message || e)); });
 }
 
 function sendChat(ctx){
-  sendChatReal(ctx);
+  sendChatReal(ctx).catch(e => console.error('chat error:', e));
 }
 
 function renderRecentProjects(){
@@ -6238,9 +6285,13 @@ function restoreStoryUI(){
         if(numEl && numEl.textContent.trim() === PROJECT.scheme.num) c.classList.add('sel');
       });
     }
-    document.getElementById('gen-mask')?.classList.remove('show');
+    hideMask();
     const ph = document.getElementById('scheme-cards-placeholder');
     if(ph) ph.style.display = 'none';
+    // 方案已生成但未确认 → 恢复确认提示弹窗
+    if(!PROJECT.scheme.confirmed && PROJECT.scheme.num){
+      setTimeout(() => showConfirmDock('scheme'), 400);
+    }
   }
 
   // 2. 聊天记录重建
@@ -6455,11 +6506,6 @@ function updateScriptStats(){
   scheduleRepaginate();
 }
 
-// Update per-page time estimate in script body
-function updatePageTimeEsts(){
-  // After repagination, this is handled inside repaginateScript()
-  repaginateScript();
-}
 
 // ── Hollywood Pagination Engine ──
 // Collects all screenplay elements from all episodes and reflows them
@@ -6551,6 +6597,12 @@ function repaginateScript() {
   // 从隐藏数据容器读取内容 → 离屏测量高度 → 填充固定 816×1056px 纸张
   const scroll = document.getElementById('script-scroll');
   if (!scroll) return;
+
+  // 如果容器还没有可见尺寸（页面尚未挂载完毕），延迟重试
+  if (scroll.offsetWidth === 0 || scroll.offsetHeight === 0) {
+    setTimeout(repaginateScript, 200);
+    return;
+  }
 
   // ── 1. 收集所有剧本元素 ──
   const allItems = [];
@@ -6678,10 +6730,12 @@ function repaginateScript() {
     fragment.appendChild(pageEl);
   });
 
-  // 物理页插入隐藏数据块之前
-  const firstDataBlock = scroll.querySelector('.script-act-block');
-  if (firstDataBlock) {
-    scroll.insertBefore(fragment, firstDataBlock);
+  // 物理页插入 script-body（隐藏数据容器）之前，保持页面顺序
+  // 注意：.script-act-block 在 script-body 内部而非 scroll 的直接子元素，
+  // 不能直接用 insertBefore(fragment, firstDataBlock)，否则抛出 HierarchyRequestError
+  const scriptBodyEl = document.getElementById('script-body');
+  if (scriptBodyEl && scriptBodyEl.parentNode === scroll) {
+    scroll.insertBefore(fragment, scriptBodyEl);
   } else {
     scroll.appendChild(fragment);
   }
@@ -7012,6 +7066,9 @@ function _unlockPageForScriptGen() {
 }
 
 async function generateScriptAct(actIdx) {
+  if (scriptState.actScripts[actIdx]?.status === 'generating') {
+    showToast('当前幕正在生成中，请稍候…'); return;
+  }
   if (!PROJECT.outline?.confirmed && !PROJECT.bible?.confirmed) {
     showToast('请先完成创意策划案和分集细纲'); return;
   }
@@ -7243,7 +7300,7 @@ ${lockedEdits ? `【用户锁定修改——必须严格继承】\n${lockedEdits
   }
 
   document.getElementById('gen-txt').textContent = `正在生成${act.name}剧本（第${act.from}-${act.to}集）……`;
-  document.getElementById('gen-mask').classList.add('show');
+  showMask();
   const _cancelBtnScript = document.getElementById('gen-cancel-btn');
   if (_cancelBtnScript) _cancelBtnScript.style.display = 'block';
 
@@ -7251,12 +7308,12 @@ ${lockedEdits ? `【用户锁定修改——必须严格继承】\n${lockedEdits
     const raw = await callFn(userMsg, sysPrompt, 6000, _scriptSignal);
     _genAbortController = null;
     if (_cancelBtnScript) _cancelBtnScript.style.display = 'none';
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     doRender(raw);
   } catch(err) {
     _genAbortController = null;
     if (_cancelBtnScript) _cancelBtnScript.style.display = 'none';
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     if (err.name === 'AbortError') {
       // User cancelled — reset act status so they can retry
       scriptState.actScripts[actIdx] = null;
@@ -7473,14 +7530,6 @@ async function sendScriptActChat() {
 }
 
 // ── Script rendering & edit tracking ──
-function renderScript(i) {
-  currentEp = i;
-  const actIdx = bdState.acts.findIndex(a => i >= a.from-1 && i < a.to);
-  if (actIdx >= 0) currentActIdx = actIdx;
-  updateScriptSidebar(i);
-  updateScriptStats();
-  // In continuous scroll mode, just update the sidebar — the body already has all content
-}
 
 // ── Sidebar reference panel ──
 function updateScriptSidebar(i) {
@@ -7606,20 +7655,6 @@ function toggleEpCollapse(btn) {
   const collapsed = page.classList.toggle('ep-collapsed');
   btn.textContent = collapsed ? '展开' : '收起';
 }
-function collapseAllEps() {
-  document.querySelectorAll('.script-page').forEach(p => {
-    p.classList.add('ep-collapsed');
-    const btn = p.querySelector('.ep-collapse-btn');
-    if(btn) btn.textContent = '展开';
-  });
-}
-function expandAllEps() {
-  document.querySelectorAll('.script-page').forEach(p => {
-    p.classList.remove('ep-collapsed');
-    const btn = p.querySelector('.ep-collapse-btn');
-    if(btn) btn.textContent = '收起';
-  });
-}
 
 // ── Script edit tracking — sp-body (single contenteditable wrapper per episode) ──
 let _scriptEditTimers = {};
@@ -7734,7 +7769,8 @@ function saveScriptField(el) {
 // scroll observer: update sidebar as user scrolls past episode wrappers
 function initScriptScrollObserver() {
   const scroll = document.getElementById('script-scroll');
-  if (!scroll) return;
+  if (!scroll || scroll._scrollObserverAttached) return; // 已挂载则跳过
+  scroll._scrollObserverAttached = true;
   let ticking = false;
   scroll.addEventListener('scroll', () => {
     if (ticking) return;
@@ -7779,10 +7815,6 @@ function selEpTab(el, i) {
 }
 
 
-function gotoScript() {
-  showPage('script');
-  buildScriptUI();
-}
 
 // Export current script page as .txt
 function exportCurrentScript() {
@@ -7884,18 +7916,18 @@ function confirmDirector(){
   const directorNotes = ['ep-task','ep-emotion','ep-camera']
     .map(id=>document.getElementById(id)?.value||'').filter(Boolean).join('\n\n');
   if(cfg.doubaoKey && directorNotes){
-    document.getElementById('gen-mask').classList.add('show');
+    showMask();
     document.getElementById('gen-txt').textContent = '正在基于导演阐述生成资产设定……';
     callDoubao(
       `请根据以下导演阐述，生成主要角色的AI生图提示词（中英双语）：\n\n${directorNotes}`,
       '你是专业短剧美术指导，输出格式：角色名 | 中文提示词 | English prompt，每行一个角色。'
     ).then(()=>{
-      document.getElementById('gen-mask').classList.remove('show');
+      hideMask();
       const ptA=document.getElementById('pt-assets');
       if(ptA)swtProd(ptA,'assets');
       showToast('资产设定已生成');
     }).catch(e=>{
-      document.getElementById('gen-mask').classList.remove('show');
+      hideMask();
       if(e.message!=='no key') showToast('生成失败：'+e.message);
     });
   } else {
@@ -7971,13 +8003,13 @@ function regenProdSection(id){
   };
   const p=prompts[id];
   if(!p){ showGen('正在重新生成……',1200,()=>showToast('已重新生成')); return; }
-  document.getElementById('gen-mask').classList.add('show');
+  showMask();
   document.getElementById('gen-txt').textContent='正在重新生成……';
   p.fn().then(()=>{
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     showToast('已重新生成');
   }).catch(e=>{
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     if(e.message!=='no key') showToast('生成失败：'+e.message);
   });
 }
@@ -8390,10 +8422,10 @@ function autoResize(el){
 
 function showGen(txt,ms,cb){
   document.getElementById('gen-txt').textContent=txt;
-  document.getElementById('gen-mask').classList.add('show');
-  const timer = setTimeout(()=>{document.getElementById('gen-mask').classList.remove('show');if(cb)cb();},ms);
+  showMask();
+  const timer = setTimeout(()=>{hideMask();if(cb)cb();},ms);
   // Safety timeout: force-hide after 10s in case something goes wrong
-  setTimeout(()=>{ document.getElementById('gen-mask').classList.remove('show'); }, Math.max(ms+2000, 10000));
+  setTimeout(()=>{ hideMask(); }, Math.max(ms+2000, 10000));
 }
 
 function showToast(msg){
@@ -8407,6 +8439,15 @@ function showToast(msg){
 const STORAGE_KEY = 'dramamind_v2';  // localStorage key
 
 // ── Cloud storage removed: localStorage-only implementation ──
+
+// ── Cloud function stubs (cloud removed, kept as no-ops for compatibility) ──
+let _cloudAvailable = false;
+async function _cloudGet(key) { return null; }
+async function _cloudSet(key, val) { return null; }
+async function _cloudDel(key) { return null; }
+async function _getCloudIndex() { return []; }
+async function _setCloudIndex(idx) { return null; }
+async function _updateCloudIndex(snap) { return null; }
 
 // ── Safe localStorage helpers ──
 function _safeParseJSON(str, fallback) {
@@ -8443,7 +8484,6 @@ function _buildSnapshot() {
     ASSET_STORE: JSON.parse(JSON.stringify(ASSET_STORE)),
     inquiryHistory: inquiryHistory.map(m => ({role: m.role, content: m.content})),
     globalChatHistory: globalChatHistory.map(m => ({role:m.role, content:m.content, stage:m.stage||''})),
-    breakdownState: JSON.parse(JSON.stringify(breakdownState)),
     scriptState: {
       total: scriptState.total,
       finalized: scriptState.finalized,
@@ -8464,6 +8504,7 @@ function _buildSnapshot() {
       chatHistory: bdState.chatHistory,
     },
     savedAt: Date.now(),
+    scriptActHistory: JSON.parse(JSON.stringify(scriptActHistory)),
   };
 }
 
@@ -8633,7 +8674,6 @@ function restoreFromSnap(snap) {
       if(ASSET_STORE[k].text) updateAssetCard(k, ASSET_STORE[k].text);
     });
   }
-  Object.assign(breakdownState, snap.breakdownState || {});
   // Restore scriptState
   if (snap.scriptState) {
     scriptState.total = snap.scriptState.total || 40;
@@ -8646,6 +8686,11 @@ function restoreFromSnap(snap) {
     scriptState.cnHashByEp = snap.scriptState.cnHashByEp || {};
     scriptState.enHashByEp = snap.scriptState.enHashByEp || {};
     scriptState.prodHashByEp = snap.scriptState.prodHashByEp || {};
+  }
+  // Restore scriptActHistory
+  if (snap.scriptActHistory) {
+    Object.keys(scriptActHistory).forEach(k => delete scriptActHistory[k]);
+    Object.assign(scriptActHistory, snap.scriptActHistory);
   }
   // Restore bdState
   if (snap.bdState) {
@@ -8715,7 +8760,6 @@ function newProject(){
       name: S.proj, savedAt: Date.now(),
       S: {...S}, PROJECT: JSON.parse(JSON.stringify(PROJECT)),
       ASSET_STORE: JSON.parse(JSON.stringify(ASSET_STORE)),
-      breakdownState: JSON.parse(JSON.stringify(breakdownState)),
       scriptState: {
         total: scriptState.total,
         finalized: scriptState.finalized,
@@ -8746,7 +8790,6 @@ function newProject(){
   PROJECT.episodes={allData:[],confirmedUpTo:0};
   PROJECT.script={generatedBatches:0,allData:{}};
   PROJECT.userEdits={};
-  breakdownState.generatedBatches=0; breakdownState.currentBatch=0; breakdownState.allData=[];
   bdState.acts=[]; bdState.allEps=[]; bdState.generatedCount=0; bdState.confirmed=false; bdState.chatHistory=[];
   scriptState.total=40; scriptState.finalized=false; scriptState.actScripts={}; scriptState.chatHistory=[];
   scriptState.cnHashByEp={}; scriptState.enHashByEp={}; scriptState.prodHashByEp={};
@@ -9208,7 +9251,7 @@ function regenSchemes() {
   const hasRawDoc = !!(src.rawDocText && src.rawDocText.length > 100);
 
   document.getElementById('gen-txt').textContent = hasRawDoc ? '正在读取文档并重新生成改编方案……' : '正在重新生成改编方案……';
-  document.getElementById('gen-mask').classList.add('show');
+  showMask();
 
   const sysPrompt = `你是一位专业的短剧改编策划，擅长为${src.market}创作爆款竖屏短剧改编方案。
 
@@ -9235,7 +9278,7 @@ ${src.userRequirements ? `用户需求：${src.userRequirements}` : ''}
     const hasCached = !!(src.docTitle && src.docPlanningLogic);
     if(!hasCached && !src.userRequirements){
       // 文档和缓存都没有 — 提示用户重新上传
-      document.getElementById('gen-mask').classList.remove('show');
+      hideMask();
       showToast('⚠ 页面刷新后文档内容已清除，请返回首页重新上传文档后再生成');
       return;
     }
@@ -9259,13 +9302,12 @@ ${src.userRequirements ? `用户需求：${src.userRequirements}` : ''}
   }
 
   callDoubao(userMsg, sysPrompt, hasRawDoc ? 6000 : 4096).then(raw => {
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     let schemes = null;
     if(raw){
       try {
-        const c = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-        const s = c.indexOf('['), e = c.lastIndexOf(']');
-        if(s >= 0 && e >= 0) schemes = JSON.parse(c.slice(s, e+1));
+      const _s = parseJsonFromAI(raw, '[');
+      if (_s) schemes = _s;
       } catch(err){ console.error('regenSchemes parse error:', err); }
     }
     if(schemes && schemes.length > 0){
@@ -9278,7 +9320,7 @@ ${src.userRequirements ? `用户需求：${src.userRequirements}` : ''}
     }
     updateHistoryBtn();
   }).catch(e => {
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     showToast('生成失败：' + (e.message || '未知错误'));
   });
 }
@@ -9300,16 +9342,14 @@ function submitCustomScheme(){
   if(!cfg.doubaoKey){showToast('请先配置 API Key');return;}
   closeCustomSchemeModal();
   document.getElementById('gen-txt').textContent = '正在解析方案……';
-  document.getElementById('gen-mask').classList.add('show');
+  showMask();
   const container = document.querySelector('.scheme-cards');
   const startIdx = container ? container.querySelectorAll('.sc').length : 0;
   parseInputSchemes(text, PROJECT.source).then(raw => {
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     let schemes = null;
     try {
-      const c = raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
-      const s=c.indexOf('['), e=c.lastIndexOf(']');
-      if(s>=0&&e>=0) schemes = JSON.parse(c.slice(s,e+1));
+    schemes = parseJsonFromAI(raw, '[');
     } catch(err){}
     if(schemes && schemes.length > 0){
       appendSchemeCards(schemes, startIdx);
@@ -9318,7 +9358,7 @@ function submitCustomScheme(){
       showToast('解析失败，请重试');
     }
   }).catch(()=>{
-    document.getElementById('gen-mask').classList.remove('show');
+    hideMask();
     showToast('解析失败，请重试');
   });
 }
@@ -9687,7 +9727,7 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
       ? `${actName}${modeLabel}（${epWraps.length}集）`
       : `全本${modeLabel}（${epWraps.length}集）`;
   document.getElementById('gen-txt').textContent = `正在翻译 ${totalLabel}……`;
-  document.getElementById('gen-mask').classList.add('show');
+  showMask();
 
   const sysPrompt = dialogueOnly
     ? `You are a professional script translator. ONLY translate dialogue [sp-dlg] and parenthetical [sp-paren] lines from Chinese to English. Return ALL lines with their tags, keeping non-dialogue lines (scene headings, action, character names) completely unchanged in Chinese. Format: [tag]content`
@@ -9778,7 +9818,7 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
     }
   }
 
-  document.getElementById('gen-mask').classList.remove('show');
+  hideMask();
 
   // ── 把翻译结果写入对应的独立资产，不修改中文剧本 DOM ──
   const targetKey = dialogueOnly ? 'script-prod' : 'script-en';
@@ -10495,9 +10535,19 @@ function showConfirmDock(stage, opts){
     scheme: {
       icon: '🎯',
       title: '改编方案已生成',
-      sub: '中间面板展示了所有方案，选择一个后点击确认',
-      primary: '确认方案，进入策划追问 →',
+      sub: '请点击中间面板的方案卡片进行选择',
+      primary: '确认所选方案，开始策划追问 →',
       secondary: '继续讨论 / 调整方案',
+      aiMsg: '🎬 原始文件中的改编方案已提取完成！\n\n请在**中间面板**查看各方案的策划思路和故事简介，**直接点击你感兴趣的方案卡片**进行选择——选择后右侧会弹出操作选项，你可以确认方向立即生成策划案，也可以继续和我讨论调整。',
+      hideDock: true,  // 这个阶段不显示操作卡，引导用户去点方案卡
+    },
+    inquiry_done: {
+      icon: '✅',
+      title: '策划追问已完成',
+      sub: '可以生成改编策划案了',
+      primary: '确认，生成改编策划案 →',
+      secondary: '继续补充讨论',
+      aiMsg: '✅ 策划方向已充分讨论！系统将综合**原剧的剧情节拍逻辑、策划逻辑、你选定的改编方案**以及本轮追问确认的细节，生成完整的改编策划案。点击「确认，生成改编策划案」继续；或在下方继续补充你的想法。',
     },
     bible_first: {
       icon: '📋',
@@ -10505,6 +10555,7 @@ function showConfirmDock(stage, opts){
       sub: '请检查故事简介、人物设定与剧情节拍',
       primary: '确认策划案，开始分集细纲 →',
       secondary: '继续讨论 / 修改策划案',
+      aiMsg: '📋 改编策划案已在中间面板生成，包含故事简介、人物小传、剧情节拍等完整内容。请仔细检查各部分是否符合预期。确认后系统将自动生成**分集细纲**；如需调整，在下方告诉我哪里需要修改。',
     },
     bible: {
       icon: '📋',
@@ -10512,6 +10563,7 @@ function showConfirmDock(stage, opts){
       sub: '请检查更新后的内容是否符合预期',
       primary: '确认策划案，开始分集细纲 →',
       secondary: '继续讨论 / 再次修改',
+      aiMsg: '📋 改编策划案已根据你的意见更新，请在中间面板检查修改后的内容。满意后点击「确认」进入分集细纲；仍有调整请继续告诉我。',
     },
     breakdown: {
       icon: '📊',
@@ -10519,6 +10571,7 @@ function showConfirmDock(stage, opts){
       sub: '请确认所有幕的集数和卡点安排',
       primary: '确认细纲，进入剧本创作 →',
       secondary: '继续讨论 / 调整细纲',
+      aiMsg: '📊 所有幕的分集细纲已生成完毕！请检查各集的卡点安排和爽感节奏。确认后系统将进入**剧本创作**阶段；如有调整请告诉我。',
     },
     bd_act: {
       icon: '📊',
@@ -10526,6 +10579,7 @@ function showConfirmDock(stage, opts){
       sub: '请检查本幕集数与卡点安排',
       primary: isLastAct ? '确认本幕，进入剧本创作 →' : `确认本幕，生成${nextActName} →`,
       secondary: '继续讨论 / 修改本幕',
+      aiMsg: `📊 **${actName}**的分集细纲已生成，请检查本幕的集数分配和卡点设计。${isLastAct ? '这是最后一幕，确认后进入剧本创作。' : `确认后将自动生成**${nextActName}**。`}`,
     },
     script_act: {
       icon: '✍️',
@@ -10533,10 +10587,17 @@ function showConfirmDock(stage, opts){
       sub: '请检查场景、动作与对白，确认后继续生成下一幕',
       primary: isLastAct ? '确认，完成全部剧本 →' : `确认本幕，生成${nextActName}剧本 →`,
       secondary: '继续讨论 / 修改本幕',
+      aiMsg: `✍️ **${actName}**剧本已生成，请在左侧编辑区检查场景、动作行和对白。${isLastAct ? '这是最后一幕，确认后完成全本剧本。' : `确认后将自动生成**${nextActName}**剧本。`}`,
     },
   };
   const cfg = configs[stage];
   if(!cfg) return;
+
+  // 在右侧对话框发出引导消息
+  if(cfg.aiMsg) appendGlobalMsg('ai', cfg.aiMsg);
+
+  // hideDock: 只发消息，不显示操作卡（如 scheme 阶段，操作卡由点击方案卡触发）
+  if(cfg.hideDock) return;
 
   document.getElementById('confirm-dock-icon').textContent = cfg.icon;
   document.getElementById('confirm-dock-title').textContent = cfg.title;
@@ -10545,7 +10606,6 @@ function showConfirmDock(stage, opts){
   document.getElementById('confirm-dock-btn-secondary-label').textContent = cfg.secondary;
 
   dock.classList.add('show');
-  appendGlobalMsg('ai', `✅ ${cfg.title} — ${cfg.sub}`);
 }
 
 function hideConfirmDock(){
@@ -10561,6 +10621,7 @@ function handleConfirmDockPrimary(){
   hideConfirmDock();
   if(stage === 'scheme') confirmScheme();
   else if(stage === 'bible' || stage === 'bible_first') confirmBibleAndNext();
+  else if(stage === 'inquiry_done') generateBible();
   else if(stage === 'breakdown') confirmBreakdownAndNext();
   else if(stage === 'bd_act'){
     // Use stored actIdx if available, otherwise find last done act
@@ -10578,10 +10639,32 @@ function handleConfirmDockPrimary(){
 }
 
 function handleConfirmDockSecondary(){
+  const stage = _confirmDockStage;
   hideConfirmDock();
-  // 让输入框聚焦，方便用户继续和 AI 讨论
+
+  // 针对不同阶段发出引导提示，告知用户可以继续讨论
+  const guideMessages = {
+    scheme: '没问题！你可以在下方继续告诉我对某个方案的想法，或者希望方案往哪个方向调整。讨论完毕后，直接点击方案卡片重新选择即可。',
+    inquiry_done: '好的，继续聊！把想法告诉我，细节打磨好后随时可以点击上方「生成改编策划案」按钮，或者告诉我「可以生成了」。',
+    bible_first: '好，我们继续讨论。请告诉我哪里需要调整——故事简介、人物设定、剧情节拍，或是整体方向都可以。',
+    bible: '好的，请告诉我还需要哪些修改，我会帮你整理修改意见后重新生成。',
+    breakdown: '好，继续讨论。你可以告诉我哪一幕的集数或卡点需要调整，我会帮你修改。',
+    bd_act: '好，请告诉我本幕需要哪些修改，我会帮你重新生成这一幕的细纲。',
+    script_act: '好，请告诉我这一幕哪里需要调整，我会帮你修改后重新生成。',
+  };
+
+  const msg = guideMessages[stage];
+  if(msg) appendGlobalMsg('ai', msg);
+
+  // inquiry_done 阶段：确保「生成改编策划案」按钮保持可见
+  if(stage === 'inquiry_done'){
+    const btn = document.getElementById('wb-gen-bible-btn');
+    if(btn) btn.classList.add('show');
+  }
+
+  // 聚焦输入框
   const ci = document.getElementById('wb-ci');
-  if(ci) ci.focus();
+  if(ci) { ci.focus(); }
 }
 
 // ── 同步中间顶栏导出按钮（根据当前显示的 ss0/ss1/ss3）──
@@ -11084,21 +11167,7 @@ ${ctx}
     content: m.content
   }));
 
-  fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
-    method:'POST',
-    headers:{'Authorization':`Bearer ${cfg.doubaoKey}`,'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model: cfg.doubaoModel||'doubao-seed-2-0-lite-260428',
-      max_tokens: 1000,
-      messages:[{role:'system',content:sysPrompt},...recentHistory],
-    })
-  }).then(r=>r.json()).then(d=>{
-    if(!d.choices || !d.choices[0]) {
-      const errMsg = d.error?.message || d.message || JSON.stringify(d);
-      loadEl.textContent = '请求失败：' + errMsg;
-      return;
-    }
-    const reply = d.choices[0].message.content;
+  callDoubao_multiTurn(recentHistory, sysPrompt, 1000, 'default').then(reply => {
     globalChatHistory.push({role:'ai', content:reply, stage:S.page});
     document.getElementById('global-chat-msgs').scrollTop = 9999;
 
@@ -11112,6 +11181,14 @@ ${ctx}
       _showRevisionConfirmDock(summaryText, {type:'bible'});
     } else {
       loadEl.innerHTML = _renderMarkdown(reply);
+      // 方案选择阶段：AI 回复后重新弹出确认卡，让用户随时可以确认
+      if(S.page === 'story' && S.step === 1 && !PROJECT.scheme.confirmed && !_confirmDockStage){
+        setTimeout(() => showConfirmDock('scheme'), 600);
+      }
+      // 策划案已生成但未确认阶段：AI 回复后重新弹出确认卡
+      if(S.page === 'story' && PROJECT.bible?.logline && !PROJECT.bible?.confirmed && !_confirmDockStage){
+        setTimeout(() => showConfirmDock('bible_first'), 600);
+      }
     }
   }).catch(e=>{
     loadEl.textContent = '请求失败：' + e.message;
