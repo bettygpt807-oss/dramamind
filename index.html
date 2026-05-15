@@ -1486,7 +1486,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
 .asset-btn:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.8)}
 
 /* Draggable dividers */
-.wb-divider{width:8px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10;margin:0 -2px}
+.wb-divider{width:16px;flex-shrink:0;background:transparent;cursor:col-resize;position:relative;transition:background .15s;z-index:10;margin:0 -4px}
 .wb-divider:hover,.wb-divider.dragging{background:rgba(30,92,58,.08)}
 .wb-divider::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:48px;background:var(--bd);border-radius:2px;transition:background .15s}
 .wb-divider:hover::after,.wb-divider.dragging::after{background:var(--gm)}
@@ -2227,8 +2227,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
           </div>
         </div>
 
-        <!-- 6. 剧情节拍 -->
-        <div class="bible-block" id="bible-block-beats">
+        <!-- 6. 剧情节拍 — 隐藏，仅供内部逻辑使用 -->
+        <div class="bible-block" id="bible-block-beats" style="display:none">
           <div class="bible-block-head">
             <span class="bible-block-icon">🎬</span>
             <span class="bible-block-label">剧情节拍</span>
@@ -2437,8 +2437,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
       <div class="revision-dock-body" id="revision-dock-body"></div>
       <div class="revision-dock-actions">
-        <button class="revision-dock-confirm" onclick="confirmRevisionAndRegen()">确认，自动更新改编策划 →</button>
-        <button class="revision-dock-cancel" onclick="dismissRevisionDock()">继续讨论</button>
+        <button class="revision-dock-confirm" onclick="confirmRevisionAndRegen()">输出修改版策划案 →</button>
+        <button class="revision-dock-cancel" onclick="dismissRevisionDock()">继续讨论/修改</button>
       </div>
     </div>
     <!-- 确认推进操作卡（生成内容后浮出） -->
@@ -2460,7 +2460,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
       </div>
     </div>
     <div class="wb-right-input">
-      <button class="wb-gen-bible-btn" id="wb-gen-bible-btn" onclick="generateBible()">生成创意策划案 →</button>
+      <button class="wb-gen-bible-btn" id="wb-gen-bible-btn" onclick="generateBible()" style="display:none!important"></button>
       <div class="wb-right-input-row">
         <textarea class="wb-ci" id="wb-ci" rows="1"
           placeholder="和 AI 聊聊当前创作进展……"
@@ -3013,6 +3013,44 @@ async function startProject(){
     openApiConfig();
     return;
   }
+
+  // ── Fix 1: 强制重置所有项目状态，确保新项目从零开始 ──
+  // 重置 PROJECT 到初始状态
+  Object.assign(PROJECT.source, {hasDoc:false,rawDocText:'',docTitle:'',docPlanningLogic:'',docBeatSequence:'',docBeatCount:0,docCharacters:'',docHighlights:'',docRhythmRules:'',userRequirements:'',market:'',genre:'',preference:'',episodeCount:40,path:'analyze'});
+  Object.assign(PROJECT.scheme, {confirmed:false,num:'',title:'',titleRecs:[],planningThought:'',storyBrief:'',tags:[]});
+  PROJECT.inquiry.messages = []; PROJECT.inquiry.completed = false;
+  Object.assign(PROJECT.bible, {confirmed:false,logline:'',visual:'',characters:[],beats:[],actStructure:[],schemePoints:{highlight:'',structure:'',character:'',emotion:'',rhythm:'',suspense:'',highlights:''},modifiedFields:{}});
+  PROJECT.episodes.allData = []; PROJECT.episodes.confirmedUpTo = 0;
+  PROJECT.script.generatedBatches = 0; PROJECT.script.allData = {};
+  PROJECT.userEdits = {};
+  PROJECT.outline = {confirmed:false,characters:'',story:'',wordCount:0};
+  // 重置全局状态（变量在文件后方定义，用 typeof 保护）
+  if(typeof bdState !== 'undefined'){ bdState.acts = []; bdState.allEps = []; bdState.generatedCount = 0; bdState.confirmed = false; bdState.chatHistory = []; }
+  if(typeof scriptState !== 'undefined'){ scriptState.actScripts = {}; scriptState.total = 0; scriptState.finalized = false; scriptState.chatHistory = []; scriptState.cnLastEditTs = 0; scriptState.enTranslateTs = 0; scriptState.prodTranslateTs = 0; scriptState.cnHashByEp = {}; scriptState.enHashByEp = {}; scriptState.prodHashByEp = {}; }
+  // 重置 ASSET_STORE
+  if(typeof ASSET_STORE !== 'undefined') Object.keys(ASSET_STORE).forEach(k => { ASSET_STORE[k].text = ''; });
+  // 重置对话历史
+  if(typeof globalChatHistory !== 'undefined') globalChatHistory.length = 0;
+  if(typeof inquiryHistory !== 'undefined') inquiryHistory.length = 0;
+  if(typeof inquiryMsgCount !== 'undefined') inquiryMsgCount = 0;
+  inquiryMode = false;
+  // 重置导航状态
+  S.navKey = 'doc';
+  // 清空对话框
+  const chatMsgsEl = document.getElementById('global-chat-msgs');
+  if(chatMsgsEl) chatMsgsEl.innerHTML = '';
+  // 清空侧边栏导航高亮
+  document.querySelectorAll('.asset-card').forEach(c => { c.classList.remove('ready','viewing','open'); });
+  document.querySelectorAll('.asset-card-status').forEach(el => { el.textContent = '待生成'; });
+  // 清空剧本/细纲/策划案区域
+  const scriptBody = document.getElementById('script-body');
+  if(scriptBody) scriptBody.innerHTML = '';
+  const bdBody = document.getElementById('bd-acts-container');
+  if(bdBody) bdBody.innerHTML = '';
+  const bibleLogline = document.getElementById('bible-logline');
+  if(bibleLogline) bibleLogline.textContent = '—';
+  // 重置 bibleHistory
+  if(typeof bibleHistory !== 'undefined') bibleHistory.length = 0;
 
   // ── 等待文档异步解析完成（竞态保护）──
   // 只依赖 docReadyPromise，不依赖 files[0]（session 恢复后 files[0] 可能已丢失）
@@ -4190,6 +4228,13 @@ ${inquiryDecisions}
     const ss3 = document.getElementById('ss3');
     if(ss3) ss3.style.display = 'block';
     goStep(3);
+    // Fix 5: Auto-navigate left sidebar to 创意策划
+    document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('viewing'));
+    const bibleCard = document.getElementById('ac-bible');
+    if(bibleCard) { bibleCard.classList.add('viewing','ready'); }
+    const bibleStatus = document.getElementById('ac-bible-status');
+    if(bibleStatus) bibleStatus.textContent = '✓ 已生成';
+    S.navKey = 'bible';
     PROJECT.inquiry.completed=true;
     saveProject();
     if(usedMock){
@@ -4352,10 +4397,7 @@ function renderBible(data){
     '<div class="bible-meta-item"><div class="bible-meta-label">目标市场</div><div class="bible-meta-val">'+_mv(src.market)+'</div></div>'+
     '<div class="bible-meta-item"><div class="bible-meta-label">受众偏好</div><div class="bible-meta-val">'+_mv(src.preference)+'</div></div>'+
     '<div class="bible-meta-item"><div class="bible-meta-label">题材类型</div><div class="bible-meta-val">'+_mv((src.genre||'').split('（')[0])+'</div></div>'+
-    '<div class="bible-meta-item"><div class="bible-meta-label">体量规划</div><div class="bible-meta-val">'+(src.episodeCount?src.episodeCount+'集':'—')+'</div></div>'+
-    '<div class="bible-meta-item"><div class="bible-meta-label">改编路径</div><div class="bible-meta-val">'+_mv(src.path||'拆解改编')+'</div></div>'+
-    '<div class="bible-meta-item"><div class="bible-meta-label">原著/IP</div><div class="bible-meta-val">'+_mv(src.docTitle||sc.title||(src.userRequirements||'').substring(0,30))+'</div></div>'+
-    '<div class="bible-meta-item" style="grid-column:1/-1"><div class="bible-meta-label">选定方案</div><div class="bible-meta-val">'+_mv(sc.num)+' · '+_mv(sc.title)+'</div></div>';
+    '<div class="bible-meta-item"><div class="bible-meta-label">体量规划</div><div class="bible-meta-val">'+(src.episodeCount?src.episodeCount+'集':'—')+'</div></div>';
   
   // Insert title recs before the main bible content
   const ss3 = document.getElementById('ss3');
@@ -9333,8 +9375,7 @@ function getApiConfig() {
 }
 
 // ── 模式说明 ──
-// 专业模式（balanced）：策划阶段+翻译 → Claude Sonnet（无Key时 fallback doubao-seed-2-0-pro）
-//                      细纲 → doubao-seed-2-0-pro；剧本 → doubao-seed-2-0-lite
+// 专业模式（balanced）：全程使用 doubao-seed-2-0-pro（含策划/追问/细纲/剧本/翻译）
 // 经济模式（lite）：全程 doubao-seed-2-0-lite
 
 const DOUBAO_PRO  = 'doubao-seed-2-0-pro-260215';
@@ -9352,15 +9393,13 @@ function shouldUseClaude(stage) {
 }
 
 // 豆包模型选择（不用 Claude 时）
-// 专业模式无 Claude Key：策划阶段 fallback Pro，细纲 Pro，剧本 Lite
-// 经济模式：全程 Lite
+// 专业模式：全程 Pro；经济模式：全程 Lite
 function getModelForStage(stage) {
   const cfg = getApiConfig();
   const mode = cfg.doubaoMode || 'balanced';
   if(mode === 'lite') return DOUBAO_LITE;
-  // 专业模式：策划阶段+细纲+剧本全部用Pro，翻译无Key时fallback Lite
-  const proStages = ['scheme', 'extract', 'inquiry', 'bible', 'breakdown', 'script', 'translate'];
-  return proStages.includes(stage) ? DOUBAO_PRO : DOUBAO_LITE;
+  // 专业模式：全部用 Pro
+  return DOUBAO_PRO;
 }
 
 // ── 统一调用入口：自动选 Claude 或豆包 ──
@@ -9633,14 +9672,27 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
   showMask();
 
   const sysPrompt = dialogueOnly
-    ? `You are a professional script translator. ONLY translate dialogue [sp-dlg] and parenthetical [sp-paren] lines from Chinese to English. Return ALL lines with their tags, keeping non-dialogue lines (scene headings, action, character names) completely unchanged in Chinese. Format: [tag]content`
-    : `You are a professional short drama script translator. Translate the full script from Chinese to English. Rules:
-- Scene headings: INT./EXT. LOCATION — TIME
-- Character names: translate to English equivalents (ALL CAPS)
+    ? `You are a professional script translator. Your task: translate ONLY the dialogue [sp-dlg] and parenthetical [sp-paren] lines from Chinese to English. 
+
+CRITICAL RULES:
+- Output ALL lines with their [sp-xxx] tags intact
+- For [sp-dlg] and [sp-paren] lines: replace the Chinese content with natural, emotionally resonant ENGLISH translation
+- For all other lines ([sp-scene], [sp-action], [sp-char], [sp-transition]): output them COMPLETELY UNCHANGED
+- NEVER output any Chinese characters in the dialogue or parenthetical lines
+- NEVER add explanations or commentary
+- Format: [tag]English content (for dialogue/paren) or [tag]original content (for other lines)
+- Return ONLY the script lines, nothing else`
+    : `You are a professional short drama script translator. Translate the ENTIRE script from Chinese to English.
+
+CRITICAL RULES:
+- ALL content must be in English - no Chinese characters anywhere in the output
+- Scene headings: INT./EXT. LOCATION — TIME (ALL CAPS)
+- Character names: English equivalents in ALL CAPS
 - Dialogue: natural, emotionally resonant English matching the original tone
-- Action lines: vivid, present tense, cinematic
-- Keep all [sp-xxx] tags exactly as-is, only translate the content after the tag
-- Return ONLY the translated script, no explanations`;
+- Action lines: vivid, present tense, cinematic English prose
+- Keep all [sp-xxx] tags exactly as-is, ONLY translate the content after the tag
+- NEVER output Chinese characters
+- Return ONLY the translated script lines with tags, no explanations`;
 
   // ── 按集翻译，结果累积到 outputByEp（不写入 DOM）──
   const outputByEp = {}; // epIdx → translatedText
@@ -9668,8 +9720,8 @@ async function translateScriptReal(mode, forceEpIdxs = null) {
 
     try {
       const userMsg = dialogueOnly
-        ? `Translate the dialogue and parenthetical lines to English. Keep scene headings, action lines, and character name lines unchanged (in Chinese). Return all lines with their [sp-xxx] tags:\n\n${sourceText}`
-        : `Translate all lines to English, keeping [sp-xxx] tags:\n\n${sourceText}`;
+        ? `Translate ONLY the [sp-dlg] and [sp-paren] lines to English. Keep all other lines unchanged. Output must be entirely in English for the translated lines. Return all lines with [sp-xxx] tags:\n\n${sourceText}`
+        : `Translate ALL lines to English. Every word in [sp-dlg], [sp-action], [sp-scene], [sp-char], [sp-paren] must be in English. Keep [sp-xxx] tags exactly as-is:\n\n${sourceText}`;
       const maxTok = Math.min(4096, sourceText.length * 3);
       const raw = await callAny(userMsg, sysPrompt, maxTok, 'translate');
 
@@ -10323,7 +10375,6 @@ function archiveBible(){
     if(c.keyMoments) parts.push(`关键戏份：${c.keyMoments}`);
     return parts.join('\n');
   }).join('\n\n');
-  const beats = (b.beats||[]).map(bt => `节拍${String(bt.num).padStart(2,'0')}【${bt.title}】\n${bt.summary}`).join('\n\n');
   const text = [
     `【故事简介】\n${b.logline}`,
     `【视觉风格与基调】\n${b.visual}`,
@@ -10336,7 +10387,6 @@ function archiveBible(){
     sp.suspense  ? `悬念布局：\n${sp.suspense}` : '',
     sp.highlights? `高光情节：\n${sp.highlights}` : '',
     chars ? `【人物小传】\n${chars}` : '',
-    beats ? `【剧情节拍】\n${beats}` : '',
   ].filter(Boolean).join('\n\n');
   updateAssetCard('bible', text);
 }
@@ -10934,16 +10984,16 @@ function _showRevisionConfirmDock(summaryText, context){
   // 按 context 定制标题和确认按钮文案
   const cfgMap = {
     bible: {
-      title: isLocalOnly ? 'AI 建议局部更新，确认后自动修改对应字段' : 'AI 已梳理修改意见，确认后自动更新创意策划',
-      btn: isLocalOnly ? '确认，局部更新对应字段 →' : '确认，重新生成创意策划 →',
+      title: isLocalOnly ? 'AI 建议局部更新，确认后自动修改对应字段' : 'AI 已梳理修改意见，可以输出修改版策划案了',
+      btn: isLocalOnly ? '确认，局部更新对应字段 →' : '输出修改版策划案 →',
     },
     bd: {
-      title: isLocalOnly ? 'AI 建议局部修改，确认后更新本幕' : 'AI 已梳理修改意见，确认后重新生成本幕',
-      btn: isLocalOnly ? '确认，更新本幕对应集 →' : '确认，重新生成本幕大纲 →',
+      title: isLocalOnly ? 'AI 建议局部修改，确认后更新本幕' : 'AI 已梳理修改意见，可以输出修改版大纲了',
+      btn: isLocalOnly ? '确认，更新本幕对应集 →' : '输出修改版大纲 →',
     },
     script: {
-      title: isLocalOnly ? 'AI 建议局部修改' : 'AI 已梳理修改意见，确认后重新生成本幕',
-      btn: isLocalOnly ? '确认，更新对应集剧本 →' : '确认，重新生成本幕剧本 →',
+      title: isLocalOnly ? 'AI 建议局部修改' : 'AI 已梳理修改意见，可以输出修改版剧本了',
+      btn: isLocalOnly ? '确认，更新对应集剧本 →' : '输出修改版剧本 →',
     },
   };
   const c = cfgMap[_revisionContext.type] || cfgMap.bible;
@@ -11762,8 +11812,8 @@ ${linesStr}
         </div>
         <!-- 模式说明 -->
         <div id="mode-desc-balanced" style="margin-top:8px;font-size:11px;color:var(--i3);line-height:1.65;padding:8px 10px;background:var(--gg);border-radius:var(--rs)">
-          策划·追问·改编策划 → <b style="color:var(--gm)">Claude Sonnet</b>　细纲·剧本·翻译 → <b style="color:var(--gm)">doubao-seed-2-0-pro</b>
-          <span style="display:block;font-size:10px;color:var(--i4);margin-top:3px">未配置 Claude Key 时全程 fallback 豆包</span>
+          全程使用 <b style="color:var(--gm)">doubao-seed-2-0-pro</b>（策划 · 追问 · 细纲 · 剧本 · 翻译）
+          <span style="display:block;font-size:10px;color:var(--i4);margin-top:3px">配置 Claude Key 后，策划与翻译环节将升级为 Claude Sonnet</span>
         </div>
         <div id="mode-desc-lite" style="display:none;margin-top:8px;font-size:11px;color:var(--i3);line-height:1.65;padding:8px 10px;background:var(--gg);border-radius:var(--rs)">
           全程使用 <b style="color:var(--gm)">doubao-seed-2-0-lite</b>，速度最快，成本约为专业模式的 30%
